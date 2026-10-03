@@ -1,0 +1,21 @@
+SIFI ENVIRONMENT BASELINE
+Captured: 2026-10-04T01:07:37+07:00
+
+WSL_DISTRO_NAME=Ubuntu-24.04
+
+Linux yojarto 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+VERSION_ID="24.04"
+
+Python 3.12.3
+pip 24.0 from /usr/lib/python3/dist-packages/pip (python 3.12)
+git version 2.43.0
+Docker version 29.8.0, build 88096ef
+Docker Compose version v5.5.1
+DockerServer=29.8.0 DockerOS=Docker Desktop
+
+CPU=8
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       1.1Gi       4.0Gi        63Mi       2.8Gi       6.5Gi
+Swap:          2.0Gi          0B       2.0Gi
