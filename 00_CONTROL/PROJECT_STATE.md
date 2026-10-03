@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3E-G — Geographic Admission, Named Source Universe & Source Registry
+S0.3R — Multi-Geography & Relevance Architecture Revision
 
 ## Implementation Authority
 NOT YET AUTHORIZED
@@ -34,3 +34,16 @@ until Stage 0 is formally frozen.
 Media/source attention measures detected attention within the monitored
 source universe. It does not by itself establish prevalence, severity,
 causality, or empirical truth.
+
+
+## Geography / Relevance Successor Controls
+1. SIFI is geography-configurable; Kota Yogyakarta is pilot, not product boundary.
+2. Minimum first-class levels: kabupaten/kota, province, national.
+3. Source geography, event geography, affected geography, policy jurisdiction,
+   and relevance geography are distinct.
+4. CoverageProfile is a mandatory Stage-0 object.
+5. SourceCoverageBinding is a mandatory Stage-0 object.
+6. Relevance uses explainable R0-R4/RX states, not one opaque score.
+7. The same corpus must support different geographic views without code changes.
+8. A second shadow Coverage Profile is required before Stage-0 freeze.
+9. Portability is a formal acceptance gate.

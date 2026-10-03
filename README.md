@@ -16,3 +16,12 @@ Public attention is not equivalent to empirical truth.
 
 Execution rule:
 Stage 0 definitions must be frozen before Stage 1 implementation.
+
+
+## Geography Architecture
+SIFI is geography-configurable.
+
+Kota Yogyakarta is the first pilot Coverage Profile, not a permanent product
+boundary. Core intelligence must support hierarchical relevance across
+kabupaten/kota, province, and national levels without geography-specific
+application forks.
