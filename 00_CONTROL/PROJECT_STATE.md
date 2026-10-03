@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.2 — Product Contract & Pilot Boundary
+S0.3 — Source Taxonomy & Access-Rights Model
 
 ## Implementation Authority
 NOT YET AUTHORIZED
