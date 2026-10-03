@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3 — Source Taxonomy & Access-Rights Model
+S0.3E-G — Geographic Admission, Named Source Universe & Source Registry
 
 ## Implementation Authority
 NOT YET AUTHORIZED
