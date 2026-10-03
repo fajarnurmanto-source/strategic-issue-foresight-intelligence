@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.1 — Project Control Foundation
+S0.2 — Product Contract & Pilot Boundary
 
 ## Implementation Authority
 NOT YET AUTHORIZED
