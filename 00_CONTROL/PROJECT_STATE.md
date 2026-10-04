@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3T — Geographic Relevance Decision & Acceptance Matrix
+S0.3U — Source Registry Recovery, Source Universe & Rights Governance
 
 ## Implementation Authority
 NOT YET AUTHORIZED

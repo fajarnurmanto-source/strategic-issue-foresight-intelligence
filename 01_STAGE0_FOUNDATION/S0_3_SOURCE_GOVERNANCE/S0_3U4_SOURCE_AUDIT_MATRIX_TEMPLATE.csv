@@ -1,0 +1,7 @@
+source_id,canonical_name,source_family,profile_pack,verification_status,access_method,structured_endpoint,robots_reviewed,terms_reviewed,metadata_use,fulltext_fetch,raw_retention,derived_features,redistribution,commercial_use,attribution_required,rate_limit_state,last_verified_at,evidence_locator,notes
+SRC-BPS,Badan Pusat Statistik,OFFICIAL_STATISTICS,SHARED_NATIONAL_PACK,DISCOVERED,,,,,,,,,,,,,,,
+SRC-DATAGOID,Portal Satu Data Indonesia / data.go.id,OPEN_DATA,SHARED_NATIONAL_PACK,DISCOVERED,,,,,,,,,,,,,,,
+SRC-BMKG,Badan Meteorologi Klimatologi dan Geofisika,WEATHER_ENVIRONMENT,SHARED_NATIONAL_PACK,DISCOVERED,,,,,,,,,,,,,,,
+SRC-JDIH-YK,JDIH Pemerintah Kota Yogyakarta,OFFICIAL_REGULATION,YOGYAKARTA_LOCAL_PACK,DISCOVERED,,,,,,,,,,,,,,,
+SRC-WARTA-YK,Portal Berita Pemerintah Kota Yogyakarta,OFFICIAL_GOVERNMENT,YOGYAKARTA_LOCAL_PACK,DISCOVERED,,,,,,,,,,,,,,,
+SRC-OPENDATA-YK,Portal Open Data Kota Yogyakarta,OPEN_DATA,YOGYAKARTA_LOCAL_PACK,DISCOVERED,,,,,,,,,,,,,,,
