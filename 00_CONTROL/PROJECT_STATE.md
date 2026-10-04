@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3S — Administrative Geography, Coverage Profile & Source Binding
+S0.3T — Geographic Relevance Decision & Acceptance Matrix
 
 ## Implementation Authority
 NOT YET AUTHORIZED
