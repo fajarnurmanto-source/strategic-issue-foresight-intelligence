@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3X-B — Live Source Rights & Access Audit
+S0.3V-R1 — Classification Arithmetic Integrity Correction
 
 ## Implementation Authority
 NOT YET AUTHORIZED
