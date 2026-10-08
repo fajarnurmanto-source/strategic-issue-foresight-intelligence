@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3X-A — Source Rights, Acquisition, Copyright & Retention Successor
+S0.3X-B — Live Source Rights & Access Audit
 
 ## Implementation Authority
 NOT YET AUTHORIZED
