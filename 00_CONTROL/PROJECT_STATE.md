@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3U — Source Registry Recovery, Source Universe & Rights Governance
+S0.3V — Current-State Rights, Crawling & Privacy Gap Audit
 
 ## Implementation Authority
 NOT YET AUTHORIZED
