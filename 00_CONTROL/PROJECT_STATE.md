@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3Y — Privacy, Social, Profiling & Institutional Firewall
+S0.3Z — Source Value, Coverage Regression & Commercialisation Gate
 
 ## Implementation Authority
 NOT YET AUTHORIZED
