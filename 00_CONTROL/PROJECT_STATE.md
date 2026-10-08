@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3Z — Source Value, Coverage Regression & Commercialisation Gate
+S0.4B — Stage0 Reconciliation & Gap Classification
 
 ## Implementation Authority
 NOT YET AUTHORIZED
