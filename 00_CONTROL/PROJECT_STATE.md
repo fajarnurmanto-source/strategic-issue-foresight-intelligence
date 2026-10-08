@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.5B — Issue Ontology v0
+S0.5C — Issue Object Schema v0
 
 ## Implementation Authority
 NOT YET AUTHORIZED
