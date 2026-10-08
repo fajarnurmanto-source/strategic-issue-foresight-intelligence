@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.6A — Canonical Benchmark Corpus
+S0.6B — Integrated Acceptance & Regression
 
 ## Implementation Authority
 NOT YET AUTHORIZED
