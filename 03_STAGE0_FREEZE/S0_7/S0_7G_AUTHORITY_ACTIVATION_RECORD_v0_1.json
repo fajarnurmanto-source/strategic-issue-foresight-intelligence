@@ -1,0 +1,52 @@
+{
+  "activation_basis": {
+    "foundation_verification": "24_OF_24_PASS",
+    "freeze_head": "2ff6478858c8722d527ddd19abff56dd1b7e377e",
+    "freeze_record": "S0_7F_STAGE0_FOUNDATION_FREEZE_RECORD_v0_1.json",
+    "freeze_record_sha256": "1e0766ebb113fb629cfe7e9edab78ddf2fa343245963b0b3406d2cec7605e9ca"
+  },
+  "implementation_authority": "AUTHORIZED_CONTROLLED_NON_PRODUCTION_IMPLEMENTATION_ONLY",
+  "maturity_at_activation": {
+    "end_to_end_verification": "UNVERIFIED",
+    "functional_product_verification": "UNVERIFIED",
+    "incremental_decision_value": "UNVALIDATED",
+    "l2_or_higher_capabilities": 0,
+    "representative_user_validation": "UNVALIDATED"
+  },
+  "permitted_scope": [
+    "application and repository structure",
+    "schemas and persistence implementation",
+    "deterministic transformations",
+    "provenance and lineage enforcement",
+    "rights-state enforcement",
+    "evidence qualification mechanisms",
+    "Issue Object persistence",
+    "human review workflow mechanics",
+    "benchmark and regression harnesses",
+    "non-production APIs",
+    "bounded analyst interface",
+    "synthetic fixtures",
+    "benchmark fixtures",
+    "locally authored fixtures",
+    "otherwise rights-safe non-production test material"
+  ],
+  "production_deployment_authority": "HOLD_NOT_AUTHORIZED",
+  "production_mvu_status": "NOT_YET_ESTABLISHED",
+  "production_source_ingestion_authority": "HOLD_NOT_AUTHORIZED",
+  "prohibited_scope": [
+    "recurring production ingestion from sources without separate authority",
+    "production ingestion of Z1 material",
+    "automatic source-level Z2 to Evidence Item Z2 promotion",
+    "Z1 laundering through derived outputs",
+    "production deployment",
+    "commercial production operation",
+    "claims of functional verification without executed tests",
+    "claims of user validation without representative-user evidence",
+    "claims of incremental decision value without comparative evidence"
+  ],
+  "record_type": "SIFI_STAGE0_AUTHORITY_ACTIVATION_RECORD",
+  "record_version": "0.1",
+  "stage0_foundation_status": "FROZEN_VERIFIED",
+  "status": "AUTHORITATIVE_ON_CANONICAL_COMMIT",
+  "transition_semantics": "This activation authorizes controlled software implementation only. It does not alter source rights, evidence admission, product maturity, production ingestion authority, or production deployment authority."
+}
