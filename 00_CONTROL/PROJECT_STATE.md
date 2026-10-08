@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.4B — Stage0 Reconciliation & Gap Classification
+S0.5A — Canonical Evidence Model
 
 ## Implementation Authority
 NOT YET AUTHORIZED
