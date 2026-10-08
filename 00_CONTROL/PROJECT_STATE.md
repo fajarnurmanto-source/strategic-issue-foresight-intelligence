@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.6B — Integrated Acceptance & Regression
+S0.6C — Qualified Source Universe
 
 ## Implementation Authority
 NOT YET AUTHORIZED
