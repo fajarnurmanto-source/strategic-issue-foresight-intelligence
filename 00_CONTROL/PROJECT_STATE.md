@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3V — Current-State Rights, Crawling & Privacy Gap Audit
+S0.3W — Data Rights & Evidence Admission Successor
 
 ## Implementation Authority
 NOT YET AUTHORIZED
