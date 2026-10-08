@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.3V-R1 — Classification Arithmetic Integrity Correction
+S0.3Y — Privacy, Social, Profiling & Institutional Firewall
 
 ## Implementation Authority
 NOT YET AUTHORIZED
