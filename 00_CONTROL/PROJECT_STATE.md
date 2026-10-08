@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S0.5D — Human Review & Qualification Authority
+S0.6A — Canonical Benchmark Corpus
 
 ## Implementation Authority
 NOT YET AUTHORIZED
