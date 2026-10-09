@@ -1,0 +1,240 @@
+"""Append-only SQLite version store for controlled non-production use."""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from sifi.domain.versioning import (
+    VersionedSnapshot,
+    require_aware_datetime,
+)
+
+
+class PersistenceError(Exception):
+    """Base persistence error."""
+
+
+class DuplicateVersionError(PersistenceError):
+    """Raised when an existing object version would be overwritten."""
+
+
+def _utc_iso(value: datetime) -> str:
+    require_aware_datetime(value, "datetime")
+    return value.astimezone(timezone.utc).isoformat()
+
+
+def _from_iso(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    require_aware_datetime(parsed, "stored datetime")
+    return parsed
+
+
+class SQLiteVersionStore:
+    """Small append-only version store.
+
+    This is a local controlled-development adapter.
+    It is not a production database or production deployment authority.
+    """
+
+    def __init__(self, database: str | Path = ":memory:") -> None:
+        self._database = str(database)
+        self._connection = sqlite3.connect(self._database)
+        self._connection.row_factory = sqlite3.Row
+        self._initialize()
+
+    def _initialize(self) -> None:
+        self._connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS object_versions (
+                object_type TEXT NOT NULL,
+                object_id TEXT NOT NULL,
+                version INTEGER NOT NULL CHECK (version >= 1),
+                effective_at TEXT NOT NULL,
+                recorded_at TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                PRIMARY KEY (object_type, object_id, version)
+            );
+
+            CREATE INDEX IF NOT EXISTS
+                idx_object_versions_latest
+            ON object_versions (
+                object_type,
+                object_id,
+                version DESC
+            );
+
+            CREATE INDEX IF NOT EXISTS
+                idx_object_versions_pit
+            ON object_versions (
+                object_type,
+                object_id,
+                effective_at,
+                recorded_at
+            );
+            """
+        )
+        self._connection.commit()
+
+    def append(self, snapshot: VersionedSnapshot) -> None:
+        payload_json = json.dumps(
+            dict(snapshot.payload),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
+        try:
+            self._connection.execute(
+                """
+                INSERT INTO object_versions (
+                    object_type,
+                    object_id,
+                    version,
+                    effective_at,
+                    recorded_at,
+                    payload_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    snapshot.object_type,
+                    snapshot.object_id,
+                    snapshot.version,
+                    _utc_iso(snapshot.effective_at),
+                    _utc_iso(snapshot.recorded_at),
+                    payload_json,
+                ),
+            )
+            self._connection.commit()
+
+        except sqlite3.IntegrityError as exc:
+            raise DuplicateVersionError(
+                "existing object version cannot be overwritten"
+            ) from exc
+
+    def get(
+        self,
+        object_type: str,
+        object_id: str,
+        version: int,
+    ) -> VersionedSnapshot | None:
+
+        row = self._connection.execute(
+            """
+            SELECT *
+            FROM object_versions
+            WHERE object_type = ?
+              AND object_id = ?
+              AND version = ?
+            """,
+            (object_type, object_id, version),
+        ).fetchone()
+
+        return self._row_to_snapshot(row) if row else None
+
+    def latest(
+        self,
+        object_type: str,
+        object_id: str,
+    ) -> VersionedSnapshot | None:
+
+        row = self._connection.execute(
+            """
+            SELECT *
+            FROM object_versions
+            WHERE object_type = ?
+              AND object_id = ?
+            ORDER BY version DESC
+            LIMIT 1
+            """,
+            (object_type, object_id),
+        ).fetchone()
+
+        return self._row_to_snapshot(row) if row else None
+
+    def as_of(
+        self,
+        object_type: str,
+        object_id: str,
+        cutoff: datetime,
+    ) -> VersionedSnapshot | None:
+
+        require_aware_datetime(cutoff, "cutoff")
+        cutoff_iso = _utc_iso(cutoff)
+
+        row = self._connection.execute(
+            """
+            SELECT *
+            FROM object_versions
+            WHERE object_type = ?
+              AND object_id = ?
+              AND effective_at <= ?
+              AND recorded_at <= ?
+            ORDER BY
+                effective_at DESC,
+                recorded_at DESC,
+                version DESC
+            LIMIT 1
+            """,
+            (
+                object_type,
+                object_id,
+                cutoff_iso,
+                cutoff_iso,
+            ),
+        ).fetchone()
+
+        return self._row_to_snapshot(row) if row else None
+
+    def history(
+        self,
+        object_type: str,
+        object_id: str,
+    ) -> tuple[VersionedSnapshot, ...]:
+
+        rows = self._connection.execute(
+            """
+            SELECT *
+            FROM object_versions
+            WHERE object_type = ?
+              AND object_id = ?
+            ORDER BY version ASC
+            """,
+            (object_type, object_id),
+        ).fetchall()
+
+        return tuple(
+            self._row_to_snapshot(row)
+            for row in rows
+        )
+
+    @staticmethod
+    def _row_to_snapshot(
+        row: sqlite3.Row,
+    ) -> VersionedSnapshot:
+
+        payload: dict[str, Any] = json.loads(
+            row["payload_json"]
+        )
+
+        return VersionedSnapshot(
+            object_type=row["object_type"],
+            object_id=row["object_id"],
+            version=row["version"],
+            effective_at=_from_iso(row["effective_at"]),
+            recorded_at=_from_iso(row["recorded_at"]),
+            payload=payload,
+        )
+
+    def close(self) -> None:
+        self._connection.close()
+
+    def __enter__(self) -> "SQLiteVersionStore":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        self.close()

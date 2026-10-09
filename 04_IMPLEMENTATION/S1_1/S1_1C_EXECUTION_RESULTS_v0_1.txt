@@ -1,0 +1,21 @@
+=== SIFI S1.1 EXECUTION ===
+[1] COMPILE
+COMPILEALL=PASS
+[2] UNIT TESTS
+test_canonical_enum_values (test_s1_1_core_domain_persistence.CanonicalVocabularyTests.test_canonical_enum_values) ... ok
+test_blank_geography_dimension_is_rejected (test_s1_1_core_domain_persistence.GeographyTests.test_blank_geography_dimension_is_rejected) ... ok
+test_geography_dimensions_remain_independent (test_s1_1_core_domain_persistence.GeographyTests.test_geography_dimensions_remain_independent) ... ok
+test_append_is_non_destructive (test_s1_1_core_domain_persistence.SQLiteVersionStoreTests.test_append_is_non_destructive) ... ok
+test_as_of_respects_effective_and_recorded_cutoff (test_s1_1_core_domain_persistence.SQLiteVersionStoreTests.test_as_of_respects_effective_and_recorded_cutoff) ... ok
+test_file_backed_store_survives_reopen (test_s1_1_core_domain_persistence.SQLiteVersionStoreTests.test_file_backed_store_survives_reopen) ... ok
+test_history_preserves_all_versions (test_s1_1_core_domain_persistence.SQLiteVersionStoreTests.test_history_preserves_all_versions) ... ok
+test_latest_uses_highest_version (test_s1_1_core_domain_persistence.SQLiteVersionStoreTests.test_latest_uses_highest_version) ... ok
+test_snapshot_requires_timezone_aware_times (test_s1_1_core_domain_persistence.VersionedSnapshotTests.test_snapshot_requires_timezone_aware_times) ... ok
+test_version_must_be_positive (test_s1_1_core_domain_persistence.VersionedSnapshotTests.test_version_must_be_positive) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.038s
+
+OK
+UNIT_TEST_EXECUTION=PASS
+=== END SIFI S1.1 EXECUTION ===

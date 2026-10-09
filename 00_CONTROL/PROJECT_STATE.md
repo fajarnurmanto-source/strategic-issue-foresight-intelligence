@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S1.0B — Implementation Constitution & Contract-to-Code Traceability
+S1.1 — Core Domain Model + Persistence Foundation
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED
