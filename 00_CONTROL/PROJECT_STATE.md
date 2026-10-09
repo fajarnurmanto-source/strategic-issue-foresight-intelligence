@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-Post-Stage0 — Controlled Non-Production Implementation Bootstrap
+S1.0B — Implementation Constitution & Contract-to-Code Traceability
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED
