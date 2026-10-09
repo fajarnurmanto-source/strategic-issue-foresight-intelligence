@@ -1,0 +1,40 @@
+=== SIFI S1.2B EXECUTION ===
+[1] COMPILE
+COMPILEALL=PASS
+[2] TEST DISCOVERY
+DISCOVERED_TESTS=27
+[3] UNIT TESTS
+test_permission_unknown_is_explicit (test_s1_2_rights_evidence_kernel.CanonicalRightsVocabularyTests.test_permission_unknown_is_explicit) ... ok
+test_privacy_classes_are_preserved (test_s1_2_rights_evidence_kernel.CanonicalRightsVocabularyTests.test_privacy_classes_are_preserved) ... ok
+test_profiling_levels_are_preserved (test_s1_2_rights_evidence_kernel.CanonicalRightsVocabularyTests.test_profiling_levels_are_preserved) ... ok
+test_empty_support_cannot_create_production_output (test_s1_2_rights_evidence_kernel.DerivedOutputTests.test_empty_support_cannot_create_production_output) ... ok
+test_hard_blocked_upstream_prevents_derived_production (test_s1_2_rights_evidence_kernel.DerivedOutputTests.test_hard_blocked_upstream_prevents_derived_production) ... ok
+test_z1_cannot_be_laundered_through_z3 (test_s1_2_rights_evidence_kernel.DerivedOutputTests.test_z1_cannot_be_laundered_through_z3) ... ok
+test_z3_from_only_admitted_z2_can_be_production_eligible (test_s1_2_rights_evidence_kernel.DerivedOutputTests.test_z3_from_only_admitted_z2_can_be_production_eligible) ... ok
+test_current_phase_keeps_non_p0_profiling_out (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_current_phase_keeps_non_p0_profiling_out) ... ok
+test_denied_privacy_is_hard_block (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_denied_privacy_is_hard_block) ... ok
+test_denied_retention_blocks_production (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_denied_retention_blocks_production) ... ok
+test_fully_qualified_z2_evidence_is_admitted (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_fully_qualified_z2_evidence_is_admitted) ... ok
+test_missing_pit_rights_state_blocks_production (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_missing_pit_rights_state_blocks_production) ... ok
+test_p4_is_hard_block (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_p4_is_hard_block) ... ok
+test_priv4_is_hard_block (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_priv4_is_hard_block) ... ok
+test_private_communication_requires_authority (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_private_communication_requires_authority) ... ok
+test_privileged_institutional_access_requires_authority (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_privileged_institutional_access_requires_authority) ... ok
+test_security_bypass_is_hard_block (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_security_bypass_is_hard_block) ... ok
+test_source_z2_does_not_auto_promote_evidence (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_source_z2_does_not_auto_promote_evidence) ... ok
+test_unknown_commercial_rights_fail_closed (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_unknown_commercial_rights_fail_closed) ... ok
+test_unknown_lawful_access_is_hard_block (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_unknown_lawful_access_is_hard_block) ... ok
+test_unknown_privacy_clearance_blocks_production (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_unknown_privacy_clearance_blocks_production) ... ok
+test_untraceable_evidence_cannot_be_production (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_untraceable_evidence_cannot_be_production) ... ok
+test_z0_is_hard_blocked (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_z0_is_hard_blocked) ... ok
+test_z1_remains_research_only (test_s1_2_rights_evidence_kernel.EvidenceAdmissionTests.test_z1_remains_research_only) ... ok
+test_cutoff_after_revocation_is_not_production_eligible (test_s1_2_rights_evidence_kernel.PointInTimeRightsTests.test_cutoff_after_revocation_is_not_production_eligible) ... ok
+test_historical_cutoff_before_revocation_remains_eligible (test_s1_2_rights_evidence_kernel.PointInTimeRightsTests.test_historical_cutoff_before_revocation_remains_eligible) ... ok
+test_rights_window_temporal_states (test_s1_2_rights_evidence_kernel.PointInTimeRightsTests.test_rights_window_temporal_states) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 0.004s
+
+OK
+UNIT_TEST_EXECUTION=PASS
+=== END SIFI S1.2B EXECUTION ===
