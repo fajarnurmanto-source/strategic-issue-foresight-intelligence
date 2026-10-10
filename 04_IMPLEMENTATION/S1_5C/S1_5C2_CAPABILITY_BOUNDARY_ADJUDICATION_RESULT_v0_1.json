@@ -1,0 +1,41 @@
+{
+  "gate": "S1.5C",
+  "subject": "Human Review Capability Boundary Adjudication",
+  "predecessor_commit": "17ed5adbee99250f04073f22fa9abfdf7c9ae26b",
+  "result": "PASS_WITH_BOUNDED_COMPONENT_PROMOTION",
+  "adjudication": {
+    "s1_5b_authority_kernel": {
+      "scope": "BOUNDED_COMPONENT",
+      "maturity": "L3_FUNCTIONALLY_VERIFIED",
+      "basis": [
+        "Executable authority behavior exists",
+        "44 targeted component tests passed",
+        "147 full repository regression tests passed",
+        "Adversarial authority probes passed",
+        "Correction, disagreement, merge/split, foresight and PIT guards are functionally tested"
+      ]
+    },
+    "CAP-06": {
+      "scope": "CANONICAL_PARENT_CAPABILITY",
+      "stage0_baseline_maturity": "L1_CONTRACTED",
+      "adjudicated_maturity": "L1_CONTRACTED",
+      "promotion": false,
+      "missing_proof": [
+        "Integrated review workflow",
+        "End-to-end review evidence",
+        "Canonical CB16/CB17 execution",
+        "Representative-user validation"
+      ]
+    },
+    "CAP-09": {
+      "stage0_baseline_maturity": "L0_ARCHITECTURAL_INTENT",
+      "adjudicated_maturity": "L0_ARCHITECTURAL_INTENT",
+      "promotion": false
+    }
+  },
+  "canonical_benchmark_execution_claim": false,
+  "stage0_ledger_mutated": false,
+  "production_ingestion_authorized": false,
+  "production_deployment_authorized": false,
+  "mvu_production_status": "NOT_YET_ESTABLISHED"
+}
