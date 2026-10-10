@@ -1,0 +1,52 @@
+{
+  "blocked_missing_capability": [
+    "CB03",
+    "CB04",
+    "CB05",
+    "CB06",
+    "CB09",
+    "CB10",
+    "CB11",
+    "CB13",
+    "CB14",
+    "CB15",
+    "CB18",
+    "CB19"
+  ],
+  "blocked_reference_materialization": [
+    "CB24"
+  ],
+  "blocked_rights_fixture": [
+    "CB12"
+  ],
+  "canonical_cases_executed": false,
+  "canonical_executor_count": 0,
+  "canonical_results_recorded": false,
+  "capability_promotion_performed": false,
+  "case_count": 24,
+  "materializable_now": [
+    "CB01",
+    "CB02",
+    "CB07",
+    "CB08",
+    "CB16",
+    "CB17",
+    "CB20",
+    "CB21"
+  ],
+  "partition": {
+    "BLOCKED_MISSING_CAPABILITY": 12,
+    "BLOCKED_REFERENCE_MATERIALIZATION": 1,
+    "BLOCKED_RIGHTS_FIXTURE": 1,
+    "MATERIALIZABLE_NOW": 8,
+    "PROTOCOL_ONLY": 2
+  },
+  "predecessor_head": "2501a2b7d26d2f1174bfd3f0b69d1e13e50c6411",
+  "production_deployment_authorized": false,
+  "production_ingestion_authorized": false,
+  "protocol_only": [
+    "CB22",
+    "CB23"
+  ],
+  "stage": "S1.6C"
+}
