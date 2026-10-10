@@ -1,0 +1,55 @@
+{
+  "CAP-03": {
+    "adjudicated_maturity": "L1_CONTRACTED",
+    "canonical_current_maturity": "L1_CONTRACTED",
+    "implementation_evidence": "SUBSTANTIAL_PARTIAL_EXECUTABLE_IMPLEMENTATION_EVIDENCE",
+    "promotion": "NO",
+    "reason": "Publication/Claim/Evidence boundaries, contradiction, PIT and rights integration are executable, but material evidence qualification branches remain absent: corroboration, claim-type sufficiency, observability determination, empirical condition qualification and institutional claim qualification.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 5,
+      "NOT_IMPLEMENTED": 4,
+      "PARTIAL_EXECUTABLE": 2
+    }
+  },
+  "CAP-04": {
+    "adjudicated_maturity": "L1_CONTRACTED",
+    "canonical_current_maturity": "L1_CONTRACTED",
+    "implementation_evidence": "EVENT_LAYER_PARTIAL_EXECUTABLE_IMPLEMENTATION",
+    "promotion": "NO",
+    "reason": "Event candidate semantics exist, but Issue identity, Event-Issue relationship and Issue lifecycle remain unimplemented.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 2,
+      "NOT_IMPLEMENTED": 3,
+      "PARTIAL_EXECUTABLE": 1,
+      "PARTIAL_FOUNDATION_ONLY": 1
+    }
+  },
+  "CAP-09": {
+    "adjudicated_maturity": "L0_ARCHITECTURAL_INTENT",
+    "canonical_current_maturity": "L0_ARCHITECTURAL_INTENT",
+    "implementation_evidence": "PRECURSOR_EVENT_CONSTRUCTION_IMPLEMENTATION",
+    "promotion": "NO",
+    "reason": "CAP-09 is Issue construction runtime. Explicit Event candidate construction is only a precursor and does not implement persistent Issue construction.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 1,
+      "NOT_IMPLEMENTED": 3,
+      "PARTIAL_EXECUTABLE": 1
+    }
+  },
+  "basis": {
+    "s1_3b_executed_tests": 29,
+    "s1_3b_functional_result": "PASS"
+  },
+  "component_level_statement": {
+    "automatic_event_discovery_claim": false,
+    "automatic_syndication_detection_claim": false,
+    "claim_evidence_assessment_functionally_tested": true,
+    "event_candidate_builder_functionally_tested": true,
+    "issue_construction_claim": false,
+    "publication_claim_evidence_models_implemented": true
+  },
+  "gate": "S1.3C",
+  "ledger_mutated": false,
+  "predecessor_head": "0a152d5a2867a6eaa380399655086ed0e4a109f6",
+  "production_authority_changed": false
+}
