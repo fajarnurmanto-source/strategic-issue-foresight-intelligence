@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S1.4C — Capability Boundary Adjudication
+S1.5C — Human Review Capability Boundary Adjudication
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED

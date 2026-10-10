@@ -1,0 +1,9 @@
+contract_scope,path,implementation_state
+S0.5D reviewer roles and Review Record contract,src/sifi/review/model.py,IMPLEMENTED_COMPONENT
+S0.5D protected transition authority and hard boundaries,src/sifi/review/authority.py,IMPLEMENTED_COMPONENT
+S0.5D correction history and PIT semantics,src/sifi/review/history.py,IMPLEMENTED_COMPONENT
+S0.5D package surface,src/sifi/review/__init__.py,IMPLEMENTED_COMPONENT
+S0.5D HR-aligned component tests,tests/test_s1_5_human_review_authority.py,VERIFIED_COMPONENT
+S0.5D HR13 correction-state and downstream-output preservation,src/sifi/review/model.py;src/sifi/review/authority.py,IMPLEMENTED_R1
+S0.5D HR18 foresight assumption-alternative-falsification preservation,src/sifi/review/model.py;src/sifi/review/authority.py,IMPLEMENTED_R1
+S0.5D merge/split temporal-geographic context enforcement,src/sifi/review/authority.py,IMPLEMENTED_R1

@@ -1,0 +1,70 @@
+=== SIFI S1.5B-R1 EXECUTION RESULTS ===
+
+PREDECESSOR_HEAD=d6280630f502b76425a8582d08a68c66a05a88fc
+DISCOVERED_S1_5B_TESTS=44
+test_001_roles_exact (tests.test_s1_5_human_review_authority.AuthorityTests.test_001_roles_exact) ... ok
+test_002_transitions_exact (tests.test_s1_5_human_review_authority.AuthorityTests.test_002_transitions_exact) ... ok
+test_003_ai_cannot_finally_dispose (tests.test_s1_5_human_review_authority.AuthorityTests.test_003_ai_cannot_finally_dispose) ... ok
+test_004_rr01_cannot_execute_protected_transition (tests.test_s1_5_human_review_authority.AuthorityTests.test_004_rr01_cannot_execute_protected_transition) ... ok
+test_005_rr02_claim_qualification (tests.test_s1_5_human_review_authority.AuthorityTests.test_005_rr02_claim_qualification) ... ok
+test_006_rr02_issue_qualification (tests.test_s1_5_human_review_authority.AuthorityTests.test_006_rr02_issue_qualification) ... ok
+test_007_rr02_persistence_change (tests.test_s1_5_human_review_authority.AuthorityTests.test_007_rr02_persistence_change) ... ok
+test_008_rr02_lifecycle_change (tests.test_s1_5_human_review_authority.AuthorityTests.test_008_rr02_lifecycle_change) ... ok
+test_009_strategic_issue_role_unbound (tests.test_s1_5_human_review_authority.AuthorityTests.test_009_strategic_issue_role_unbound) ... ok
+test_010_strategic_issue_can_request_authority_review (tests.test_s1_5_human_review_authority.AuthorityTests.test_010_strategic_issue_can_request_authority_review) ... ok
+test_011_invalidation_role_unbound (tests.test_s1_5_human_review_authority.AuthorityTests.test_011_invalidation_role_unbound) ... ok
+test_012_rights_mutation_blocked (tests.test_s1_5_human_review_authority.AuthorityTests.test_012_rights_mutation_blocked) ... ok
+test_013_governance_review_state_allowed (tests.test_s1_5_human_review_authority.AuthorityTests.test_013_governance_review_state_allowed) ... ok
+test_014_empirical_truth_by_review_blocked (tests.test_s1_5_human_review_authority.AuthorityTests.test_014_empirical_truth_by_review_blocked) ... ok
+test_015_institutional_action_blocked (tests.test_s1_5_human_review_authority.AuthorityTests.test_015_institutional_action_blocked) ... ok
+test_016_insufficient_evidence_cannot_approve (tests.test_s1_5_human_review_authority.AuthorityTests.test_016_insufficient_evidence_cannot_approve) ... ok
+test_017_additional_evidence_state_allowed (tests.test_s1_5_human_review_authority.AuthorityTests.test_017_additional_evidence_state_allowed) ... ok
+test_018_repetition_not_structural (tests.test_s1_5_human_review_authority.AuthorityTests.test_018_repetition_not_structural) ... ok
+test_019_coverage_failure_not_resolution (tests.test_s1_5_human_review_authority.AuthorityTests.test_019_coverage_failure_not_resolution) ... ok
+test_020_merge_requires_identity_lineage (tests.test_s1_5_human_review_authority.AuthorityTests.test_020_merge_requires_identity_lineage) ... ok
+test_021_merge_approved_with_lineage (tests.test_s1_5_human_review_authority.AuthorityTests.test_021_merge_approved_with_lineage) ... ok
+test_022_split_approved_with_lineage (tests.test_s1_5_human_review_authority.AuthorityTests.test_022_split_approved_with_lineage) ... ok
+test_023_correction_requires_supersession (tests.test_s1_5_human_review_authority.AuthorityTests.test_023_correction_requires_supersession) ... ok
+test_024_correction_valid (tests.test_s1_5_human_review_authority.AuthorityTests.test_024_correction_valid) ... ok
+test_025_reopen_requires_evidence (tests.test_s1_5_human_review_authority.AuthorityTests.test_025_reopen_requires_evidence) ... ok
+test_026_escalation_non_binding (tests.test_s1_5_human_review_authority.AuthorityTests.test_026_escalation_non_binding) ... ok
+test_027_referral_non_binding (tests.test_s1_5_human_review_authority.AuthorityTests.test_027_referral_non_binding) ... ok
+test_028_open_disagreement_visible (tests.test_s1_5_human_review_authority.AuthorityTests.test_028_open_disagreement_visible) ... ok
+test_029_adjudication_preserves_dissent (tests.test_s1_5_human_review_authority.AuthorityTests.test_029_adjudication_preserves_dissent) ... ok
+test_030_adjudication_requires_prior_reviews (tests.test_s1_5_human_review_authority.AuthorityTests.test_030_adjudication_requires_prior_reviews) ... ok
+test_037_proposed_state_is_preserved (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_037_proposed_state_is_preserved) ... ok
+test_038_merge_requires_temporal_context (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_038_merge_requires_temporal_context) ... ok
+test_039_merge_requires_geographic_context (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_039_merge_requires_geographic_context) ... ok
+test_040_split_requires_context (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_040_split_requires_context) ... ok
+test_041_correction_requires_downstream_assessment (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_041_correction_requires_downstream_assessment) ... ok
+test_042_correction_preserves_downstream_outputs (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_042_correction_preserves_downstream_outputs) ... ok
+test_043_foresight_approval_requires_framework (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_043_foresight_approval_requires_framework) ... ok
+test_044_foresight_framework_is_preserved (tests.test_s1_5_human_review_authority.ContractClosureR1Tests.test_044_foresight_framework_is_preserved) ... ok
+test_031_history_append_only (tests.test_s1_5_human_review_authority.HistoryTests.test_031_history_append_only) ... ok
+test_032_history_sequential_versions (tests.test_s1_5_human_review_authority.HistoryTests.test_032_history_sequential_versions) ... ok
+test_033_pit_excludes_later_correction (tests.test_s1_5_human_review_authority.HistoryTests.test_033_pit_excludes_later_correction) ... ok
+test_034_no_delete_api (tests.test_s1_5_human_review_authority.HistoryTests.test_034_no_delete_api) ... ok
+test_035_kernel_has_no_transition_apply_api (tests.test_s1_5_human_review_authority.HistoryTests.test_035_kernel_has_no_transition_apply_api) ... ok
+test_036_kernel_has_no_rights_mutation_api (tests.test_s1_5_human_review_authority.HistoryTests.test_036_kernel_has_no_rights_mutation_api) ... ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 0.011s
+
+OK
+
+TARGETED_R1_TESTS=PASS
+DISCOVERED_FULL_SUITE_TESTS=147
+...................................................................................................................................................
+----------------------------------------------------------------------
+Ran 147 tests in 0.084s
+
+OK
+
+FULL_REGRESSION_R1=PASS
+
+CANONICAL_BENCHMARKS_EXECUTED=FALSE
+CAPABILITY_PROMOTION_PERFORMED=FALSE
+PRODUCTION_INGESTION_AUTHORIZED=FALSE
+PRODUCTION_DEPLOYMENT_AUTHORIZED=FALSE
+
+=== END SIFI S1.5B-R1 EXECUTION RESULTS ===
