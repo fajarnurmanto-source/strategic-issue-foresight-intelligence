@@ -1,0 +1,58 @@
+{
+  "CAP-04": {
+    "adjudicated_maturity": "L1_CONTRACTED",
+    "canonical_current_maturity": "L1_CONTRACTED",
+    "implementation_evidence": "ISSUE_IDENTITY_AND_REPRESENTATION_PARTIAL_EXECUTABLE_EVIDENCE",
+    "promotion": "NO",
+    "reason": "Stable Issue identity, persistence-class representation, explicit Event links and lineage representation now exist, but lifecycle semantics, recurrence/re-emergence, narrative/empirical qualification and other material ontology behaviour remain incomplete.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 2,
+      "NOT_IMPLEMENTED": 2,
+      "PARTIAL_EXECUTABLE": 4
+    }
+  },
+  "CAP-05": {
+    "adjudicated_maturity": "L1_CONTRACTED",
+    "canonical_current_maturity": "L1_CONTRACTED",
+    "implementation_evidence": "SUBSTANTIAL_PERSISTENT_ISSUE_OBJECT_EXECUTABLE_EVIDENCE",
+    "promotion": "NO",
+    "reason": "A real persistent Issue Object with stable identity, differentiated evidence links, five trajectories, geography, append-only versioning and PIT reconstruction now exists. However the full S0.5C capability boundary remains incomplete across material sections including risk/opportunity, strategic hypotheses, analytical significance, analytical responses, decision-use metadata, briefing support, review-governed transitions and complete reproducibility.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 8,
+      "NOT_IMPLEMENTED": 7,
+      "PARTIAL_EXECUTABLE": 8,
+      "PARTIAL_FOUNDATION_ONLY": 3
+    }
+  },
+  "CAP-09": {
+    "adjudicated_maturity": "L0_ARCHITECTURAL_INTENT",
+    "canonical_current_maturity": "L0_ARCHITECTURAL_INTENT",
+    "implementation_evidence": "PERSISTENT_ISSUE_OBJECT_SUBSTRATE_AND_EXPLICIT_IDENTITY_PRECURSOR",
+    "promotion": "NO",
+    "reason": "Persistent Issue representation and identity verification are precursors, not an Issue-construction runtime. No automatic or authorized Event-to-Issue construction workflow exists.",
+    "requirement_state_counts": {
+      "NOT_IMPLEMENTED": 4,
+      "PARTIAL_EXECUTABLE": 2
+    }
+  },
+  "basis": {
+    "full_regression_tests": 103,
+    "s1_4b_executed_tests": 37,
+    "s1_4b_functional_result": "PASS"
+  },
+  "component_level_statement": {
+    "automatic_issue_construction_claim": false,
+    "automatic_issue_identity_claim": false,
+    "automatic_lifecycle_transition_claim": false,
+    "capability_level_L2_claim": false,
+    "merge_split_execution_claim": false,
+    "persistent_issue_object_functionally_tested": true,
+    "persistent_issue_object_implemented": true,
+    "point_in_time_issue_reconstruction_tested": true,
+    "review_authority_claim": false
+  },
+  "gate": "S1.4C",
+  "ledger_mutated": false,
+  "predecessor_head": "261cfb5825382763805fd10373212ba096c34bc3",
+  "production_authority_changed": false
+}
