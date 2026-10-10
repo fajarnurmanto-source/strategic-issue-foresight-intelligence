@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S1.3C — Capability Boundary Adjudication
+S1.4B — Issue Identity + Persistent Issue Object
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED

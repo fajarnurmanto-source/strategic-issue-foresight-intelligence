@@ -1,0 +1,50 @@
+=== SIFI S1.4B EXECUTION ===
+[1] COMPILE
+COMPILEALL=PASS
+[2] TEST DISCOVERY
+DISCOVERED_TESTS=37
+[3] UNIT TESTS
+test_duplicate_event_relationship_rejected (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_duplicate_event_relationship_rejected) ... ok
+test_event_relationship_mismatch_rejected (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_event_relationship_mismatch_rejected) ... ok
+test_explicit_identity_can_be_verified (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_explicit_identity_can_be_verified) ... ok
+test_explicit_issue_id_required (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_explicit_issue_id_required) ... ok
+test_identity_mismatch_rejected (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_identity_mismatch_rejected) ... ok
+test_identity_rationale_required (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_identity_rationale_required) ... ok
+test_no_automatic_issue_identity_inference (test_s1_4_issue_identity_persistence.ExplicitIdentityTests.test_no_automatic_issue_identity_inference) ... ok
+test_all_trajectory_dimensions_are_required (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_all_trajectory_dimensions_are_required) ... ok
+test_candidate_authority_does_not_become_established_authority (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_candidate_authority_does_not_become_established_authority) ... ok
+test_duplicate_trajectory_dimension_rejected (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_duplicate_trajectory_dimension_rejected) ... ok
+test_event_relationship_is_explicit (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_event_relationship_is_explicit) ... ok
+test_evidence_category_overlap_rejected (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_evidence_category_overlap_rejected) ... ok
+test_geography_dimensions_remain_separate (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_geography_dimensions_remain_separate) ... ok
+test_issue_id_required (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_issue_id_required) ... ok
+test_last_updated_cannot_precede_first_seen (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_last_updated_cannot_precede_first_seen) ... ok
+test_lineage_fields_are_preserved (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_lineage_fields_are_preserved) ... ok
+test_no_universal_issue_score (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_no_universal_issue_score) ... ok
+test_observability_state_is_preserved (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_observability_state_is_preserved) ... ok
+test_payload_roundtrip_preserves_issue (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_payload_roundtrip_preserves_issue) ... ok
+test_same_event_may_be_explicitly_related_to_multiple_issues (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_same_event_may_be_explicitly_related_to_multiple_issues) ... ok
+test_stable_identity_survives_lifecycle_change (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_stable_identity_survives_lifecycle_change) ... ok
+test_stable_identity_survives_title_change (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_stable_identity_survives_title_change) ... ok
+test_support_and_contradiction_evidence_are_distinct (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_support_and_contradiction_evidence_are_distinct) ... ok
+test_supporting_and_disputed_claim_overlap_rejected (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_supporting_and_disputed_claim_overlap_rejected) ... ok
+test_title_required (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_title_required) ... ok
+test_trajectory_dimensions_remain_separate (test_s1_4_issue_identity_persistence.IssueObjectModelTests.test_trajectory_dimensions_remain_separate) ... ok
+test_append_version_one (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_append_version_one) ... ok
+test_as_of_excludes_later_version (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_as_of_excludes_later_version) ... ok
+test_different_issue_histories_are_independent (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_different_issue_histories_are_independent) ... ok
+test_duplicate_version_rejected_by_sequence_guard (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_duplicate_version_rejected_by_sequence_guard) ... ok
+test_first_version_must_be_one (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_first_version_must_be_one) ... ok
+test_history_is_append_only (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_history_is_append_only) ... ok
+test_later_recorded_correction_does_not_leak_backward (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_later_recorded_correction_does_not_leak_backward) ... ok
+test_non_sequential_version_rejected (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_non_sequential_version_rejected) ... ok
+test_persisted_evidence_categories_roundtrip (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_persisted_evidence_categories_roundtrip) ... ok
+test_persisted_trajectory_dimensions_roundtrip (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_persisted_trajectory_dimensions_roundtrip) ... ok
+test_sequential_version_two (test_s1_4_issue_identity_persistence.IssuePersistenceTests.test_sequential_version_two) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.025s
+
+OK
+UNIT_TEST_EXECUTION=PASS
+=== END SIFI S1.4B EXECUTION ===
