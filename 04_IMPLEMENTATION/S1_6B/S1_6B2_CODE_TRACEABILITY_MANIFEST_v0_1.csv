@@ -1,0 +1,14 @@
+contract_scope,path,implementation_state
+Canonical case/result state model,src/sifi/benchmarks/model.py,IMPLEMENTED_COMPONENT
+Structured execution-evidence reference,src/sifi/benchmarks/model.py,IMPLEMENTED_R1
+Executor identity/version/reference binding,src/sifi/benchmarks/model.py;src/sifi/benchmarks/harness.py,IMPLEMENTED_R1
+Canonical registry/control loader,src/sifi/benchmarks/harness.py,IMPLEMENTED_COMPONENT
+Fail-closed executor registration,src/sifi/benchmarks/harness.py,IMPLEMENTED_COMPONENT
+PASS/FAIL only after execution evidence,src/sifi/benchmarks/harness.py,IMPLEMENTED_COMPONENT
+Evidence artifact existence/hash/producer validation,src/sifi/benchmarks/harness.py,IMPLEMENTED_R1
+Protected Stage0 before/after fingerprint guard,src/sifi/benchmarks/harness.py,IMPLEMENTED_R1
+Missing capability -> NO_RESULT,src/sifi/benchmarks/harness.py,IMPLEMENTED_COMPONENT
+CB22/CB23 protocol-only guard,src/sifi/benchmarks/harness.py,IMPLEMENTED_COMPONENT
+FROZEN_T analytical-cutoff guard,src/sifi/benchmarks/harness.py,IMPLEMENTED_COMPONENT
+Frozen Stage0 non-mutation,src/sifi/benchmarks/harness.py;tests/test_s1_6_canonical_benchmark_harness.py,IMPLEMENTED_R1
+Harness component verification,tests/test_s1_6_canonical_benchmark_harness.py,VERIFIED_COMPONENT_R1

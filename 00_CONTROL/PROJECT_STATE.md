@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S1.6 — Canonical Benchmark Harness
+S1.6C — Canonical Case Materialization and Executability Adjudication
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED

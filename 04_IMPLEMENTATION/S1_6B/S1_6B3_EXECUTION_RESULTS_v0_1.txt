@@ -1,0 +1,53 @@
+=== SIFI S1.6B-R1 HARNESS EXECUTION RESULTS ===
+
+PREDECESSOR_HEAD=5d443f179b7533c4d98f66856e0b67e7af8481e2
+DISCOVERED_S1_6B_TESTS=25
+test_001_loads_exactly_24_cases (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_001_loads_exactly_24_cases) ... ok
+test_002_case_ids_are_exact (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_002_case_ids_are_exact) ... ok
+test_003_protocol_only_is_exact (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_003_protocol_only_is_exact) ... ok
+test_004_frozen_states_remain_unexecuted (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_004_frozen_states_remain_unexecuted) ... ok
+test_005_unknown_registration_rejected (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_005_unknown_registration_rejected) ... ok
+test_006_protocol_registration_rejected (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_006_protocol_registration_rejected) ... ok
+test_007_missing_executor_is_blocked (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_007_missing_executor_is_blocked) ... ok
+test_008_protocol_case_has_no_result (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_008_protocol_case_has_no_result) ... ok
+test_009_executed_case_can_pass (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_009_executed_case_can_pass) ... ok
+test_010_expected_failure_causes_fail (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_010_expected_failure_causes_fail) ... ok
+test_011_forbidden_output_causes_fail (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_011_forbidden_output_causes_fail) ... ok
+test_012_regression_failure_causes_fail (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_012_regression_failure_causes_fail) ... ok
+test_013_rights_failure_causes_fail (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_013_rights_failure_causes_fail) ... ok
+test_014_executor_exception_is_no_result (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_014_executor_exception_is_no_result) ... ok
+test_015_frozen_cutoff_is_required (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_015_frozen_cutoff_is_required) ... ok
+test_016_run_all_preserves_partition (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_016_run_all_preserves_partition) ... ok
+test_017_loading_does_not_mutate_stage0 (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_017_loading_does_not_mutate_stage0) ... ok
+test_018_execution_record_has_executor_identity (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_018_execution_record_has_executor_identity) ... ok
+test_019_arbitrary_string_evidence_rejected (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_019_arbitrary_string_evidence_rejected) ... ok
+test_020_missing_evidence_artifact_no_result (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_020_missing_evidence_artifact_no_result) ... ok
+test_021_evidence_digest_mismatch_no_result (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_021_evidence_digest_mismatch_no_result) ... ok
+test_022_evidence_producer_mismatch_no_result (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_022_evidence_producer_mismatch_no_result) ... ok
+test_023_registry_mutation_cannot_pass (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_023_registry_mutation_cannot_pass) ... ok
+test_024_case_spec_mutation_cannot_pass (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_024_case_spec_mutation_cannot_pass) ... ok
+test_025_pre_execution_integrity_mismatch_blocks (tests.test_s1_6_canonical_benchmark_harness.HarnessContractTests.test_025_pre_execution_integrity_mismatch_blocks) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 24.771s
+
+OK
+
+TARGETED_R1_TESTS=PASS
+DISCOVERED_FULL_SUITE_TESTS=172
+............................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 172 tests in 23.061s
+
+OK
+
+FULL_REGRESSION_R1=PASS
+
+CANONICAL_CASES_EXECUTED=FALSE
+CANONICAL_RESULTS_RECORDED=FALSE
+HARNESS_COMPONENT_ONLY=TRUE
+CAPABILITY_PROMOTION_PERFORMED=FALSE
+PRODUCTION_INGESTION_AUTHORIZED=FALSE
+PRODUCTION_DEPLOYMENT_AUTHORIZED=FALSE
+
+=== END SIFI S1.6B-R1 HARNESS EXECUTION RESULTS ===
