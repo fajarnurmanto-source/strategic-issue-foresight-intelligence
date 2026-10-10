@@ -1,0 +1,41 @@
+{
+  "CAP-01": {
+    "adjudicated_maturity": "L1_CONTRACTED",
+    "canonical_current_maturity": "L1_CONTRACTED",
+    "implementation_evidence": "PARTIAL_EXECUTABLE_IMPLEMENTATION_EVIDENCE",
+    "l2_evidence_condition": "EXECUTABLE_REFERENCE_EXISTS_BUT_CAPABILITY_BOUNDARY_INCOMPLETE",
+    "promotion": "NO",
+    "reason": "Material S0.3U/X/Y/Z capability branches remain unimplemented; labelling the whole source-governance and rights-admission capability IMPLEMENTED would overstate current executable scope.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 3,
+      "NOT_IMPLEMENTED": 4,
+      "PARTIAL_EXECUTABLE": 3
+    }
+  },
+  "CAP-03": {
+    "adjudicated_maturity": "L1_CONTRACTED",
+    "canonical_current_maturity": "L1_CONTRACTED",
+    "implementation_evidence": "RIGHTS_ADMISSION_SLICE_EXECUTABLE",
+    "l2_evidence_condition": "EXECUTABLE_SLICE_EXISTS_BUT_CAPABILITY_BOUNDARY_INCOMPLETE",
+    "promotion": "NO",
+    "reason": "Core canonical evidence qualification behaviours including Claim/Evidence construction, independence, corroboration, contradiction, observability and claim-type sufficiency remain unimplemented.",
+    "requirement_state_counts": {
+      "IMPLEMENTED_TESTED": 1,
+      "NOT_IMPLEMENTED": 6,
+      "PARTIAL_FOUNDATION_ONLY": 1
+    }
+  },
+  "basis": {
+    "s1_2b_executed_tests": 27,
+    "s1_2b_functional_result": "PASS"
+  },
+  "component_level_statement": {
+    "capability_level_L3_claim": false,
+    "rights_kernel_functionally_tested": true,
+    "rights_kernel_implemented": true
+  },
+  "gate": "S1.2C",
+  "ledger_mutated": false,
+  "predecessor_head": "7ce933dffce97572707cc7ab1bbada9becf35585",
+  "production_authority_changed": false
+}

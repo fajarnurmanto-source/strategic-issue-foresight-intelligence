@@ -1,0 +1,19 @@
+capability_id,requirement_id,requirement,contract_owner,implementation_state,implementation_reference,test_reference,adjudication_basis
+CAP-01,C01,Z0/Z1/Z2/Z3 admission and source/evidence separation,S0.3W,IMPLEMENTED_TESTED,src/sifi/rights/model.py;src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,Core admission behaviour exists and executed tests passed.
+CAP-01,C02,UNKNOWN fail-closed and security/production hard blocks,S0.3W;S0.3X;S0.3Y,IMPLEMENTED_TESTED,src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,"UNKNOWN, access, security, privacy and prohibited-state guards are executable."
+CAP-01,C03,Privacy and profiling enforcement,S0.3Y,PARTIAL_EXECUTABLE,src/sifi/rights/model.py;src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,PRIV/P0-P4 vocabulary and hard guards exist; full authorization/governance workflow is not implemented.
+CAP-01,C04,Point-in-time rights and revocation,S0.3W;S0.3X,PARTIAL_EXECUTABLE,src/sifi/rights/model.py;src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,PIT evaluation and revocation eligibility are executable; ingestion-stop and retention/deletion execution are absent.
+CAP-01,C05,Derived-output restriction inheritance / Z1 laundering guard,S0.3W;S0.5A,IMPLEMENTED_TESTED,src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,Z3 cannot become production eligible from Z1 or hard-blocked upstream evidence.
+CAP-01,C06,Source Registry runtime governance,S0.3U,NOT_IMPLEMENTED,,,S1.2B evaluates supplied context; no executable source-registry runtime or mutation path exists.
+CAP-01,C07,Acquisition and retention execution,S0.3X,NOT_IMPLEMENTED,,,No crawler/acquisition runtime and no retention/deletion executor exist.
+CAP-01,C08,Override governance persistence and audit workflow,S0.3W,NOT_IMPLEMENTED,,,No persistent explicit override workflow is implemented.
+CAP-01,C09,Institutional independence / private-data boundary,S0.3Y,PARTIAL_EXECUTABLE,src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,Private communication and privileged institutional access hard blocks exist; broader isolation/governance runtime remains incomplete.
+CAP-01,C10,"Rights-constrained coverage, source loss, substitution and MVU",S0.3Z,NOT_IMPLEMENTED,,,No rights-coverage/substitution/MVU runtime exists.
+CAP-03,E01,Rights/evidence admission integration,S0.5A#23,IMPLEMENTED_TESTED,src/sifi/rights/model.py;src/sifi/rights/policy.py,tests/test_s1_2_rights_evidence_kernel.py,Executable rights-admission slice exists.
+CAP-03,E02,Canonical Publication / Claim / Evidence executable objects,S0.5A#4-10,NOT_IMPLEMENTED,,,Canonical evidence-domain construction is scheduled after the rights kernel.
+CAP-03,E03,Source independence and syndication,S0.5A#13,NOT_IMPLEMENTED,,,No executable independence/syndication qualification exists.
+CAP-03,E04,Corroboration,S0.5A#14,NOT_IMPLEMENTED,,,No executable corroboration engine exists.
+CAP-03,E05,Contradiction handling,S0.5A#15,NOT_IMPLEMENTED,,,No executable contradiction engine exists.
+CAP-03,E06,Observability and missingness,S0.5A#16,NOT_IMPLEMENTED,,,"Canonical OBS vocabulary exists from S1.1, but qualification behaviour is not yet implemented."
+CAP-03,E07,Claim-type-appropriate evidence sufficiency,S0.5A#17,NOT_IMPLEMENTED,,,No executable claim-type sufficiency evaluator exists.
+CAP-03,E08,Evidence PIT and correction/revision lineage,S0.5A#20-22,PARTIAL_FOUNDATION_ONLY,src/sifi/domain/versioning.py;src/sifi/persistence/version_store.py,tests/test_s1_1_core_domain_persistence.py,Generic PIT/versioning foundation exists; evidence-specific semantics are not implemented.

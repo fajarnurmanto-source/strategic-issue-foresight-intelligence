@@ -7,7 +7,7 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S1.2B — Rights / Evidence Enforcement Kernel
+S1.2C — Capability Boundary Adjudication
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED
