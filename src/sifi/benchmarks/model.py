@@ -11,6 +11,9 @@ _SHA256_RE = re.compile(
 
 
 class HarnessExecutionState(StrEnum):
+    NOT_READY_FOR_EXECUTION = (
+        "NOT_READY_FOR_EXECUTION"
+    )
     EXECUTED = "EXECUTED"
     BLOCKED_BY_MISSING_CAPABILITY = (
         "BLOCKED_BY_MISSING_CAPABILITY"

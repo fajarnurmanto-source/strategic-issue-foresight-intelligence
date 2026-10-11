@@ -1,0 +1,1 @@
+S1.6 authorization component-test materialization artifact only; not canonical case materialization.\n

@@ -153,6 +153,11 @@ class CanonicalBenchmarkHarness:
             _ExecutorRegistration,
         ] = {}
 
+        self._execution_authorizations: dict[
+            str,
+            object,
+        ] = {}
+
         self._protected_baseline = (
             self._fingerprint_protected_artifacts()
         )
@@ -335,6 +340,350 @@ class CanonicalBenchmarkHarness:
                 f"unknown canonical case: {case_id}"
             ) from exc
 
+    @property
+    def contract_fingerprint(
+        self,
+    ) -> str:
+        """Fingerprint the complete canonical S0.6A contract."""
+
+        import hashlib
+
+        relative_paths = (
+            Path(
+                "02_BENCHMARKS/S0_6A/"
+                "S0_6A1_BENCHMARK_CORPUS_CONTRACT_v0_1.md"
+            ),
+            Path(
+                "02_BENCHMARKS/S0_6A/"
+                "S0_6A2_CANONICAL_BENCHMARK_CASE_REGISTRY_v0_1.csv"
+            ),
+            Path(
+                "02_BENCHMARKS/S0_6A/"
+                "S0_6A3_CANONICAL_BENCHMARK_CASE_SPECIFICATIONS_v0_1.md"
+            ),
+            Path(
+                "02_BENCHMARKS/S0_6A/"
+                "S0_6A4_BENCHMARK_CASE_CONTROL_MATRIX_v0_1.csv"
+            ),
+        )
+
+        digest = hashlib.sha256()
+
+        for relative in relative_paths:
+            candidate = (
+                self._repo_root
+                / relative
+            ).resolve()
+
+            if (
+                not candidate.is_relative_to(
+                    self._repo_root
+                )
+                or not candidate.is_file()
+            ):
+                raise BenchmarkContractError(
+                    "canonical benchmark contract "
+                    "artifact unavailable: "
+                    + relative.as_posix()
+                )
+
+            digest.update(
+                relative.as_posix().encode(
+                    "utf-8"
+                )
+            )
+
+            digest.update(
+                b"\0"
+            )
+
+            digest.update(
+                _sha256_file(
+                    candidate
+                ).encode(
+                    "ascii"
+                )
+            )
+
+            digest.update(
+                b"\n"
+            )
+
+        return digest.hexdigest()
+
+    def authorize_execution(
+        self,
+        authorization,
+    ) -> None:
+        """Explicitly authorize one registered executor."""
+
+        from .authorization import (
+            BenchmarkAuthorizationError,
+            CaseExecutionAuthorization,
+        )
+
+        if not isinstance(
+            authorization,
+            CaseExecutionAuthorization,
+        ):
+            raise BenchmarkAuthorizationError(
+                "authorization must be "
+                "CaseExecutionAuthorization"
+            )
+
+        definition = self.definition(
+            authorization.case_id
+        )
+
+        if definition.protocol_only:
+            raise BenchmarkAuthorizationError(
+                authorization.case_id
+                + " is PROTOCOL_ONLY"
+            )
+
+        registration = self._executors.get(
+            authorization.case_id
+        )
+
+        if registration is None:
+            raise BenchmarkAuthorizationError(
+                authorization.case_id
+                + ": executor must be registered "
+                "before authorization"
+            )
+
+        if (
+            authorization.case_id
+            in self._execution_authorizations
+        ):
+            raise BenchmarkAuthorizationError(
+                authorization.case_id
+                + ": execution authorization "
+                "already exists"
+            )
+
+        bindings = (
+            (
+                registration.executor_id,
+                authorization.executor_id,
+            ),
+            (
+                registration.executor_version,
+                authorization.executor_version,
+            ),
+            (
+                registration.executor_reference,
+                authorization.executor_reference,
+            ),
+        )
+
+        if any(
+            actual != expected
+            for actual, expected in bindings
+        ):
+            raise BenchmarkAuthorizationError(
+                authorization.case_id
+                + ": authorization executor "
+                "binding mismatch"
+            )
+
+        if (
+            authorization.contract_fingerprint
+            != self.contract_fingerprint
+        ):
+            raise BenchmarkAuthorizationError(
+                authorization.case_id
+                + ": canonical contract "
+                "fingerprint mismatch"
+            )
+
+        integrity_error = (
+            self._protected_integrity_error()
+        )
+
+        if integrity_error is not None:
+            raise BenchmarkAuthorizationError(
+                authorization.case_id
+                + ": protected canonical artifacts "
+                "differ from harness baseline: "
+                + integrity_error
+            )
+
+        artifacts = (
+            (
+                "materialization",
+                authorization
+                .materialization_reference,
+                authorization
+                .materialization_sha256,
+            ),
+            (
+                "adjudication",
+                authorization
+                .adjudication_reference,
+                authorization
+                .adjudication_sha256,
+            ),
+            (
+                "authorization",
+                authorization
+                .authorization_reference,
+                authorization
+                .authorization_sha256,
+            ),
+        )
+
+        for (
+            label,
+            reference,
+            expected_sha256,
+        ) in artifacts:
+            error = (
+                self._authorization_artifact_error(
+                    reference,
+                    expected_sha256,
+                )
+            )
+
+            if error is not None:
+                raise BenchmarkAuthorizationError(
+                    authorization.case_id
+                    + ": "
+                    + label
+                    + " artifact invalid: "
+                    + error
+                )
+
+        self._execution_authorizations[
+            authorization.case_id
+        ] = authorization
+
+    def has_execution_authorization(
+        self,
+        case_id: str,
+    ) -> bool:
+        self.definition(
+            case_id
+        )
+
+        return (
+            case_id
+            in self._execution_authorizations
+        )
+
+    def _authorization_artifact_error(
+        self,
+        reference: str,
+        expected_sha256: str,
+    ) -> str | None:
+        relative = Path(
+            reference
+        )
+
+        if relative.is_absolute():
+            return (
+                "absolute artifact path prohibited"
+            )
+
+        candidate = (
+            self._repo_root
+            / relative
+        ).resolve()
+
+        if not candidate.is_relative_to(
+            self._repo_root
+        ):
+            return (
+                "artifact path escapes repository root"
+            )
+
+        if not candidate.is_file():
+            return (
+                "artifact not found"
+            )
+
+        if (
+            _sha256_file(candidate)
+            != expected_sha256
+        ):
+            return (
+                "SHA-256 mismatch"
+            )
+
+        return None
+
+    def _execution_authorization_error(
+        self,
+        registration,
+        authorization,
+    ) -> str | None:
+        bindings = (
+            (
+                registration.executor_id,
+                authorization.executor_id,
+            ),
+            (
+                registration.executor_version,
+                authorization.executor_version,
+            ),
+            (
+                registration.executor_reference,
+                authorization.executor_reference,
+            ),
+        )
+
+        if any(
+            actual != expected
+            for actual, expected in bindings
+        ):
+            return (
+                "registered executor no longer "
+                "matches authorization"
+            )
+
+        if (
+            authorization.contract_fingerprint
+            != self.contract_fingerprint
+        ):
+            return (
+                "canonical contract fingerprint "
+                "no longer matches authorization"
+            )
+
+        artifacts = (
+            (
+                authorization
+                .materialization_reference,
+                authorization
+                .materialization_sha256,
+            ),
+            (
+                authorization
+                .adjudication_reference,
+                authorization
+                .adjudication_sha256,
+            ),
+            (
+                authorization
+                .authorization_reference,
+                authorization
+                .authorization_sha256,
+            ),
+        )
+
+        for reference, expected_sha256 in artifacts:
+            error = (
+                self._authorization_artifact_error(
+                    reference,
+                    expected_sha256,
+                )
+            )
+
+            if error is not None:
+                return error
+
+        return None
+
     def register_executor(
         self,
         case_id: str,
@@ -443,7 +792,7 @@ class CanonicalBenchmarkHarness:
                 case_id=case_id,
                 execution_state=(
                     HarnessExecutionState
-                    .BLOCKED_BY_MISSING_CAPABILITY
+                    .NOT_READY_FOR_EXECUTION
                 ),
                 result_state=(
                     HarnessResultState.NO_RESULT
@@ -458,7 +807,41 @@ class CanonicalBenchmarkHarness:
                     definition.reference_methodology
                 ),
                 blocking_reason=(
-                    "no canonical executor registered"
+                    "no canonical executor registered; "
+                    "execution readiness has not "
+                    "been established"
+                ),
+            )
+
+        authorization = (
+            self._execution_authorizations.get(
+                case_id
+            )
+        )
+
+        if authorization is None:
+            return CaseExecutionRecord(
+                case_id=case_id,
+                execution_state=(
+                    HarnessExecutionState
+                    .NOT_READY_FOR_EXECUTION
+                ),
+                result_state=(
+                    HarnessResultState.NO_RESULT
+                ),
+                rights_basis=(
+                    definition.rights_basis
+                ),
+                analytical_cutoff_rule=(
+                    definition.analytical_cutoff_rule
+                ),
+                reference_methodology=(
+                    definition.reference_methodology
+                ),
+                blocking_reason=(
+                    "executor is registered but "
+                    "canonical execution has not "
+                    "been explicitly authorized"
                 ),
             )
 
@@ -481,6 +864,44 @@ class CanonicalBenchmarkHarness:
                 ),
                 notes=(
                     integrity_error,
+                ),
+            )
+
+        authorization_error = (
+            self._execution_authorization_error(
+                registration,
+                authorization,
+            )
+        )
+
+        if authorization_error is not None:
+            return CaseExecutionRecord(
+                case_id=case_id,
+                execution_state=(
+                    HarnessExecutionState
+                    .NOT_READY_FOR_EXECUTION
+                ),
+                result_state=(
+                    HarnessResultState.NO_RESULT
+                ),
+                rights_basis=(
+                    definition.rights_basis
+                ),
+                analytical_cutoff_rule=(
+                    definition.analytical_cutoff_rule
+                ),
+                reference_methodology=(
+                    definition.reference_methodology
+                ),
+                blocking_reason=(
+                    "execution authorization "
+                    "is no longer valid"
+                ),
+                error_type=(
+                    "EXECUTION_AUTHORIZATION_INVALID"
+                ),
+                notes=(
+                    authorization_error,
                 ),
             )
 

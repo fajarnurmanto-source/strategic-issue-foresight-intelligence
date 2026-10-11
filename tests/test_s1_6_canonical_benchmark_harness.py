@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 import shutil
 import tempfile
 import unittest
@@ -15,6 +16,11 @@ from sifi.benchmarks import (
     HarnessResultState,
 )
 
+from sifi.benchmarks.authorization import (
+    BenchmarkAuthorizationError,
+    CaseExecutionAuthorization,
+)
+
 
 ROOT = Path(
     __file__
@@ -23,6 +29,27 @@ ROOT = Path(
 THIS_TEST_REL = (
     "tests/"
     "test_s1_6_canonical_benchmark_harness.py"
+)
+
+
+AUTH_FIXTURE_DIR_REL = (
+    "tests/fixtures/"
+    "s1_6_authorization"
+)
+
+MATERIALIZATION_REL = (
+    AUTH_FIXTURE_DIR_REL
+    + "/materialization.txt"
+)
+
+ADJUDICATION_REL = (
+    AUTH_FIXTURE_DIR_REL
+    + "/adjudication.txt"
+)
+
+AUTHORIZATION_REL = (
+    AUTH_FIXTURE_DIR_REL
+    + "/authorization.txt"
 )
 
 
@@ -95,6 +122,49 @@ def passing_observation(
     )
 
 
+def execution_authorization(
+    harness: CanonicalBenchmarkHarness,
+    case_id: str,
+    *,
+    executor_id: str = "TEST-EXECUTOR",
+    executor_version: str = "v0.1",
+    executor_reference: str = (
+        "tests::synthetic-harness-executor"
+    ),
+) -> CaseExecutionAuthorization:
+    return CaseExecutionAuthorization(
+        authorization_id=(
+            "TEST-AUTH-"
+            + case_id
+        ),
+        case_id=case_id,
+        executor_id=executor_id,
+        executor_version=executor_version,
+        executor_reference=executor_reference,
+        materialization_reference=(
+            MATERIALIZATION_REL
+        ),
+        materialization_sha256=sha256(
+            ROOT / MATERIALIZATION_REL
+        ),
+        adjudication_reference=(
+            ADJUDICATION_REL
+        ),
+        adjudication_sha256=sha256(
+            ROOT / ADJUDICATION_REL
+        ),
+        authorization_reference=(
+            AUTHORIZATION_REL
+        ),
+        authorization_sha256=sha256(
+            ROOT / AUTHORIZATION_REL
+        ),
+        contract_fingerprint=(
+            harness.contract_fingerprint
+        ),
+    )
+
+
 def register(
     harness: CanonicalBenchmarkHarness,
     case_id: str,
@@ -105,6 +175,7 @@ def register(
     executor_reference: str = (
         "tests::synthetic-harness-executor"
     ),
+    authorize_execution: bool = True,
 ) -> None:
     harness.register_executor(
         case_id,
@@ -113,6 +184,21 @@ def register(
         executor_version=executor_version,
         executor_reference=executor_reference,
     )
+
+    if authorize_execution:
+        harness.authorize_execution(
+            execution_authorization(
+                harness,
+                case_id,
+                executor_id=executor_id,
+                executor_version=(
+                    executor_version
+                ),
+                executor_reference=(
+                    executor_reference
+                ),
+            )
+        )
 
 
 def temporary_stage0_root() -> tempfile.TemporaryDirectory:
@@ -168,6 +254,26 @@ def populate_temp_root(
             project_state,
             target,
         )
+
+    auth_source = (
+        ROOT
+        / AUTH_FIXTURE_DIR_REL
+    )
+
+    auth_target = (
+        root
+        / AUTH_FIXTURE_DIR_REL
+    )
+
+    auth_target.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    shutil.copytree(
+        auth_source,
+        auth_target,
+    )
 
     evidence_path = (
         root
@@ -274,7 +380,7 @@ class HarnessContractTests(
                 ),
             )
 
-    def test_007_missing_executor_is_blocked(self):
+    def test_007_missing_executor_is_not_ready(self):
         harness = make_harness()
 
         record = harness.run_case(
@@ -284,7 +390,7 @@ class HarnessContractTests(
         self.assertEqual(
             record.execution_state,
             HarnessExecutionState
-            .BLOCKED_BY_MISSING_CAPABILITY,
+            .NOT_READY_FOR_EXECUTION,
         )
 
         self.assertEqual(
@@ -540,7 +646,7 @@ class HarnessContractTests(
             if (
                 r.execution_state
                 == HarnessExecutionState
-                .BLOCKED_BY_MISSING_CAPABILITY
+                .NOT_READY_FOR_EXECUTION
             )
         ]
 
@@ -932,14 +1038,6 @@ class HarnessContractTests(
                 / "S0_6A4_BENCHMARK_CASE_CONTROL_MATRIX_v0_1.csv"
             )
 
-            with control.open(
-                "a",
-                encoding="utf-8",
-            ) as handle:
-                handle.write(
-                    "\n# external mutation\n"
-                )
-
             register(
                 harness,
                 "CB01",
@@ -950,6 +1048,14 @@ class HarnessContractTests(
                     ),
                 ),
             )
+
+            with control.open(
+                "a",
+                encoding="utf-8",
+            ) as handle:
+                handle.write(
+                    "\n# external mutation\n"
+                )
 
             record = harness.run_case(
                 "CB01"
@@ -970,6 +1076,244 @@ class HarnessContractTests(
                 record.error_type,
                 "PROTECTED_ARTIFACT_"
                 "INTEGRITY_MISMATCH",
+            )
+
+    def test_026_registration_alone_cannot_execute(self):
+        harness = make_harness()
+
+        called = {
+            "value": False
+        }
+
+        def executor(definition):
+            called["value"] = True
+            return passing_observation()
+
+        register(
+            harness,
+            "CB01",
+            executor,
+            authorize_execution=False,
+        )
+
+        self.assertTrue(
+            harness.has_executor(
+                "CB01"
+            )
+        )
+
+        self.assertFalse(
+            harness.has_execution_authorization(
+                "CB01"
+            )
+        )
+
+        record = harness.run_case(
+            "CB01"
+        )
+
+        self.assertEqual(
+            record.execution_state,
+            HarnessExecutionState
+            .NOT_READY_FOR_EXECUTION,
+        )
+
+        self.assertEqual(
+            record.result_state,
+            HarnessResultState.NO_RESULT,
+        )
+
+        self.assertFalse(
+            called["value"]
+        )
+
+    def test_027_authorization_requires_executor(self):
+        harness = make_harness()
+
+        with self.assertRaises(
+            BenchmarkAuthorizationError
+        ):
+            harness.authorize_execution(
+                execution_authorization(
+                    harness,
+                    "CB01",
+                )
+            )
+
+    def test_028_protocol_authorization_rejected(self):
+        harness = make_harness()
+
+        with self.assertRaises(
+            BenchmarkAuthorizationError
+        ):
+            harness.authorize_execution(
+                execution_authorization(
+                    harness,
+                    "CB22",
+                )
+            )
+
+    def test_029_bad_materialization_hash_rejected(self):
+        harness = make_harness()
+
+        register(
+            harness,
+            "CB01",
+            lambda d: passing_observation(),
+            authorize_execution=False,
+        )
+
+        bad = replace(
+            execution_authorization(
+                harness,
+                "CB01",
+            ),
+            materialization_sha256=(
+                "0" * 64
+            ),
+        )
+
+        with self.assertRaises(
+            BenchmarkAuthorizationError
+        ):
+            harness.authorize_execution(
+                bad
+            )
+
+    def test_030_bad_contract_fingerprint_rejected(self):
+        harness = make_harness()
+
+        register(
+            harness,
+            "CB01",
+            lambda d: passing_observation(),
+            authorize_execution=False,
+        )
+
+        bad = replace(
+            execution_authorization(
+                harness,
+                "CB01",
+            ),
+            contract_fingerprint=(
+                "0" * 64
+            ),
+        )
+
+        with self.assertRaises(
+            BenchmarkAuthorizationError
+        ):
+            harness.authorize_execution(
+                bad
+            )
+
+    def test_031_valid_authorization_is_explicit(self):
+        harness = make_harness()
+
+        register(
+            harness,
+            "CB01",
+            lambda d: passing_observation(),
+        )
+
+        self.assertTrue(
+            harness.has_executor(
+                "CB01"
+            )
+        )
+
+        self.assertTrue(
+            harness.has_execution_authorization(
+                "CB01"
+            )
+        )
+
+    def test_032_authorization_artifact_mutation_blocks_execution(self):
+        with temporary_stage0_root() as td:
+            root = Path(td)
+
+            populate_temp_root(
+                root
+            )
+
+            harness = make_harness(
+                root
+            )
+
+            called = {
+                "value": False
+            }
+
+            def executor(definition):
+                called["value"] = True
+
+                return passing_observation(
+                    root=root,
+                    artifact_path=(
+                        "execution-evidence.txt"
+                    ),
+                )
+
+            register(
+                harness,
+                "CB01",
+                executor,
+            )
+
+            authorization_path = (
+                root
+                / AUTHORIZATION_REL
+            )
+
+            with authorization_path.open(
+                "a",
+                encoding="utf-8",
+            ) as handle:
+                handle.write(
+                    "mutation\n"
+                )
+
+            record = harness.run_case(
+                "CB01"
+            )
+
+            self.assertEqual(
+                record.execution_state,
+                HarnessExecutionState
+                .NOT_READY_FOR_EXECUTION,
+            )
+
+            self.assertEqual(
+                record.result_state,
+                HarnessResultState.NO_RESULT,
+            )
+
+            self.assertEqual(
+                record.error_type,
+                "EXECUTION_AUTHORIZATION_INVALID",
+            )
+
+            self.assertFalse(
+                called["value"]
+            )
+
+    def test_033_duplicate_authorization_rejected(self):
+        harness = make_harness()
+
+        register(
+            harness,
+            "CB01",
+            lambda d: passing_observation(),
+        )
+
+        with self.assertRaises(
+            BenchmarkAuthorizationError
+        ):
+            harness.authorize_execution(
+                execution_authorization(
+                    harness,
+                    "CB01",
+                )
             )
 
 
