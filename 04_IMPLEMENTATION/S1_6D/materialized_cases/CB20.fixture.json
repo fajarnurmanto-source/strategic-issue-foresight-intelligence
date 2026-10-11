@@ -1,0 +1,94 @@
+{
+  "analytical_cutoff": "2026-01-05T12:00:00+00:00",
+  "case_id": "CB20",
+  "claims": [
+    {
+      "claim_id": "CB20-CL-ATTENTION",
+      "claim_text": "Synthetic reporting attention is present.",
+      "claim_type": "CT-01",
+      "publication_id": "CB20-PUB-01",
+      "recorded_at": "2026-01-02T12:00:00+00:00",
+      "source_id": "CB20-SRC-01"
+    },
+    {
+      "claim_id": "CB20-CL-PREVALENCE",
+      "claim_text": "Synthetic underlying prevalence is high.",
+      "claim_type": "CT-05",
+      "publication_id": "CB20-PUB-01",
+      "recorded_at": "2026-01-02T12:00:00+00:00",
+      "source_id": "CB20-SRC-01"
+    }
+  ],
+  "evidence": [
+    {
+      "admission_zone": "Z2",
+      "contradicted_claim_ids": [],
+      "evidence_id": "CB20-EV-01",
+      "evidence_kind": "SYNTHETIC_ATTENTION_EVIDENCE",
+      "origin_key": "CB20-ORIGIN-01",
+      "publication_id": "CB20-PUB-01",
+      "recorded_at": "2026-01-02T12:00:00+00:00",
+      "source_id": "CB20-SRC-01",
+      "supported_claim_ids": [
+        "CB20-CL-ATTENTION"
+      ]
+    },
+    {
+      "admission_zone": "Z2",
+      "contradicted_claim_ids": [],
+      "evidence_id": "CB20-EV-02",
+      "evidence_kind": "SYNTHETIC_ATTENTION_EVIDENCE",
+      "origin_key": "CB20-ORIGIN-02",
+      "publication_id": "CB20-PUB-02",
+      "recorded_at": "2026-01-02T12:00:00+00:00",
+      "source_id": "CB20-SRC-02",
+      "supported_claim_ids": [
+        "CB20-CL-ATTENTION"
+      ]
+    },
+    {
+      "admission_zone": "Z2",
+      "contradicted_claim_ids": [],
+      "evidence_id": "CB20-EV-03",
+      "evidence_kind": "SYNTHETIC_ATTENTION_EVIDENCE",
+      "origin_key": "CB20-ORIGIN-03",
+      "publication_id": "CB20-PUB-03",
+      "recorded_at": "2026-01-02T12:00:00+00:00",
+      "source_id": "CB20-SRC-03",
+      "supported_claim_ids": [
+        "CB20-CL-ATTENTION"
+      ]
+    }
+  ],
+  "fixture_kind": "SYNTHETIC_CANONICAL_BENCHMARK_FIXTURE",
+  "publications": [
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB20-CONTENT-01",
+      "origin_key": "CB20-ORIGIN-01",
+      "publication_id": "CB20-PUB-01",
+      "source_id": "CB20-SRC-01",
+      "title": "Synthetic attention publication 01"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB20-CONTENT-02",
+      "origin_key": "CB20-ORIGIN-02",
+      "publication_id": "CB20-PUB-02",
+      "source_id": "CB20-SRC-02",
+      "title": "Synthetic attention publication 02"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB20-CONTENT-03",
+      "origin_key": "CB20-ORIGIN-03",
+      "publication_id": "CB20-PUB-03",
+      "source_id": "CB20-SRC-03",
+      "title": "Synthetic attention publication 03"
+    }
+  ],
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS"
+}

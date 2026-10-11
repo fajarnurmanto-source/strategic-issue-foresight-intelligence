@@ -1,0 +1,37 @@
+{
+  "analytical_cutoff": "2026-01-05T12:00:00+00:00",
+  "case_id": "CB07",
+  "claim": {
+    "attribution": "Synthetic attributed speaker",
+    "claim_id": "CB07-CL-ALLEGATION",
+    "claim_text": "A synthetic attributed accusation that has not been verified.",
+    "claim_type": "CT-02",
+    "publication_id": "CB07-PUB-01",
+    "recorded_at": "2026-01-02T12:00:00+00:00",
+    "source_id": "CB07-SRC-01"
+  },
+  "evidence": {
+    "admission_zone": "Z2",
+    "contradicted_claim_ids": [],
+    "evidence_id": "CB07-EV-01",
+    "evidence_kind": "SYNTHETIC_ATTRIBUTED_ALLEGATION",
+    "origin_key": "CB07-ORIGIN-01",
+    "publication_id": "CB07-PUB-01",
+    "recorded_at": "2026-01-02T12:00:00+00:00",
+    "source_id": "CB07-SRC-01",
+    "supported_claim_ids": [
+      "CB07-CL-ALLEGATION"
+    ]
+  },
+  "fixture_kind": "SYNTHETIC_CANONICAL_BENCHMARK_FIXTURE",
+  "publication": {
+    "admission_zone": "Z2",
+    "collected_at": "2026-01-02T12:00:00+00:00",
+    "content_fingerprint": "CB07-CONTENT-01",
+    "origin_key": "CB07-ORIGIN-01",
+    "publication_id": "CB07-PUB-01",
+    "source_id": "CB07-SRC-01",
+    "title": "Synthetic publication containing an attributed allegation"
+  },
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS"
+}

@@ -1,0 +1,31 @@
+{
+  "analytical_cutoff_rule": "CASE_DEFINED",
+  "benchmark_input_reference": "S0_6A3::CB07::Scenario",
+  "canonical_execution_authorized": false,
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "case_id": "CB07",
+  "executor_id": "SIFI-CB07-ALLEGATION-GUARD-EXECUTOR",
+  "executor_module_path": "src/sifi/benchmarks/materialized_cases.py",
+  "executor_module_sha256": "eda9f0e8b9815a2176f39b5868764d769ab8884437d42aef12473700fc11fc9c",
+  "executor_reference": "sifi.benchmarks.materialized_cases:execute_cb07",
+  "executor_version": "v0.1",
+  "expected_output_reference": "S0_6A3::CB07::Expected",
+  "fixture_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB07.fixture.json",
+  "fixture_sha256": "9f7a65c787d593c9a3819fb271db25e37b0e3d62c13ffce746b2275d84403205",
+  "forbidden_output_reference": "S0_6A3::CB07::Forbidden",
+  "manifest_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB07.materialization.json",
+  "materialization_adjudication_state": "NOT_ADJUDICATED",
+  "materialization_state": "MATERIALIZED_NOT_ADJUDICATED",
+  "notes": [
+    "Synthetic controlled-development materialization only.",
+    "Materialization does not constitute canonical execution authorization.",
+    "Component self-tests are not canonical benchmark executions."
+  ],
+  "predecessor_head": "71945a89c4c55445948306bd6557ae14fdaa66c7",
+  "reference_methodology": "ADJUDICATED_CLAIM_REFERENCE",
+  "regression_dependency_reference": "S0_6A3::CB07::Regression",
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS",
+  "s1_6c_adjudication_reference": "04_IMPLEMENTATION/S1_6C/S1_6C1_CASE_EXECUTABILITY_ADJUDICATION_MATRIX_v0_1.csv",
+  "s1_6c_executability_state": "MATERIALIZABLE_NOW"
+}

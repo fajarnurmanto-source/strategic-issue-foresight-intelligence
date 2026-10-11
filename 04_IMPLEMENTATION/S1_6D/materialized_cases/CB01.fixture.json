@@ -1,0 +1,191 @@
+{
+  "analytical_cutoff": "2026-01-05T12:00:00+00:00",
+  "case_id": "CB01",
+  "expected_independent_origin_count": 1,
+  "expected_origin_key": "CB01-ORIGIN-001",
+  "expected_publication_count": 20,
+  "fixture_kind": "SYNTHETIC_CANONICAL_BENCHMARK_FIXTURE",
+  "publications": [
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-01",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-01",
+      "source_id": "CB01-SRC-01",
+      "title": "Synthetic syndicated item 01"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-02",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-02",
+      "source_id": "CB01-SRC-02",
+      "title": "Synthetic syndicated item 02"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-03",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-03",
+      "source_id": "CB01-SRC-03",
+      "title": "Synthetic syndicated item 03"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-04",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-04",
+      "source_id": "CB01-SRC-04",
+      "title": "Synthetic syndicated item 04"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-05",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-05",
+      "source_id": "CB01-SRC-05",
+      "title": "Synthetic syndicated item 05"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-06",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-06",
+      "source_id": "CB01-SRC-06",
+      "title": "Synthetic syndicated item 06"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-07",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-07",
+      "source_id": "CB01-SRC-07",
+      "title": "Synthetic syndicated item 07"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-08",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-08",
+      "source_id": "CB01-SRC-08",
+      "title": "Synthetic syndicated item 08"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-09",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-09",
+      "source_id": "CB01-SRC-09",
+      "title": "Synthetic syndicated item 09"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-10",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-10",
+      "source_id": "CB01-SRC-10",
+      "title": "Synthetic syndicated item 10"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-11",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-11",
+      "source_id": "CB01-SRC-11",
+      "title": "Synthetic syndicated item 11"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-12",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-12",
+      "source_id": "CB01-SRC-12",
+      "title": "Synthetic syndicated item 12"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-13",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-13",
+      "source_id": "CB01-SRC-13",
+      "title": "Synthetic syndicated item 13"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-14",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-14",
+      "source_id": "CB01-SRC-14",
+      "title": "Synthetic syndicated item 14"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-15",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-15",
+      "source_id": "CB01-SRC-15",
+      "title": "Synthetic syndicated item 15"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-16",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-16",
+      "source_id": "CB01-SRC-16",
+      "title": "Synthetic syndicated item 16"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-17",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-17",
+      "source_id": "CB01-SRC-17",
+      "title": "Synthetic syndicated item 17"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-18",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-18",
+      "source_id": "CB01-SRC-18",
+      "title": "Synthetic syndicated item 18"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-19",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-19",
+      "source_id": "CB01-SRC-19",
+      "title": "Synthetic syndicated item 19"
+    },
+    {
+      "admission_zone": "Z2",
+      "collected_at": "2026-01-02T12:00:00+00:00",
+      "content_fingerprint": "CB01-CONTENT-20",
+      "origin_key": "CB01-ORIGIN-001",
+      "publication_id": "CB01-PUB-20",
+      "source_id": "CB01-SRC-20",
+      "title": "Synthetic syndicated item 20"
+    }
+  ],
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS"
+}

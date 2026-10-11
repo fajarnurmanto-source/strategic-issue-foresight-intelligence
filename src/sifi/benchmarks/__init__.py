@@ -30,6 +30,10 @@ __all__ = [
     "ExecutionEvidenceReference",
     "HarnessExecutionState",
     "HarnessResultState",
+    "MATERIALIZED_CASE_IDS",
+    "MATERIALIZED_EXECUTORS",
+    "MATERIALIZED_EXECUTOR_SPECS",
+    "MaterializedExecutorSpec",
     "PersistedBenchmarkResultVersion",
     "RecordedBenchmarkResult",
     "execution_record_fingerprint",
@@ -45,4 +49,11 @@ from .result_repository import (
     PersistedBenchmarkResultVersion,
     RecordedBenchmarkResult,
     execution_record_fingerprint,
+)
+
+from .materialized_cases import (
+    MATERIALIZED_CASE_IDS,
+    MATERIALIZED_EXECUTORS,
+    MATERIALIZED_EXECUTOR_SPECS,
+    MaterializedExecutorSpec,
 )
