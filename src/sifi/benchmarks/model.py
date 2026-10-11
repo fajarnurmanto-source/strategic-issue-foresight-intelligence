@@ -238,6 +238,9 @@ class CaseExecutionRecord:
     executor_version: str | None = None
     executor_reference: str | None = None
 
+    authorization_id: str | None = None
+    contract_fingerprint: str | None = None
+
     expected_conditions_satisfied: bool | None = None
     forbidden_output_observed: bool | None = None
     regression_dependencies_satisfied: bool | None = None
@@ -334,18 +337,19 @@ class CaseExecutionRecord:
                 )
 
         if (
+            self.result_state
+            != HarnessResultState.NO_RESULT
+        ):
+            raise ValueError(
+                "execution records cannot carry "
+                "PASS or FAIL before explicit "
+                "result recording"
+            )
+
+        if (
             self.execution_state
             == HarnessExecutionState.EXECUTED
         ):
-            if self.result_state not in {
-                HarnessResultState.PASS,
-                HarnessResultState.FAIL,
-            }:
-                raise ValueError(
-                    "executed case must have "
-                    "PASS or FAIL"
-                )
-
             if not self.evidence_refs:
                 raise ValueError(
                     "executed case requires "
@@ -368,14 +372,34 @@ class CaseExecutionRecord:
                     "acceptance dimensions"
                 )
 
-        else:
-            if (
-                self.result_state
-                != HarnessResultState.NO_RESULT
+            _require_text(
+                "authorization_id",
+                self.authorization_id,
+            )
+
+            _require_text(
+                "contract_fingerprint",
+                self.contract_fingerprint,
+            )
+
+            if not _SHA256_RE.fullmatch(
+                self.contract_fingerprint
             ):
                 raise ValueError(
-                    "non-executed case cannot "
-                    "have PASS or FAIL"
+                    "contract_fingerprint must be "
+                    "64 lowercase hexadecimal "
+                    "characters"
+                )
+
+        else:
+            if (
+                self.authorization_id is not None
+                or self.contract_fingerprint
+                is not None
+            ):
+                raise ValueError(
+                    "non-executed case cannot claim "
+                    "execution authorization binding"
                 )
 
         if self.analytical_cutoff is not None:

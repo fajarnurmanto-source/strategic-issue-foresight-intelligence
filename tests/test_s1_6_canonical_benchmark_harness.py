@@ -416,7 +416,7 @@ class HarnessContractTests(
             HarnessResultState.NO_RESULT,
         )
 
-    def test_009_executed_case_can_pass(self):
+    def test_009_executed_case_has_no_result_before_recording(self):
         harness = make_harness()
 
         register(
@@ -436,10 +436,19 @@ class HarnessContractTests(
 
         self.assertEqual(
             record.result_state,
-            HarnessResultState.PASS,
+            HarnessResultState.NO_RESULT,
         )
 
-    def test_010_expected_failure_causes_fail(self):
+        self.assertIsNotNone(
+            record.authorization_id
+        )
+
+        self.assertEqual(
+            record.contract_fingerprint,
+            harness.contract_fingerprint,
+        )
+
+    def test_010_expected_failure_is_execution_observation_only(self):
         harness = make_harness()
 
         def executor(definition):
@@ -464,11 +473,20 @@ class HarnessContractTests(
         )
 
         self.assertEqual(
-            record.result_state,
-            HarnessResultState.FAIL,
+            record.execution_state,
+            HarnessExecutionState.EXECUTED,
         )
 
-    def test_011_forbidden_output_causes_fail(self):
+        self.assertEqual(
+            record.result_state,
+            HarnessResultState.NO_RESULT,
+        )
+
+        self.assertFalse(
+            record.expected_conditions_satisfied
+        )
+
+    def test_011_forbidden_output_is_execution_observation_only(self):
         harness = make_harness()
 
         def executor(definition):
@@ -494,10 +512,14 @@ class HarnessContractTests(
 
         self.assertEqual(
             record.result_state,
-            HarnessResultState.FAIL,
+            HarnessResultState.NO_RESULT,
         )
 
-    def test_012_regression_failure_causes_fail(self):
+        self.assertTrue(
+            record.forbidden_output_observed
+        )
+
+    def test_012_regression_failure_is_execution_observation_only(self):
         harness = make_harness()
 
         def executor(definition):
@@ -523,10 +545,14 @@ class HarnessContractTests(
 
         self.assertEqual(
             record.result_state,
-            HarnessResultState.FAIL,
+            HarnessResultState.NO_RESULT,
         )
 
-    def test_013_rights_failure_causes_fail(self):
+        self.assertFalse(
+            record.regression_dependencies_satisfied
+        )
+
+    def test_013_rights_failure_is_execution_observation_only(self):
         harness = make_harness()
 
         def executor(definition):
@@ -552,7 +578,11 @@ class HarnessContractTests(
 
         self.assertEqual(
             record.result_state,
-            HarnessResultState.FAIL,
+            HarnessResultState.NO_RESULT,
+        )
+
+        self.assertFalse(
+            record.rights_constraints_satisfied
         )
 
     def test_014_executor_exception_is_no_result(self):

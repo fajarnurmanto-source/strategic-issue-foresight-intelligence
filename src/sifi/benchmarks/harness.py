@@ -1035,31 +1035,14 @@ class CanonicalBenchmarkHarness:
                 ),
             )
 
-        passed = all(
-            (
-                observation
-                .expected_conditions_satisfied,
-                not observation
-                .forbidden_output_observed,
-                observation
-                .regression_dependencies_satisfied,
-                observation
-                .rights_constraints_satisfied,
-            )
-        )
-
-        result_state = (
-            HarnessResultState.PASS
-            if passed
-            else HarnessResultState.FAIL
-        )
-
         return CaseExecutionRecord(
             case_id=case_id,
             execution_state=(
                 HarnessExecutionState.EXECUTED
             ),
-            result_state=result_state,
+            result_state=(
+                HarnessResultState.NO_RESULT
+            ),
             rights_basis=(
                 definition.rights_basis
             ),
@@ -1077,6 +1060,12 @@ class CanonicalBenchmarkHarness:
             ),
             executor_reference=(
                 registration.executor_reference
+            ),
+            authorization_id=(
+                authorization.authorization_id
+            ),
+            contract_fingerprint=(
+                authorization.contract_fingerprint
             ),
             expected_conditions_satisfied=(
                 observation
