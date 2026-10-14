@@ -1,0 +1,12 @@
+step_id,stage,input,required_output,fail_closed_condition,audit_event,governing_boundary
+WF-01,COVERAGE_INSPECTION,"task; coverage_profile","coverage dimensions and limitations",missing coverage profile,WORKFLOW_COVERAGE_INSPECTED,S0.5C
+WF-02,ADMITTED_SIGNAL_REVIEW,"rights decisions; evidence","only production-eligible evidence visible",non-eligible evidence requested as admitted,WORKFLOW_ADMITTED_EVIDENCE_INSPECTED,S0.3Y
+WF-03,PERSISTENT_ISSUE_INSPECTION,"issue_id; cutoff","point-in-time Issue version",Issue unavailable at cutoff,WORKFLOW_ISSUE_INSPECTED,S0.5B
+WF-04,EVIDENCE_CONTRADICTION_INSPECTION,"Issue evidence links","separate evidence categories",category overlap or missing provenance,WORKFLOW_EVIDENCE_CATEGORIES_INSPECTED,S0.5A
+WF-05,GEOGRAPHIC_RELEVANCE_INSPECTION,"Issue geography","separate geography dimensions",geography dimensions collapsed,WORKFLOW_GEOGRAPHY_INSPECTED,S0.4
+WF-06,UNCERTAINTY_INSPECTION,"uncertainty; gaps; limitations","explicit uncertainty view",uncertainty omitted,WORKFLOW_UNCERTAINTY_INSPECTED,S0.5B
+WF-07,TRAJECTORY_INSPECTION,"trajectory dimensions; cutoff","separate trajectory states",trajectory dimensions collapsed,WORKFLOW_TRAJECTORY_INSPECTED,S0.5C
+WF-08,AUTHORIZED_CORRECTION,"review proposal; assignment","authorized analytical ReviewRecord",authority or protected-transition failure,WORKFLOW_CORRECTION_RECORDED,S0.5D
+WF-09,CANDIDATE_PRIORITIZATION,"bounded analytical factors","priority rationale with limitations",attention treated as materiality,WORKFLOW_PRIORITY_RECORDED,S0.5C
+WF-10,EVIDENCE_LINKED_BRIEF,"Issue; admitted evidence; review","analytical brief with evidence references",brief contains unsupported or ineligible assertion,WORKFLOW_BRIEF_CREATED,S0.5A-D
+WF-11,HISTORICAL_RETRIEVAL,"session_id; historical cutoff","state reproducible as of cutoff",later-recorded information leaks backward,WORKFLOW_HISTORY_RETRIEVED,S0.3Y;S0.5A-D
