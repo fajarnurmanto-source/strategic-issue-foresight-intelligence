@@ -1,0 +1,87 @@
+{
+  "record_type": "SIFI_CANONICAL_BENCHMARK_INITIAL_BATCH_RESULT",
+  "record_version": "0.1",
+  "scope": "CONTROLLED_NON_PRODUCTION_CANONICAL_BENCHMARK",
+  "authorization_commit": "065190ba987df328b4615e7c7d9d58301dceff91",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "durable_store_reference": "04_IMPLEMENTATION/S1_6D/runtime/s1_6d_execution.sqlite",
+  "cases": [
+    {
+      "case_id": "CB01",
+      "authorization_id": "S1.6D-CB01-AUTH-001",
+      "execution_id": "S1.6D-CB01-EXEC-001",
+      "requested_at": "2026-10-14T14:56:30.345554+00:00",
+      "started_at": "2026-10-14T14:56:30.345576+00:00",
+      "completed_at": "2026-10-14T14:56:31.379097+00:00",
+      "recorded_at": "2026-10-14T14:56:31.379118+00:00",
+      "consumption_state": "CONSUMED",
+      "execution_state": "EXECUTED",
+      "recording_state": "RESULT_RECORDED",
+      "result_state": "PASS",
+      "execution_fingerprint": "a472ac8ac4f8c405346046f9d24a4b5a80cdb98140eeda9a26fedd8866f863f2",
+      "expected_conditions_satisfied": true,
+      "forbidden_output_observed": false,
+      "regression_dependencies_satisfied": true,
+      "rights_constraints_satisfied": true,
+      "notes": [
+        "publication_count=20",
+        "independent_origin_count=1",
+        "synthetic_fixture_no_external_rights=TRUE"
+      ]
+    },
+    {
+      "case_id": "CB07",
+      "authorization_id": "S1.6D-CB07-AUTH-001",
+      "execution_id": "S1.6D-CB07-EXEC-001",
+      "requested_at": "2026-10-14T14:56:31.913912+00:00",
+      "started_at": "2026-10-14T14:56:31.913922+00:00",
+      "completed_at": "2026-10-14T14:56:32.941001+00:00",
+      "recorded_at": "2026-10-14T14:56:32.941023+00:00",
+      "consumption_state": "CONSUMED",
+      "execution_state": "EXECUTED",
+      "recording_state": "RESULT_RECORDED",
+      "result_state": "PASS",
+      "execution_fingerprint": "f98d69354d5454b6d1d59fb317fa9c6343b390d931a2e8da83967173f96cd5ec",
+      "expected_conditions_satisfied": true,
+      "forbidden_output_observed": false,
+      "regression_dependencies_satisfied": true,
+      "rights_constraints_satisfied": true,
+      "notes": [
+        "attribution_visible=TRUE",
+        "allegation_event_construction_rejected=TRUE",
+        "claim_type=CT-02"
+      ]
+    },
+    {
+      "case_id": "CB20",
+      "authorization_id": "S1.6D-CB20-AUTH-001",
+      "execution_id": "S1.6D-CB20-EXEC-001",
+      "requested_at": "2026-10-14T14:56:33.418191+00:00",
+      "started_at": "2026-10-14T14:56:33.418198+00:00",
+      "completed_at": "2026-10-14T14:56:34.532601+00:00",
+      "recorded_at": "2026-10-14T14:56:34.532620+00:00",
+      "consumption_state": "CONSUMED",
+      "execution_state": "EXECUTED",
+      "recording_state": "RESULT_RECORDED",
+      "result_state": "PASS",
+      "execution_fingerprint": "935fb3ec4d5ace3b3ea87aebb6aca1619b77be3ddc745dac818dd41b4dc5523d",
+      "expected_conditions_satisfied": true,
+      "forbidden_output_observed": false,
+      "regression_dependencies_satisfied": true,
+      "rights_constraints_satisfied": true,
+      "notes": [
+        "attention_production_support=TRUE",
+        "attention_support_count=3",
+        "prevalence_support_count=0"
+      ]
+    }
+  ],
+  "canonical_execution_count": 3,
+  "canonical_result_recorded_count": 3,
+  "pass_count": 3,
+  "fail_count": 0,
+  "replay_protection_verified": true,
+  "capability_promotion_performed": false,
+  "production_ingestion_authorized": false,
+  "production_deployment_authorized": false
+}
