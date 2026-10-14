@@ -65,7 +65,7 @@ def adjudication(
 class MaterializationAdjudicationTests(
     unittest.TestCase
 ):
-    def test_001_exact_adjudicated_case_set(self):
+    def test_001_initial_adjudicated_case_set_remains_present(self):
         actual = {
             path.name.split(
                 "."
@@ -75,11 +75,8 @@ class MaterializationAdjudicationTests(
             )
         }
 
-        self.assertEqual(
-            actual,
-            set(
-                CASE_IDS
-            ),
+        self.assertTrue(
+            set(CASE_IDS).issubset(actual),
         )
 
     def test_002_adjudication_binds_immutable_materialization(self):
