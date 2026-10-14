@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "authorization_id": "S1.6D-CB02-AUTH-001",
+  "execution_intent_id": "S1.6D-CB02-AUTH-001",
+  "case_id": "CB02",
+  "authorization_scope": "ONE_CANONICAL_BENCHMARK_EXECUTION",
+  "decision": "AUTHORIZE_CANONICAL_EXECUTION",
+  "authorization_state": "ISSUED_NOT_EXECUTED",
+  "single_use": true,
+  "issued_by_or_role_reference": "SIFI_PROJECT_OWNER_HUMAN_USER",
+  "authority_basis": "HUMAN_USER_EXPLICIT_CONTINUATION_2026-10-15_AND_S0_7G_CONTROLLED_NON_PRODUCTION_IMPLEMENTATION",
+  "issued_at": "2026-10-15T03:55:55+07:00",
+  "materialization_commit": "0f67266437260b192dc8e9361aa2eb42ff112c34",
+  "adjudication_commit": "3efa1818e546707318743a546aee966b8e9dadfc",
+  "materialization_reference": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB02.materialization.json",
+  "materialization_sha256": "aa1819983499e55f2d0ce03087ada61f652dd159143d572a9e90e56aa5689e62",
+  "adjudication_reference": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB02.adjudication.json",
+  "adjudication_sha256": "2b4142ae76cb258adffd548f0547753d1310044a2cd8864633c89a8bb82c5846",
+  "executor_id": "SIFI-CB02-ATTENTION-IMPACT-SEPARATION-EXECUTOR",
+  "executor_version": "v0.1",
+  "executor_reference": "sifi.benchmarks.materialized_cases_batch2:execute_cb02",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "notes": [
+    "Authorized by explicit human continuation instruction for one controlled non-production canonical benchmark execution.",
+    "PASS would establish only bounded attention-impact separation for this fixture.",
+    "This authorization does not authorize production ingestion or deployment."
+  ]
+}
