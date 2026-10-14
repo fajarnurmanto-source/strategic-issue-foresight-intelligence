@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "authorization_id": "S1.6D-CB08-AUTH-001",
+  "execution_intent_id": "S1.6D-CB08-AUTH-001",
+  "case_id": "CB08",
+  "authorization_scope": "ONE_CANONICAL_BENCHMARK_EXECUTION",
+  "decision": "AUTHORIZE_CANONICAL_EXECUTION",
+  "authorization_state": "ISSUED_NOT_EXECUTED",
+  "single_use": true,
+  "issued_by_or_role_reference": "SIFI_PROJECT_OWNER_HUMAN_USER",
+  "authority_basis": "HUMAN_USER_EXPLICIT_CONTINUATION_2026-10-15_AND_S0_7G_CONTROLLED_NON_PRODUCTION_IMPLEMENTATION",
+  "issued_at": "2026-10-15T05:19:02+07:00",
+  "materialization_commit": "45dcb1f615daafcb169f52daef8e56b41723c8a3",
+  "adjudication_commit": "ca76eff7d24c72b018533ce6f3445a543c5f0f14",
+  "materialization_reference": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB08.materialization.json",
+  "materialization_sha256": "82d93c14f3d50fddc659fa2df897bf51dab27f524b7be984bdfef4fa79527878",
+  "adjudication_reference": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB08.adjudication.json",
+  "adjudication_sha256": "b7ad9dcdf16558d7425e4b15aa4c9342b209ae580751da04e33e203f859f80a1",
+  "executor_id": "SIFI-CB08-INDEPENDENT-CORROBORATION-EXECUTOR",
+  "executor_version": "v0.1",
+  "executor_reference": "sifi.benchmarks.materialized_cases_batch3:execute_cb08",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "notes": [
+    "Authorized by explicit human continuation instruction for one controlled non-production canonical benchmark execution.",
+    "Rights decisions apply only to supplied synthetic rights facts and create no real-world source rights.",
+    "This authorization does not authorize production ingestion or deployment."
+  ]
+}
