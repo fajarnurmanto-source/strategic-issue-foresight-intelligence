@@ -1,0 +1,32 @@
+{
+  "analytical_cutoff_rule": "FROZEN_T_REQUIRED",
+  "benchmark_input_reference": "S0_6A3::CB21::Scenario",
+  "canonical_execution_authorized": false,
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "case_id": "CB21",
+  "executor_id": "SIFI-CB21-HISTORICAL-PIT-EXECUTOR",
+  "executor_module_path": "src/sifi/benchmarks/materialized_cases_batch6.py",
+  "executor_module_sha256": "cba7bc0974774ff3b0cb5ff62b1ba79d726a953a98b8c8a81bd375eab9f0529d",
+  "executor_reference": "sifi.benchmarks.materialized_cases_batch6:execute_cb21",
+  "executor_version": "v0.1",
+  "expected_output_reference": "S0_6A3::CB21::Expected",
+  "fixture_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB21.fixture.json",
+  "fixture_sha256": "854ddc8253f267dfd79d4178f95a8032332d691971a15d3b0d6fa543b13f2b6f",
+  "forbidden_output_reference": "S0_6A3::CB21::Forbidden",
+  "manifest_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB21.materialization.json",
+  "materialization_adjudication_state": "NOT_ADJUDICATED",
+  "materialization_state": "MATERIALIZED_NOT_ADJUDICATED",
+  "notes": [
+    "Synthetic bitemporal Issue history with an explicit frozen cutoff.",
+    "A retrospectively effective correction recorded after T must not leak into the assessment at T.",
+    "A later outcome and its evidence must also remain excluded at T.",
+    "Materialization does not constitute canonical execution authorization."
+  ],
+  "predecessor_head": "67393a5",
+  "reference_methodology": "POINT_IN_TIME_REFERENCE",
+  "regression_dependency_reference": "S0_6A3::CB21::Regression",
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS",
+  "s1_6c_adjudication_reference": "04_IMPLEMENTATION/S1_6C/S1_6C1_CASE_EXECUTABILITY_ADJUDICATION_MATRIX_v0_1.csv",
+  "s1_6c_executability_state": "MATERIALIZABLE_NOW"
+}

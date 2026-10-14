@@ -1,0 +1,38 @@
+{
+  "schema_version": "0.1",
+  "case_id": "CB21",
+  "issue_id": "CB21-ISSUE-001",
+  "frozen_cutoff": "2026-01-15T12:00:00+00:00",
+  "expected_version_at_cutoff": 1,
+  "expected_title_at_cutoff": "Assessment known at frozen cutoff",
+  "expected_lifecycle_at_cutoff": "ACTIVE_UNRESOLVED",
+  "future_only_titles": ["Retrospective correction", "Outcome known after cutoff"],
+  "future_only_lifecycle_states": ["CORRECTED_RETROSPECTIVELY", "RESOLVED_AFTER_CUTOFF"],
+  "future_only_evidence_ids": ["CB21-EV-CORRECTION", "CB21-EV-OUTCOME"],
+  "versions": [
+    {
+      "version": 1,
+      "title": "Assessment known at frozen cutoff",
+      "lifecycle_state": "ACTIVE_UNRESOLVED",
+      "evidence_id": "CB21-EV-PRE-CUTOFF",
+      "effective_at": "2026-01-14T08:00:00+00:00",
+      "recorded_at": "2026-01-14T08:05:00+00:00"
+    },
+    {
+      "version": 2,
+      "title": "Retrospective correction",
+      "lifecycle_state": "CORRECTED_RETROSPECTIVELY",
+      "evidence_id": "CB21-EV-CORRECTION",
+      "effective_at": "2026-01-15T10:00:00+00:00",
+      "recorded_at": "2026-01-16T09:00:00+00:00"
+    },
+    {
+      "version": 3,
+      "title": "Outcome known after cutoff",
+      "lifecycle_state": "RESOLVED_AFTER_CUTOFF",
+      "evidence_id": "CB21-EV-OUTCOME",
+      "effective_at": "2026-01-16T12:00:00+00:00",
+      "recorded_at": "2026-01-16T12:05:00+00:00"
+    }
+  ]
+}
