@@ -1,0 +1,33 @@
+{
+  "record_type": "SIFI_CANONICAL_BENCHMARK_EXECUTION_RESULT",
+  "record_version": "0.1",
+  "scope": "CONTROLLED_NON_PRODUCTION_CANONICAL_BENCHMARK",
+  "case_id": "CB08",
+  "authorization_id": "S1.6D-CB08-AUTH-001",
+  "authorization_commit": "35e35dbda366b06b7c24187b937b443666321700",
+  "execution_id": "S1.6D-CB08-EXEC-001",
+  "requested_at": "2026-10-14T22:19:36.540917+00:00",
+  "started_at": "2026-10-14T22:19:36.540934+00:00",
+  "completed_at": "2026-10-14T22:19:37.527436+00:00",
+  "recorded_at": "2026-10-14T22:19:37.527466+00:00",
+  "consumption_state": "CONSUMED",
+  "execution_state": "EXECUTED",
+  "recording_state": "RESULT_RECORDED",
+  "result_state": "PASS",
+  "execution_fingerprint": "89504ec08d63d269b146dc25a0393f4a61f9aca49b6674abc90ea8d6ad39aa60",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "expected_conditions_satisfied": true,
+  "forbidden_output_observed": false,
+  "regression_dependencies_satisfied": true,
+  "rights_constraints_satisfied": true,
+  "findings": {
+    "rights_policy_z2_count": 3,
+    "support_count": 3,
+    "independent_origin_count": 2,
+    "unsupported_severity_support_count": 0
+  },
+  "replay_protection_verified": true,
+  "capability_promotion_performed": false,
+  "production_ingestion_authorized": false,
+  "production_deployment_authorized": false
+}
