@@ -1,0 +1,31 @@
+{
+  "record_type": "SIFI_S1_6D_PHASE_CLOSURE_RESULT",
+  "record_version": "0.1",
+  "status": "PASS_BOUNDED_CANONICAL_EXECUTION_COMPLETE",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "s1_6c_materializable_now_count": 8,
+  "canonical_result_recorded_count": 8,
+  "pass_count": 8,
+  "fail_count": 0,
+  "executed_case_ids": ["CB01", "CB02", "CB07", "CB08", "CB16", "CB17", "CB20", "CB21"],
+  "result_artifacts": {
+    "CB01": "04_IMPLEMENTATION/S1_6D/execution_results/S1_6D_INITIAL_BATCH_EXECUTION_RESULT_v0_1.json",
+    "CB02": "04_IMPLEMENTATION/S1_6D/execution_results/CB02.execution_result.json",
+    "CB07": "04_IMPLEMENTATION/S1_6D/execution_results/S1_6D_INITIAL_BATCH_EXECUTION_RESULT_v0_1.json",
+    "CB08": "04_IMPLEMENTATION/S1_6D/execution_results/CB08.execution_result.json",
+    "CB16": "04_IMPLEMENTATION/S1_6D/execution_results/CB16.execution_result.json",
+    "CB17": "04_IMPLEMENTATION/S1_6D/execution_results/CB17.execution_result.json",
+    "CB20": "04_IMPLEMENTATION/S1_6D/execution_results/S1_6D_INITIAL_BATCH_EXECUTION_RESULT_v0_1.json",
+    "CB21": "04_IMPLEMENTATION/S1_6D/execution_results/CB21.execution_result.json"
+  },
+  "blocked_missing_capability_case_ids": ["CB03", "CB04", "CB05", "CB06", "CB09", "CB10", "CB11", "CB13", "CB14", "CB15", "CB18", "CB19"],
+  "blocked_rights_fixture_case_ids": ["CB12"],
+  "blocked_reference_materialization_case_ids": ["CB24"],
+  "protocol_only_case_ids": ["CB22", "CB23"],
+  "full_regression_pass_count": 288,
+  "replay_protection_verified": true,
+  "capability_promotion_performed": false,
+  "production_ingestion_authorized": false,
+  "production_deployment_authorized": false,
+  "next_roadmap_stage": "S1.7_BOUNDED_ANALYST_WORKFLOW"
+}
