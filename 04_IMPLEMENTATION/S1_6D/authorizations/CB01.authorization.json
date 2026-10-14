@@ -1,0 +1,29 @@
+{
+  "schema_version": "0.1",
+  "authorization_id": "S1.6D-CB01-AUTH-001",
+  "execution_intent_id": "S1.6D-CB01-AUTH-001",
+  "case_id": "CB01",
+  "authorization_scope": "ONE_CANONICAL_BENCHMARK_EXECUTION",
+  "decision": "AUTHORIZE_CANONICAL_EXECUTION",
+  "authorization_state": "ISSUED_NOT_EXECUTED",
+  "single_use": true,
+  "issued_by_or_role_reference": "SIFI_PROJECT_OWNER_HUMAN_USER",
+  "authority_basis": "HUMAN_USER_EXPLICIT_AUTHORIZATION_2026-10-14_AND_S0_7G_CONTROLLED_NON_PRODUCTION_IMPLEMENTATION",
+  "issued_at": "2026-10-14T21:54:22+07:00",
+  "materialization_commit": "b322db1108e174567b2991cf4e53154f30ec3531",
+  "adjudication_commit": "5754f9a1206229e208ad9a1a3e70de14c534288c",
+  "materialization_reference": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB01.materialization.json",
+  "materialization_sha256": "a115554dc471c66e468c8e1d7bed6ee5636dd71d18f8f1e59d2e43018376cbfe",
+  "adjudication_reference": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB01.adjudication.json",
+  "adjudication_sha256": "130cd58c5a6a9de0770a20a9ec52f99ac9a29681612aab2dbfea92d0dfffeb17",
+  "executor_id": "SIFI-CB01-SOURCE-LINEAGE-EXECUTOR",
+  "executor_version": "v0.1",
+  "executor_reference": "sifi.benchmarks.materialized_cases:execute_cb01",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "notes": [
+    "Authorized by explicit human instruction for one controlled non-production canonical benchmark execution.",
+    "This authorization does not authorize production ingestion or deployment."
+  ]
+}
