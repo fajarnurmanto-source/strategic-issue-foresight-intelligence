@@ -14,6 +14,11 @@ from .model import (
 )
 
 __all__ = [
+    "AUTHORIZATION_CONSUMPTION_OBJECT_TYPE",
+    "AuthorizationAlreadyConsumedError",
+    "AuthorizationConsumption",
+    "AuthorizationConsumptionError",
+    "AuthorizationConsumptionRepository",
     "BENCHMARK_RESULT_OBJECT_TYPE",
     "BenchmarkContractError",
     "BenchmarkRegistrationError",
@@ -35,9 +40,19 @@ __all__ = [
     "MATERIALIZED_EXECUTOR_SPECS",
     "MaterializedExecutorSpec",
     "PersistedBenchmarkResultVersion",
+    "PersistedAuthorizationConsumption",
     "RecordedBenchmarkResult",
     "execution_record_fingerprint",
 ]
+
+from .authorization_consumption import (
+    AUTHORIZATION_CONSUMPTION_OBJECT_TYPE,
+    AuthorizationAlreadyConsumedError,
+    AuthorizationConsumption,
+    AuthorizationConsumptionError,
+    AuthorizationConsumptionRepository,
+    PersistedAuthorizationConsumption,
+)
 
 from .result_repository import (
     BENCHMARK_RESULT_OBJECT_TYPE,
