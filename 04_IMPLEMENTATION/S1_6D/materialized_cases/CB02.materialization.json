@@ -1,0 +1,31 @@
+{
+  "analytical_cutoff_rule": "CASE_DEFINED",
+  "benchmark_input_reference": "S0_6A3::CB02::Scenario",
+  "canonical_execution_authorized": false,
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "case_id": "CB02",
+  "executor_id": "SIFI-CB02-ATTENTION-IMPACT-SEPARATION-EXECUTOR",
+  "executor_module_path": "src/sifi/benchmarks/materialized_cases_batch2.py",
+  "executor_module_sha256": "9a80677e3e9ce5a4218de55bede3ce30f6149b2724a7a531615eafa6ec33b286",
+  "executor_reference": "sifi.benchmarks.materialized_cases_batch2:execute_cb02",
+  "executor_version": "v0.1",
+  "expected_output_reference": "S0_6A3::CB02::Expected",
+  "fixture_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB02.fixture.json",
+  "fixture_sha256": "d0fcb28454f2438f049a11eba2d9bb22de41f3ecc0641eddbdcc6791b8643e95",
+  "forbidden_output_reference": "S0_6A3::CB02::Forbidden",
+  "manifest_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB02.materialization.json",
+  "materialization_adjudication_state": "NOT_ADJUDICATED",
+  "materialization_state": "MATERIALIZED_NOT_ADJUDICATED",
+  "notes": [
+    "Synthetic controlled-development attention-versus-impact materialization only.",
+    "High attention does not establish impact, severity, or strategic importance.",
+    "Materialization does not constitute canonical execution authorization."
+  ],
+  "predecessor_head": "575c608c3575b43e1ef2df2fa8cea41322fab8d8",
+  "reference_methodology": "ADJUDICATED_SYNTHETIC_REFERENCE",
+  "regression_dependency_reference": "S0_6A3::CB02::Regression",
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS",
+  "s1_6c_adjudication_reference": "04_IMPLEMENTATION/S1_6C/S1_6C1_CASE_EXECUTABILITY_ADJUDICATION_MATRIX_v0_1.csv",
+  "s1_6c_executability_state": "MATERIALIZABLE_NOW"
+}

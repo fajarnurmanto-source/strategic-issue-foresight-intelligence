@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.1",
+  "case_id": "CB02",
+  "analytical_cutoff": "2026-01-05T12:00:00+00:00",
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS",
+  "observed_publication_count": 120,
+  "high_attention_threshold": 20,
+  "qualified_impact_evidence": [],
+  "expected_attention_state": "HIGH_ATTENTION",
+  "expected_impact_state": "IMPACT_NOT_ESTABLISHED",
+  "automatic_severity_assigned": false,
+  "automatic_strategic_importance_assigned": false,
+  "attention_impact_separation_required": true,
+  "severity_engine_claimed_available": false,
+  "notes": [
+    "Synthetic high-attention fixture with no qualified impact evidence.",
+    "Publication volume is not evidence of severity or strategic importance."
+  ]
+}
