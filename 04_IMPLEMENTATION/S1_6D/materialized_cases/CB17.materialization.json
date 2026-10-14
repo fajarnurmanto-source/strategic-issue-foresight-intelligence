@@ -1,0 +1,32 @@
+{
+  "analytical_cutoff_rule": "CASE_DEFINED",
+  "benchmark_input_reference": "S0_6A3::CB17::Scenario",
+  "canonical_execution_authorized": false,
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "case_id": "CB17",
+  "executor_id": "SIFI-CB17-REVIEWER-DISAGREEMENT-EXECUTOR",
+  "executor_module_path": "src/sifi/benchmarks/materialized_cases_batch5.py",
+  "executor_module_sha256": "6c298aac48cce48b1d847098b06bfb7245e15ed48864850353d8b2debefe96e4",
+  "executor_reference": "sifi.benchmarks.materialized_cases_batch5:execute_cb17",
+  "executor_version": "v0.1",
+  "expected_output_reference": "S0_6A3::CB17::Expected",
+  "fixture_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB17.fixture.json",
+  "fixture_sha256": "2d105ee646f80bc4b23927b78e0eae3c3c6341ee18c13655084f464440b87ddc",
+  "forbidden_output_reference": "S0_6A3::CB17::Forbidden",
+  "manifest_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB17.materialization.json",
+  "materialization_adjudication_state": "NOT_ADJUDICATED",
+  "materialization_state": "MATERIALIZED_NOT_ADJUDICATED",
+  "notes": [
+    "Synthetic controlled-development reviewer-disagreement materialization only.",
+    "Both reviewer records remain explicit and are referenced by adjudication.",
+    "Dissent is retained; first-reviewer selection and judgment averaging are forbidden.",
+    "Materialization does not constitute canonical execution authorization."
+  ],
+  "predecessor_head": "1b19b6c764b9d9095331bfb864d6e59af3cce483",
+  "reference_methodology": "HUMAN_REVIEW_CONTRACT_REFERENCE",
+  "regression_dependency_reference": "S0_6A3::CB17::Regression",
+  "rights_basis": "SYNTHETIC_NO_EXTERNAL_RIGHTS",
+  "s1_6c_adjudication_reference": "04_IMPLEMENTATION/S1_6C/S1_6C1_CASE_EXECUTABILITY_ADJUDICATION_MATRIX_v0_1.csv",
+  "s1_6c_executability_state": "MATERIALIZABLE_NOW"
+}

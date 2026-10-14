@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.1",
+  "case_id": "CB17",
+  "analytical_cutoff": "2026-01-12T16:00:00+00:00",
+  "expected_adjudicated_state": "QUALIFIED_WITH_DISSENT",
+  "forbidden_averaged_state": "QUALIFIED_MEDIUM",
+  "reviewer_disagreements": [
+    {
+      "review_id": "CB17-REV-A",
+      "final_disposition": "RD-07",
+      "decided_at": "2026-01-12T10:10:00+00:00",
+      "recorded_at": "2026-01-12T10:11:00+00:00",
+      "assignment": {"assignment_id": "CB17-ASG-A", "reviewer_reference": "CB17-REVIEWER-A", "role": "RR-02", "transition": "T-02", "authority_basis": "CONTROLLED_SYNTHETIC_REVIEW_AUTHORITY", "effective_from": "2026-01-01T00:00:00+00:00"},
+      "proposal": {"proposal_id": "CB17-PROP-A", "reviewed_object_type": "ISSUE", "reviewed_object_id": "CB17-ISSUE-001", "reviewed_object_version": 1, "proposed_action": "T-02", "proposed_state": "QUALIFIED_HIGH", "proposer_actor_type": "HUMAN", "proposer_reference": "CB17-REVIEWER-A", "rationale": "Reviewer A interprets the synthetic evidence as high qualification.", "evidence_refs": ["CB17-EV-001"], "contradictory_evidence_refs": ["CB17-EV-002"], "coverage_limitations": ["Synthetic benchmark scope."], "rights_or_privacy_constraints": [], "uncertainty_state": "MATERIAL_DISAGREEMENT", "disagreement_state": "DISAGREEMENT_OPEN", "proposed_at": "2026-01-12T10:00:00+00:00", "analytical_cutoff": "2026-01-12T09:55:00+00:00"}
+    },
+    {
+      "review_id": "CB17-REV-B",
+      "final_disposition": "RD-07",
+      "decided_at": "2026-01-12T11:10:00+00:00",
+      "recorded_at": "2026-01-12T11:11:00+00:00",
+      "assignment": {"assignment_id": "CB17-ASG-B", "reviewer_reference": "CB17-REVIEWER-B", "role": "RR-02", "transition": "T-02", "authority_basis": "CONTROLLED_SYNTHETIC_REVIEW_AUTHORITY", "effective_from": "2026-01-01T00:00:00+00:00"},
+      "proposal": {"proposal_id": "CB17-PROP-B", "reviewed_object_type": "ISSUE", "reviewed_object_id": "CB17-ISSUE-001", "reviewed_object_version": 1, "proposed_action": "T-02", "proposed_state": "QUALIFIED_LOW", "proposer_actor_type": "HUMAN", "proposer_reference": "CB17-REVIEWER-B", "rationale": "Reviewer B interprets the same bounded evidence as low qualification.", "evidence_refs": ["CB17-EV-001"], "contradictory_evidence_refs": ["CB17-EV-002"], "coverage_limitations": ["Synthetic benchmark scope."], "rights_or_privacy_constraints": [], "uncertainty_state": "MATERIAL_DISAGREEMENT", "disagreement_state": "DISAGREEMENT_OPEN", "proposed_at": "2026-01-12T11:00:00+00:00", "analytical_cutoff": "2026-01-12T10:55:00+00:00"}
+    }
+  ],
+  "adjudication": {
+    "review_id": "CB17-REV-ADJ",
+    "final_disposition": "RD-08",
+    "decided_at": "2026-01-12T14:10:00+00:00",
+    "recorded_at": "2026-01-12T14:11:00+00:00",
+    "assignment": {"assignment_id": "CB17-ASG-ADJ", "reviewer_reference": "CB17-ADJUDICATOR", "role": "RR-06", "transition": "T-02", "authority_basis": "CONTROLLED_SYNTHETIC_ADJUDICATION_AUTHORITY", "effective_from": "2026-01-01T00:00:00+00:00"},
+    "proposal": {"proposal_id": "CB17-PROP-ADJ", "reviewed_object_type": "ISSUE", "reviewed_object_id": "CB17-ISSUE-001", "reviewed_object_version": 1, "proposed_action": "T-02", "proposed_state": "QUALIFIED_WITH_DISSENT", "proposer_actor_type": "HUMAN", "proposer_reference": "CB17-ADJUDICATOR", "rationale": "Adjudication records a bounded decision without erasing the competing interpretation.", "evidence_refs": ["CB17-EV-001"], "contradictory_evidence_refs": ["CB17-EV-002"], "coverage_limitations": ["Synthetic benchmark scope."], "rights_or_privacy_constraints": [], "uncertainty_state": "DISSENT_RETAINED", "disagreement_state": "ADJUDICATED_WITH_DISSENT_RETAINED", "proposed_at": "2026-01-12T14:00:00+00:00", "analytical_cutoff": "2026-01-12T13:55:00+00:00", "prior_review_ids": ["CB17-REV-A", "CB17-REV-B"], "dissenting_view": "Reviewer B's lower-qualification interpretation remains materially plausible.", "review_notes": ["No averaging of reviewer judgments was performed."]}
+  }
+}
