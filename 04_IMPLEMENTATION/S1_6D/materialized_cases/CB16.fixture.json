@@ -1,0 +1,78 @@
+{
+  "schema_version": "0.1",
+  "case_id": "CB16",
+  "analytical_cutoff": "2026-01-10T12:00:00+00:00",
+  "expected_prior_state": "QUALIFIED_STANDARD",
+  "expected_corrected_state": "QUALIFIED_LIMITED",
+  "prior_review": {
+    "review_id": "CB16-REV-PRIOR-001",
+    "final_disposition": "RD-01",
+    "decided_at": "2026-01-10T09:10:00+00:00",
+    "recorded_at": "2026-01-10T09:11:00+00:00",
+    "assignment": {
+      "assignment_id": "CB16-ASG-PRIOR-001",
+      "reviewer_reference": "CB16-REVIEWER-A",
+      "role": "RR-02",
+      "transition": "T-01",
+      "authority_basis": "CONTROLLED_SYNTHETIC_REVIEW_AUTHORITY",
+      "effective_from": "2026-01-01T00:00:00+00:00"
+    },
+    "proposal": {
+      "proposal_id": "CB16-PROP-PRIOR-001",
+      "reviewed_object_type": "CLAIM",
+      "reviewed_object_id": "CB16-CLAIM-001",
+      "reviewed_object_version": 1,
+      "proposed_action": "T-01",
+      "proposed_state": "QUALIFIED_STANDARD",
+      "proposer_actor_type": "AI",
+      "proposer_reference": "CB16-ANALYTICAL-GENERATOR",
+      "rationale": "Initial synthetic classification based on the evidence available at the first cutoff.",
+      "evidence_refs": ["CB16-EV-001"],
+      "contradictory_evidence_refs": [],
+      "coverage_limitations": ["Single synthetic observation window."],
+      "rights_or_privacy_constraints": [],
+      "uncertainty_state": "BOUNDED",
+      "disagreement_state": "NO_MATERIAL_DISAGREEMENT",
+      "proposed_at": "2026-01-10T09:00:00+00:00",
+      "analytical_cutoff": "2026-01-10T08:55:00+00:00"
+    }
+  },
+  "correction_review": {
+    "review_id": "CB16-REV-CORRECTION-001",
+    "final_disposition": "RD-01",
+    "decided_at": "2026-01-10T11:30:00+00:00",
+    "recorded_at": "2026-01-10T11:31:00+00:00",
+    "assignment": {
+      "assignment_id": "CB16-ASG-CORRECTION-001",
+      "reviewer_reference": "CB16-REVIEWER-B",
+      "role": "RR-02",
+      "transition": "T-08",
+      "authority_basis": "CONTROLLED_SYNTHETIC_CORRECTION_AUTHORITY",
+      "effective_from": "2026-01-01T00:00:00+00:00"
+    },
+    "proposal": {
+      "proposal_id": "CB16-PROP-CORRECTION-001",
+      "reviewed_object_type": "CLAIM",
+      "reviewed_object_id": "CB16-CLAIM-001",
+      "reviewed_object_version": 1,
+      "proposed_action": "T-08",
+      "proposed_state": "QUALIFIED_LIMITED",
+      "proposer_actor_type": "HUMAN",
+      "proposer_reference": "CB16-REVIEWER-B",
+      "rationale": "Contradictory synthetic evidence narrows the classification while preserving the earlier decision.",
+      "evidence_refs": ["CB16-EV-001", "CB16-EV-002"],
+      "contradictory_evidence_refs": ["CB16-EV-003"],
+      "coverage_limitations": ["Synthetic benchmark scope only."],
+      "rights_or_privacy_constraints": [],
+      "uncertainty_state": "MATERIAL_LIMITATION_RECORDED",
+      "disagreement_state": "NO_MATERIAL_DISAGREEMENT",
+      "proposed_at": "2026-01-10T11:20:00+00:00",
+      "analytical_cutoff": "2026-01-10T11:15:00+00:00",
+      "prior_review_ids": ["CB16-REV-PRIOR-001"],
+      "supersedes_review_id": "CB16-REV-PRIOR-001",
+      "correction_reference": "CB16-CORR-001",
+      "affected_downstream_outputs": ["CB16-OUTPUT-001"],
+      "review_notes": ["Prior state remains available through append-only review history."]
+    }
+  }
+}
