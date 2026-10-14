@@ -28,11 +28,14 @@ __all__ = [
     "BenchmarkResultVersionSequenceError",
     "CanonicalBenchmarkHarness",
     "CanonicalCaseDefinition",
+    "CanonicalExecutionAttempt",
+    "CanonicalExecutionCoordinator",
     "CaseExecutionRecord",
     "CaseExecutor",
     "CaseObservation",
     "DuplicateExecutionResultError",
     "ExecutionEvidenceReference",
+    "ExecutionBoundaryError",
     "HarnessExecutionState",
     "HarnessResultState",
     "MATERIALIZED_CASE_IDS",
@@ -44,6 +47,12 @@ __all__ = [
     "RecordedBenchmarkResult",
     "execution_record_fingerprint",
 ]
+
+from .execution_boundary import (
+    CanonicalExecutionAttempt,
+    CanonicalExecutionCoordinator,
+    ExecutionBoundaryError,
+)
 
 from .authorization_consumption import (
     AUTHORIZATION_CONSUMPTION_OBJECT_TYPE,
