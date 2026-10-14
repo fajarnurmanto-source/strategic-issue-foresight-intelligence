@@ -1,0 +1,20 @@
+{
+  "record_type": "SIFI_S1_7D_LOCAL_RUNTIME_RESULT",
+  "record_version": "0.1",
+  "status": "PASS_LOCAL_DURABLE_RUNTIME_ADAPTER",
+  "implementation_reference": "src/sifi/workflow/runtime.py",
+  "test_reference": "tests/test_s1_7d_local_runtime.py",
+  "focused_test_pass_count": 4,
+  "full_regression_pass_count": 308,
+  "local_database_path_configurable": true,
+  "durable_recovery_verified": true,
+  "failed_boundary_leaves_no_partial_progress": true,
+  "point_in_time_retrieval_verified": true,
+  "external_runtime_service_required": false,
+  "end_to_end_domain_orchestration_verified": false,
+  "cb22_state": "PROTOCOL_ONLY_NOT_EXECUTED_NO_RESULT",
+  "representative_user_validation": "NOT_PERFORMED",
+  "production_ingestion_authorized": false,
+  "production_deployment_authorized": false,
+  "next_action": "BIND_LOCAL_RUNTIME_TO_ISSUE_EVIDENCE_REVIEW_AND_BRIEF_ADAPTERS"
+}

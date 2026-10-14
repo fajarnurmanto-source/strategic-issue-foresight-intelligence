@@ -14,6 +14,7 @@ from .repository import (
     WorkflowSessionRepositoryError,
     WorkflowSessionVersionError,
 )
+from .runtime import LocalWorkflowRuntime
 
 __all__ = [
     "BoundedAnalystWorkflow",
@@ -26,4 +27,5 @@ __all__ = [
     "WorkflowSessionRepository",
     "WorkflowSessionRepositoryError",
     "WorkflowSessionVersionError",
+    "LocalWorkflowRuntime",
 ]
