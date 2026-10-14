@@ -1,0 +1,39 @@
+{
+  "record_type": "SIFI_CANONICAL_BENCHMARK_EXECUTION_RESULT",
+  "record_version": "0.1",
+  "scope": "CONTROLLED_NON_PRODUCTION_CANONICAL_BENCHMARK",
+  "case_id": "CB02",
+  "authorization_id": "S1.6D-CB02-AUTH-001",
+  "authorization_commit": "2f4e76c1ed133017f375a774f38a43fb251e938a",
+  "execution_id": "S1.6D-CB02-EXEC-001",
+  "requested_at": "2026-10-14T20:56:40.122425+00:00",
+  "started_at": "2026-10-14T20:56:40.122445+00:00",
+  "completed_at": "2026-10-14T20:56:41.128285+00:00",
+  "recorded_at": "2026-10-14T20:56:41.128306+00:00",
+  "consumption_state": "CONSUMED",
+  "execution_state": "EXECUTED",
+  "recording_state": "RESULT_RECORDED",
+  "result_state": "PASS",
+  "execution_fingerprint": "c8c5bfd7d0e3d24fcbffa960e6e6e48114ff935aa6ec6dbae56a27845269deaa",
+  "contract_fingerprint": "a36f96b363b31235a33bc02104bceb1115713a6e61bdbd608511abf0e6e14a6a",
+  "expected_conditions_satisfied": true,
+  "forbidden_output_observed": false,
+  "regression_dependencies_satisfied": true,
+  "rights_constraints_satisfied": true,
+  "evidence_reference": {
+    "artifact_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB02.fixture.json",
+    "evidence_id": "CB02-MATERIALIZED-FIXTURE",
+    "sha256": "d0fcb28454f2438f049a11eba2d9bb22de41f3ecc0641eddbdcc6791b8643e95"
+  },
+  "findings": {
+    "publication_count": 120,
+    "high_attention": true,
+    "qualified_impact_evidence_count": 0,
+    "impact_established": false,
+    "automatic_severity_assigned": false
+  },
+  "replay_protection_verified": true,
+  "capability_promotion_performed": false,
+  "production_ingestion_authorized": false,
+  "production_deployment_authorized": false
+}
