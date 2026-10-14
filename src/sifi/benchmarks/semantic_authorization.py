@@ -10,8 +10,8 @@ from pathlib import Path
 from .authorization import (
     CaseExecutionAuthorization,
 )
-from .materialized_cases import (
-    MATERIALIZED_EXECUTOR_SPECS,
+from .executor_registry import (
+    ALL_MATERIALIZED_EXECUTOR_SPECS,
 )
 
 
@@ -279,7 +279,7 @@ class SemanticAuthorizationIssuer:
     ) -> SemanticAuthorizationEligibility:
         if (
             case_id
-            not in MATERIALIZED_EXECUTOR_SPECS
+            not in ALL_MATERIALIZED_EXECUTOR_SPECS
         ):
             raise SemanticAuthorizationError(
                 case_id
@@ -287,7 +287,7 @@ class SemanticAuthorizationIssuer:
             )
 
         spec = (
-            MATERIALIZED_EXECUTOR_SPECS[
+            ALL_MATERIALIZED_EXECUTOR_SPECS[
                 case_id
             ]
         )
