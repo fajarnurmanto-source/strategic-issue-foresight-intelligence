@@ -8,6 +8,12 @@ from .service import (
     WorkflowStep,
     WorkflowStepSubmission,
 )
+from .repository import (
+    PersistedWorkflowSession,
+    WorkflowSessionRepository,
+    WorkflowSessionRepositoryError,
+    WorkflowSessionVersionError,
+)
 
 __all__ = [
     "BoundedAnalystWorkflow",
@@ -16,4 +22,8 @@ __all__ = [
     "WorkflowSession",
     "WorkflowStep",
     "WorkflowStepSubmission",
+    "PersistedWorkflowSession",
+    "WorkflowSessionRepository",
+    "WorkflowSessionRepositoryError",
+    "WorkflowSessionVersionError",
 ]
