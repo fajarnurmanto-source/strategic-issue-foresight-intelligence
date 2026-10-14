@@ -1,0 +1,42 @@
+{
+  "schema_version": "0.1",
+  "case_id": "CB08",
+  "analytical_cutoff": "2026-01-05T12:00:00+00:00",
+  "rights_basis": "Z2_REQUIRED_FOR_PRODUCTION_TEST",
+  "expected_independent_origin_count": 2,
+  "expected_support_count": 3,
+  "sources": [
+    {
+      "source_id": "CB08-SRC-A",
+      "source_zone": "Z2",
+      "access_state": "ALLOWED",
+      "commercial_use_state": "ALLOWED",
+      "retention_state": "ALLOWED",
+      "privacy_clearance_state": "ALLOWED",
+      "valid_from": "2026-01-01T00:00:00+00:00"
+    },
+    {
+      "source_id": "CB08-SRC-B",
+      "source_zone": "Z2",
+      "access_state": "ALLOWED",
+      "commercial_use_state": "ALLOWED",
+      "retention_state": "ALLOWED",
+      "privacy_clearance_state": "ALLOWED",
+      "valid_from": "2026-01-01T00:00:00+00:00"
+    }
+  ],
+  "publications": [
+    {"publication_id": "CB08-PUB-A1", "source_id": "CB08-SRC-A", "collected_at": "2026-01-03T08:00:00+00:00", "content_fingerprint": "CB08-CONTENT-A1", "source_zone": "Z2", "origin_key": "CB08-ORIGIN-A"},
+    {"publication_id": "CB08-PUB-A2", "source_id": "CB08-SRC-A", "collected_at": "2026-01-03T09:00:00+00:00", "content_fingerprint": "CB08-CONTENT-A2", "source_zone": "Z2", "origin_key": "CB08-ORIGIN-A"},
+    {"publication_id": "CB08-PUB-B1", "source_id": "CB08-SRC-B", "collected_at": "2026-01-04T08:00:00+00:00", "content_fingerprint": "CB08-CONTENT-B1", "source_zone": "Z2", "origin_key": "CB08-ORIGIN-B"}
+  ],
+  "claims": [
+    {"claim_id": "CB08-CL-CONDITION", "source_id": "CB08-SRC-A", "claim_type": "CT-04", "claim_text": "A bounded empirical condition is observed.", "recorded_at": "2026-01-03T10:00:00+00:00"},
+    {"claim_id": "CB08-CL-SEVERITY", "source_id": "CB08-SRC-A", "claim_type": "CT-06", "claim_text": "The condition has material severity.", "recorded_at": "2026-01-03T10:00:00+00:00"}
+  ],
+  "evidence": [
+    {"evidence_id": "CB08-EV-A1", "source_id": "CB08-SRC-A", "publication_id": "CB08-PUB-A1", "evidence_kind": "SYNTHETIC_OBSERVATION", "recorded_at": "2026-01-03T08:30:00+00:00", "origin_key": "CB08-ORIGIN-A", "evidence_specific_reviewed": true, "provenance_traceable": true, "supported_claim_ids": ["CB08-CL-CONDITION"]},
+    {"evidence_id": "CB08-EV-A2", "source_id": "CB08-SRC-A", "publication_id": "CB08-PUB-A2", "evidence_kind": "SYNTHETIC_OBSERVATION", "recorded_at": "2026-01-03T09:30:00+00:00", "origin_key": "CB08-ORIGIN-A", "evidence_specific_reviewed": true, "provenance_traceable": true, "supported_claim_ids": ["CB08-CL-CONDITION"]},
+    {"evidence_id": "CB08-EV-B1", "source_id": "CB08-SRC-B", "publication_id": "CB08-PUB-B1", "evidence_kind": "SYNTHETIC_OBSERVATION", "recorded_at": "2026-01-04T08:30:00+00:00", "origin_key": "CB08-ORIGIN-B", "evidence_specific_reviewed": true, "provenance_traceable": true, "supported_claim_ids": ["CB08-CL-CONDITION"]}
+  ]
+}

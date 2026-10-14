@@ -1,0 +1,32 @@
+{
+  "analytical_cutoff_rule": "CASE_DEFINED",
+  "benchmark_input_reference": "S0_6A3::CB08::Scenario",
+  "canonical_execution_authorized": false,
+  "canonical_execution_performed": false,
+  "canonical_result_recorded": false,
+  "case_id": "CB08",
+  "executor_id": "SIFI-CB08-INDEPENDENT-CORROBORATION-EXECUTOR",
+  "executor_module_path": "src/sifi/benchmarks/materialized_cases_batch3.py",
+  "executor_module_sha256": "2d9f9b782c7686a7f401295730599dc9efa7421c6d4f45a741e057af413f3995",
+  "executor_reference": "sifi.benchmarks.materialized_cases_batch3:execute_cb08",
+  "executor_version": "v0.1",
+  "expected_output_reference": "S0_6A3::CB08::Expected",
+  "fixture_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB08.fixture.json",
+  "fixture_sha256": "9f16a0f41e47fe3e658106b71475ec3136964c9b2714dfd09a4b0f5ce6272d15",
+  "forbidden_output_reference": "S0_6A3::CB08::Forbidden",
+  "manifest_path": "04_IMPLEMENTATION/S1_6D/materialized_cases/CB08.materialization.json",
+  "materialization_adjudication_state": "NOT_ADJUDICATED",
+  "materialization_state": "MATERIALIZED_NOT_ADJUDICATED",
+  "notes": [
+    "Synthetic controlled-development corroboration materialization only.",
+    "Z2 evidence admission is produced by RightsPolicyEvaluator.",
+    "Same-origin repetition is not counted as independent corroboration.",
+    "Materialization does not constitute canonical execution authorization."
+  ],
+  "predecessor_head": "464cc34314c9d042466d47b9bab4a6589c898497",
+  "reference_methodology": "ADJUDICATED_INDEPENDENCE_REFERENCE",
+  "regression_dependency_reference": "S0_6A3::CB08::Regression",
+  "rights_basis": "Z2_REQUIRED_FOR_PRODUCTION_TEST",
+  "s1_6c_adjudication_reference": "04_IMPLEMENTATION/S1_6C/S1_6C1_CASE_EXECUTABILITY_ADJUDICATION_MATRIX_v0_1.csv",
+  "s1_6c_executability_state": "MATERIALIZABLE_NOW"
+}
