@@ -19,6 +19,8 @@ __all__ = [
     "AuthorizationConsumption",
     "AuthorizationConsumptionError",
     "AuthorizationConsumptionRepository",
+    "AuthorizationProposal",
+    "AuthorizationProposalBuilder",
     "BENCHMARK_RESULT_OBJECT_TYPE",
     "BenchmarkContractError",
     "BenchmarkRegistrationError",
@@ -47,6 +49,11 @@ __all__ = [
     "RecordedBenchmarkResult",
     "execution_record_fingerprint",
 ]
+
+from .authorization_proposal import (
+    AuthorizationProposal,
+    AuthorizationProposalBuilder,
+)
 
 from .execution_boundary import (
     CanonicalExecutionAttempt,
