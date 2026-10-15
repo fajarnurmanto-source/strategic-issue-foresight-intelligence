@@ -87,6 +87,12 @@ class EvidenceBriefRepository:
             for item in self._store.history(BRIEF_OBJECT_TYPE, brief_id)
         )
 
+    def list_latest(self, *, limit: int = 100) -> tuple[PersistedBrief, ...]:
+        return tuple(
+            self._decode(item)
+            for item in self._store.list_latest(BRIEF_OBJECT_TYPE, limit=limit)
+        )
+
     @staticmethod
     def _decode(snapshot) -> PersistedBrief | None:
         if snapshot is None:

@@ -142,6 +142,12 @@ class WorkflowSessionRepository:
             for item in self._store.history(WORKFLOW_SESSION_OBJECT_TYPE, session_id)
         )
 
+    def list_latest(self, *, limit: int = 100) -> tuple[PersistedWorkflowSession, ...]:
+        return tuple(
+            self._decode(item)
+            for item in self._store.list_latest(WORKFLOW_SESSION_OBJECT_TYPE, limit=limit)
+        )
+
     @staticmethod
     def _decode(snapshot) -> PersistedWorkflowSession | None:
         if snapshot is None:

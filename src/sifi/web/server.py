@@ -104,10 +104,44 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._send_json(code, {"service": "sifi-local", "status": status.integrity, "local_only": True})
         elif parsed.path == "/api/status":
             self._send_json(HTTPStatus.OK, LocalOperations(self.server.paths.root).status())
+        elif parsed.path == "/api/catalog":
+            self._serve_catalog()
         elif parsed.path in {"/api/session", "/api/brief"}:
             self._serve_record(parsed.path, parse_qs(parsed.query))
         else:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+
+    def _serve_catalog(self) -> None:
+        if not self.server.paths.database.is_file():
+            self._send_json(HTTPStatus.OK, {"sessions": [], "briefs": []})
+            return
+        with LocalWorkflowRuntime(
+            self.server.paths.database, workspace_root=self.server.paths.root
+        ) as runtime:
+            catalog = runtime.catalog(limit=100)
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "sessions": [
+                    {
+                        "id": item.session_id,
+                        "issue_id": item.issue_id,
+                        "complete": item.is_complete,
+                        "analytical_only": item.analytical_only,
+                    }
+                    for item in catalog["sessions"]
+                ],
+                "briefs": [
+                    {
+                        "id": item.brief_id,
+                        "issue_id": item.issue_id,
+                        "created_at": item.created_at,
+                        "analytical_only": item.analytical_only,
+                    }
+                    for item in catalog["briefs"]
+                ],
+            },
+        )
 
     def _serve_record(self, path: str, query: dict[str, list[str]]) -> None:
         values = query.get("id", [])

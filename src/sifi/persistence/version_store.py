@@ -212,6 +212,36 @@ class SQLiteVersionStore:
             for row in rows
         )
 
+    def list_latest(
+        self,
+        object_type: str,
+        *,
+        limit: int = 100,
+    ) -> tuple[VersionedSnapshot, ...]:
+        if not object_type.strip():
+            raise ValueError("object_type must be nonblank")
+        if limit < 1 or limit > 1000:
+            raise ValueError("limit must be between 1 and 1000")
+        rows = self._connection.execute(
+            """
+            SELECT current.*
+            FROM object_versions AS current
+            INNER JOIN (
+                SELECT object_id, MAX(version) AS latest_version
+                FROM object_versions
+                WHERE object_type = ?
+                GROUP BY object_id
+            ) AS latest
+              ON current.object_id = latest.object_id
+             AND current.version = latest.latest_version
+            WHERE current.object_type = ?
+            ORDER BY current.recorded_at DESC, current.object_id ASC
+            LIMIT ?
+            """,
+            (object_type, object_type, limit),
+        ).fetchall()
+        return tuple(self._row_to_snapshot(row) for row in rows)
+
     @staticmethod
     def _row_to_snapshot(
         row: sqlite3.Row,

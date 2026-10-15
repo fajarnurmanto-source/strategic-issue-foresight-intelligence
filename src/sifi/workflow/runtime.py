@@ -97,3 +97,9 @@ class LocalWorkflowRuntime:
     def latest_brief(self, brief_id: str) -> EvidenceLinkedBrief | None:
         item = self._brief_repository.latest(brief_id)
         return item.brief if item else None
+
+    def catalog(self, *, limit: int = 100) -> dict[str, tuple]:
+        return {
+            "sessions": tuple(item.session for item in self._repository.list_latest(limit=limit)),
+            "briefs": tuple(item.brief for item in self._brief_repository.list_latest(limit=limit)),
+        }
