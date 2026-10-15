@@ -1,0 +1,42 @@
+{
+  "record_type": "SIFI_PRODUCT_READINESS_ASSESSMENT",
+  "record_version": "0.1",
+  "assessment_date": "2026-10-15",
+  "basis_commit": "7a5d4a8",
+  "method": "EVIDENCE_WEIGHTED_PLANNING_INDEX_NOT_PROBABILITY",
+  "dimensions": [
+    {"id": "D1", "name": "Governance, contracts, and domain controls", "weight": 20, "earned": 20},
+    {"id": "D2", "name": "Benchmark and functional verification", "weight": 15, "earned": 13},
+    {"id": "D3", "name": "Local application and operations", "weight": 20, "earned": 18},
+    {"id": "D4", "name": "Live acquisition and representative coverage", "weight": 15, "earned": 0},
+    {"id": "D5", "name": "Representative-user operability", "weight": 10, "earned": 0},
+    {"id": "D6", "name": "Comparative decision value", "weight": 10, "earned": 0},
+    {"id": "D7", "name": "Production and commercial operations", "weight": 10, "earned": 1}
+  ],
+  "scores": {
+    "controlled_nonproduction_prototype_percent": 93,
+    "operational_product_percent": 64,
+    "commercial_readiness_percent": 52
+  },
+  "verified_current_state": {
+    "full_windows_test_pass_count": 350,
+    "s1_7_engineering_closed": true,
+    "maturity": "L4_CANDIDATE",
+    "local_runtime_confined": true,
+    "managed_start_stop": true,
+    "backup_restore": true,
+    "interactive_eleven_step_workflow": true,
+    "atomic_workflow_and_brief": true,
+    "resumable_session": true,
+    "local_markdown_export": true
+  },
+  "zero_evidence_holds": {
+    "live_recurring_ingestion": false,
+    "representative_user_validation": false,
+    "cb22_pass": false,
+    "comparative_decision_value": false,
+    "cb23_pass": false,
+    "production_deployment": false,
+    "commercial_readiness_established": false
+  }
+}
