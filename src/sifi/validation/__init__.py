@@ -14,17 +14,25 @@ from .runtime import CB22StudyRuntime
 from .workflow import CB22WorkflowError, CB22WorkflowState, LocalCB22Workflow
 from .gate import CB22GateStatus, cb22_gate_status
 from .export import export_adjudication_bundle
+from .decision import (
+    AdjudicationReceipt, AdjudicationRole, AdjudicationVote,
+    CB22AdjudicationRuntime,
+)
 
 __all__ = [
     "CB22Assessment",
     "CB22Result",
     "CB22GateStatus",
+    "CB22AdjudicationRuntime",
     "CB22StudyRuntime",
     "CB22WorkflowError",
     "CB22WorkflowState",
     "CB22_PROTOCOL_VERSION",
     "CB22_TASK_PACKAGE_VERSION",
     "EvidenceLinkCheck",
+    "AdjudicationReceipt",
+    "AdjudicationRole",
+    "AdjudicationVote",
     "Intervention",
     "InterventionCategory",
     "LocalCB22Workflow",

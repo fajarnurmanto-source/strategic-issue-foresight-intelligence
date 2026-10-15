@@ -8,13 +8,38 @@ from pathlib import Path
 
 from sifi.validation import (
     CB22_PROTOCOL_VERSION, CB22_TASK_PACKAGE_VERSION, CB22Result,
-    CB22StudyRuntime, EvidenceLinkCheck, Intervention, InterventionCategory,
+    AdjudicationRole, CB22AdjudicationRuntime, CB22StudyRuntime,
+    EvidenceLinkCheck, Intervention, InterventionCategory,
     LocalCB22Workflow, StudyMode, StudyObservation, assess_cb22, cb22_gate_status,
     export_adjudication_bundle,
 )
 
 
 NOW = datetime(2026, 10, 15, 9, 0, tzinfo=timezone.utc)
+
+
+def install_frozen_materials(root: Path) -> None:
+    destination = root / "05_VALIDATION" / "CB22_PREP"
+    destination.mkdir(parents=True)
+    source = Path.cwd() / "05_VALIDATION" / "CB22_PREP"
+    for name in (
+        "CB22_TASK_PACKAGE_v1_0.json",
+        "CB22_7_FROZEN_PROTOCOL_v1_0.md",
+        "CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
+    ):
+        (destination / name).write_bytes((source / name).read_bytes())
+
+
+def install_ready_gate(root: Path) -> None:
+    config = root / "runtime" / "config"
+    config.mkdir(parents=True, exist_ok=True)
+    (config / "cb22-execution-gate.json").write_text(json.dumps({
+        "protocol_version":"CB22-v1.0", "task_package_version":"CB22-TASK-v1.0",
+        "primary_adjudicator_staff_code":"ADJ-001",
+        "independent_checker_staff_code":"CHK-001",
+        "conflict_review_complete":True,
+        "external_review_requirement":"SATISFIED",
+    }), encoding="utf-8")
 
 
 def observation(number: int = 1, **changes) -> StudyObservation:
@@ -84,17 +109,8 @@ class CB22StudyKernelTests(unittest.TestCase):
             root = Path(directory)
             (root / "src" / "sifi").mkdir(parents=True)
             workflow = LocalCB22Workflow(root)
-            (root / "05_VALIDATION" / "CB22_PREP").mkdir(parents=True)
-            source = Path.cwd() / "05_VALIDATION" / "CB22_PREP" / "CB22_TASK_PACKAGE_v1_0.json"
-            (root / "05_VALIDATION" / "CB22_PREP" / source.name).write_bytes(source.read_bytes())
-            (root / "runtime" / "config").mkdir(parents=True, exist_ok=True)
-            (root / "runtime" / "config" / "cb22-execution-gate.json").write_text(json.dumps({
-                "protocol_version": "CB22-v1.0", "task_package_version": "CB22-TASK-v1.0",
-                "primary_adjudicator_staff_code": "ADJ-001",
-                "independent_checker_staff_code": "CHK-001",
-                "conflict_review_complete": True,
-                "external_review_requirement": "NOT_REQUIRED_DOCUMENTED",
-            }), encoding="utf-8")
+            install_frozen_materials(root)
+            install_ready_gate(root)
             state = workflow.start(
                 participant_code="P-101", screening_record_id="SCR-101",
                 consent_record_id="CON-101", consent_confirmed_at=NOW,
@@ -149,10 +165,7 @@ class CB22StudyKernelTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             root = Path(directory)
             (root / "src" / "sifi").mkdir(parents=True)
-            package_dir = root / "05_VALIDATION" / "CB22_PREP"
-            package_dir.mkdir(parents=True)
-            source = Path.cwd() / package_dir.relative_to(root) / "CB22_TASK_PACKAGE_v1_0.json"
-            (package_dir / source.name).write_bytes(source.read_bytes())
+            install_frozen_materials(root)
             config_dir = root / "runtime" / "config"; config_dir.mkdir(parents=True)
             (config_dir / "cb22-execution-gate.json").write_text(json.dumps({
                 "protocol_version":"CB22-v1.0", "task_package_version":"CB22-TASK-v1.0",
@@ -180,6 +193,33 @@ class CB22StudyKernelTests(unittest.TestCase):
             self.assertEqual(payload["observations"][0]["participant_code"], "P-001")
             self.assertFalse(payload["observations"][0]["direct_identifier_collected"])
             self.assertNotIn("name", json.dumps(payload).lower())
+
+    def test_017_two_distinct_assigned_roles_are_required_for_final_pass(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory)
+            (root / "src" / "sifi").mkdir(parents=True)
+            install_frozen_materials(root); install_ready_gate(root)
+            stages = tuple(f"WF-{n:02d}" for n in range(1, 12))
+            items = tuple(observation(n, completed_stage_ids=stages, task_completed=True,
+                                      completed_at=NOW + timedelta(hours=1),
+                                      evidence_link_check=EvidenceLinkCheck.PASS) for n in range(1, 6))
+            bundle = export_adjudication_bundle(root, items)
+            with CB22AdjudicationRuntime(root) as runtime:
+                receipt = runtime.record_vote(
+                    bundle_path=bundle, role=AdjudicationRole.PRIMARY_ADJUDICATOR,
+                    staff_code="ADJ-001", decision=CB22Result.PASS,
+                    reviewed_at=NOW + timedelta(hours=2), conflict_free=True,
+                )
+                self.assertFalse(receipt.claim_allowed)
+                receipt = runtime.record_vote(
+                    bundle_path=bundle, role=AdjudicationRole.INDEPENDENT_CHECKER,
+                    staff_code="CHK-001", decision=CB22Result.PASS,
+                    reviewed_at=NOW + timedelta(hours=3), conflict_free=True,
+                )
+                self.assertTrue(receipt.claim_allowed)
+                self.assertEqual(receipt.status, "FINAL")
+                final_path = runtime.export_final_receipt(bundle)
+                self.assertTrue(final_path.is_file())
 
 
 if __name__ == "__main__":

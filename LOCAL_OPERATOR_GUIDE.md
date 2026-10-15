@@ -100,3 +100,9 @@ lalu hanya memasukkan kode pseudonim serta waktu konfirmasi consent.
 
 Materi beku berada di `05_VALIDATION\CB22_PREP`. Perubahan checksum task
 package akan otomatis menutup gerbang sesi counted.
+
+Setelah seluruh sesi selesai, ekspor bundle dari dashboard atau jalankan
+`scripts\export-cb22.ps1`. Dua staf yang kode perannya sudah ditetapkan harus
+meninjau bundle yang sama dan masing-masing menjalankan
+`scripts\adjudicate-cb22.ps1`. Hanya dua vote bebas konflik yang final dapat
+menghasilkan receipt; satu vote saja tidak pernah mengizinkan klaim PASS.
