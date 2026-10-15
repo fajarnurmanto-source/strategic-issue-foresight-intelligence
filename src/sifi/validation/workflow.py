@@ -130,6 +130,25 @@ class LocalCB22Workflow:
                 raise CB22WorkflowError("participant does not own this study session")
             if observation.completed_at is not None:
                 raise CB22WorkflowError("study observation is already ended")
+            if observation.mode is StudyMode.COUNTED:
+                gate = cb22_gate_status(self.paths.root)
+                if not gate.ready_for_counted_sessions:
+                    raise CB22WorkflowError(
+                        "counted study gate closed during session: "
+                        + ", ".join(gate.reasons)
+                    )
+                configuration = current_gate_configuration(self.paths.root)
+                lock = runtime.version_store.latest(
+                    GATE_LOCK_OBJECT_TYPE, GATE_LOCK_OBJECT_ID
+                )
+                if (
+                    lock is None
+                    or lock.payload.get("configuration_sha256")
+                    != configuration["configuration_sha256"]
+                ):
+                    raise CB22WorkflowError(
+                        "counted-study gate lock is missing or inconsistent"
+                    )
             session = runtime.latest(observation.workflow_session_id)
             if session is None or session.next_step is None:
                 raise CB22WorkflowError("study workflow is missing or already complete")

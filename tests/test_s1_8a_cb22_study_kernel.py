@@ -207,17 +207,25 @@ class CB22StudyKernelTests(unittest.TestCase):
             root = Path(directory)
             (root / "src" / "sifi").mkdir(parents=True)
             install_frozen_materials(root); install_ready_gate(root)
-            LocalCB22Workflow(root).start(
-                participant_code="P-LOCK", screening_record_id="SCR-LOCK",
-                consent_record_id="CON-LOCK", consent_confirmed_at=NOW,
-                governance_authorization_id="GOV-001", representative_profile_met=True,
-                participant_is_sifi_developer=False, mode=StudyMode.COUNTED,
-                now=NOW + timedelta(minutes=1),
-            )
-            stages = tuple(f"WF-{n:02d}" for n in range(1, 12))
-            items = tuple(observation(n, completed_stage_ids=stages, task_completed=True,
-                                      completed_at=NOW + timedelta(hours=1),
-                                      evidence_link_check=EvidenceLinkCheck.PASS) for n in range(1, 6))
+            completed = []
+            workflow = LocalCB22Workflow(root)
+            for n in range(1, 6):
+                state = workflow.start(
+                    participant_code=f"P-{n:03d}", screening_record_id=f"SCR-{n:03d}",
+                    consent_record_id=f"CON-{n:03d}", consent_confirmed_at=NOW,
+                    governance_authorization_id="GOV-001", representative_profile_met=True,
+                    participant_is_sifi_developer=False, mode=StudyMode.COUNTED,
+                    now=NOW + timedelta(minutes=n),
+                )
+                for offset in range(11):
+                    state = workflow.advance(
+                        observation_id=state.observation.observation_id,
+                        participant_code=state.observation.participant_code,
+                        answer_code=STUDY_STEP_SPECS[state.session.next_step].accepted_code,
+                        now=NOW + timedelta(minutes=10 + n * 20 + offset),
+                    )
+                completed.append(state.observation)
+            items = tuple(completed)
             bundle = export_adjudication_bundle(root, items)
             with CB22AdjudicationRuntime(root) as runtime:
                 receipt = runtime.record_vote(
@@ -331,6 +339,41 @@ class CB22StudyKernelTests(unittest.TestCase):
             result = cb22_status(root)
             self.assertTrue(result["automated_pass_candidate"])
             self.assertFalse(result["claim_allowed"])
+
+    def test_024_export_demotes_pass_when_workflow_evidence_is_missing(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            stages = tuple(f"WF-{n:02d}" for n in range(1, 12))
+            items = tuple(observation(
+                n, completed_stage_ids=stages, task_completed=True,
+                completed_at=NOW + timedelta(hours=1),
+                evidence_link_check=EvidenceLinkCheck.PASS,
+            ) for n in range(1, 6))
+            bundle = export_adjudication_bundle(root, items)
+            payload = json.loads(bundle.read_text(encoding="utf-8"))
+            self.assertEqual(payload["assessment"]["result"], "INCONCLUSIVE")
+            self.assertEqual(len(payload["workflow_linkage_failures"]), 5)
+
+    def test_025_counted_session_stops_if_frozen_task_changes_mid_session(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            install_frozen_materials(root); install_ready_gate(root)
+            workflow = LocalCB22Workflow(root)
+            state = workflow.start(
+                participant_code="P-501", screening_record_id="SCR-501",
+                consent_record_id="CON-501", consent_confirmed_at=NOW,
+                governance_authorization_id="GOV-001", representative_profile_met=True,
+                participant_is_sifi_developer=False, mode=StudyMode.COUNTED,
+                now=NOW + timedelta(minutes=1),
+            )
+            task = root / "05_VALIDATION" / "CB22_PREP" / "CB22_TASK_PACKAGE_v1_0.json"
+            task.write_text("{}", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "closed during session"):
+                workflow.advance(
+                    observation_id=state.observation.observation_id,
+                    participant_code="P-501", answer_code="COVERAGE-SYNTHETIC",
+                    now=NOW + timedelta(minutes=2),
+                )
 
 
 if __name__ == "__main__":
