@@ -1,0 +1,20 @@
+{
+  "record_type": "SIFI_S1_7N_LOCAL_AUDIT_LOG_RESULT",
+  "record_version": "0.1",
+  "status": "PASS_PRIVACY_BOUNDED_LOCAL_AUDIT_LOG_VERIFIED",
+  "implementation_references": [
+    "src/sifi/web/server.py",
+    "tests/test_s1_7n_local_audit_log.py"
+  ],
+  "focused_test_pass_count": 8,
+  "full_windows_test_pass_count": 338,
+  "log_path": "D:/Research/SIFI/runtime/logs/web-access.jsonl",
+  "rotation_max_bytes": 1000000,
+  "rotation_backup_count": 3,
+  "query_string_recorded": false,
+  "request_body_recorded": false,
+  "client_identity_recorded": "LOOPBACK_ONLY_LABEL",
+  "database_integrity": "OK",
+  "release_check": "PASS",
+  "production_ready_claimed": false
+}

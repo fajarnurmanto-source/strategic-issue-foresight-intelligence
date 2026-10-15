@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import secrets
+import sys
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from enum import Enum
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -45,7 +48,37 @@ class LocalSIFIWebServer(ThreadingHTTPServer):
         self.paths = LocalSIFIPaths.from_root(workspace_root)
         self.static_root = Path(__file__).with_name("static").resolve()
         self.csrf_token = secrets.token_urlsafe(32)
+        self.audit_logger = logging.getLogger(f"sifi.local.web.{id(self)}")
+        self.audit_logger.setLevel(logging.INFO)
+        self.audit_logger.propagate = False
+        handler = RotatingFileHandler(
+            self.paths.logs / "web-access.jsonl",
+            maxBytes=1_000_000,
+            backupCount=3,
+            encoding="utf-8",
+        )
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        self.audit_logger.addHandler(handler)
         super().__init__(server_address, handler_class)
+
+    def server_close(self) -> None:
+        super().server_close()
+        for handler in tuple(self.audit_logger.handlers):
+            handler.close()
+            self.audit_logger.removeHandler(handler)
+
+    def handle_error(self, request, client_address) -> None:
+        error_type = sys.exc_info()[0]
+        self.audit_logger.error(
+            json.dumps(
+                {
+                    "event": "request_error",
+                    "error_type": error_type.__name__ if error_type else "UNKNOWN",
+                    "client": "loopback",
+                },
+                sort_keys=True,
+            )
+        )
 
 
 class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
@@ -55,6 +88,21 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         return
+
+    def send_response(self, code, message=None):
+        super().send_response(code, message)
+        self.server.audit_logger.info(
+            json.dumps(
+                {
+                    "at": datetime.now().astimezone().isoformat(),
+                    "method": self.command,
+                    "path": urlsplit(self.path).path,
+                    "status": int(code),
+                    "client": "loopback",
+                },
+                sort_keys=True,
+            )
+        )
 
     def _headers(self, status: HTTPStatus, content_type: str, length: int) -> None:
         self.send_response(status)
