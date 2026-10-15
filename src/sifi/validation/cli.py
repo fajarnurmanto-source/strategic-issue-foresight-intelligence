@@ -38,6 +38,7 @@ def status(root: Path) -> dict:
     if paths.database.exists():
         with CB22StudyRuntime(paths.database, workspace_root=paths.root) as runtime:
             assessment = runtime.assessment()
+            observations = runtime.observations()
         assessment_payload = {
             "result": assessment.result.value,
             "analyzable_participants": assessment.analyzable_participants,
@@ -51,12 +52,27 @@ def status(root: Path) -> dict:
             "median_duration_seconds": assessment.median_duration_seconds,
         }
     else:
+        observations = ()
         assessment_payload = {"result": "NOT_READY", "analyzable_participants": 0,
                               "reasons": ("NO_COUNTED_PARTICIPANTS",)}
+    bundles = sorted(
+        (item for item in paths.exports.glob("cb22-adjudication-*.json")
+         if not item.name.startswith("cb22-adjudication-receipt-")),
+        key=lambda item: item.stat().st_mtime,
+    )
+    receipts = sorted(paths.exports.glob("cb22-adjudication-receipt-*.json"), key=lambda item: item.stat().st_mtime)
     return {
         "gate": {"ready_for_counted_sessions": gate.ready_for_counted_sessions,
                  "reasons": gate.reasons},
         "assessment": assessment_payload,
+        "execution_summary": {
+            "observation_count": len(observations),
+            "rehearsal_count": sum(item.mode.value == "REHEARSAL" for item in observations),
+            "counted_count": sum(item.mode.value == "COUNTED" for item in observations),
+            "active_count": sum(item.completed_at is None for item in observations),
+            "latest_bundle": str(bundles[-1].relative_to(paths.root)) if bundles else None,
+            "latest_final_receipt": str(receipts[-1].relative_to(paths.root)) if receipts else None,
+        },
         "automated_pass_candidate": assessment_payload["result"] == "PASS",
         "claim_allowed": False,
         "claim_hold": "TWO_ROLE_FINAL_ADJUDICATION_RECEIPT_REQUIRED",
