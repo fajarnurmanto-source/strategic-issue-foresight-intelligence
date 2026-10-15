@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,7 +45,7 @@ class LocalOperations:
         size = self.paths.database.stat().st_size if exists else 0
         integrity = "NOT_INITIALIZED"
         if exists:
-            with sqlite3.connect(self.paths.database) as connection:
+            with closing(sqlite3.connect(self.paths.database)) as connection:
                 integrity = str(
                     connection.execute("PRAGMA integrity_check").fetchone()[0]
                 ).upper()
@@ -68,8 +69,8 @@ class LocalOperations:
         )
         if destination.exists():
             raise LocalOperationsError("backup destination already exists")
-        with sqlite3.connect(self.paths.database) as source:
-            with sqlite3.connect(destination) as target:
+        with closing(sqlite3.connect(self.paths.database)) as source:
+            with closing(sqlite3.connect(destination)) as target:
                 source.backup(target)
         return destination
 
@@ -77,7 +78,7 @@ class LocalOperations:
         source = self.paths.require_inside(backup_path)
         if not source.is_file() or source.parent != self.paths.backups:
             raise LocalOperationsError("restore source must be a local SIFI backup")
-        with sqlite3.connect(source) as candidate:
+        with closing(sqlite3.connect(source)) as candidate:
             result = str(candidate.execute("PRAGMA integrity_check").fetchone()[0])
             if result.lower() != "ok":
                 raise LocalOperationsError("backup integrity check failed")
@@ -87,7 +88,7 @@ class LocalOperations:
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
             safety = self.backup(label="pre_restore_" + stamp)
         self.paths.initialize()
-        with sqlite3.connect(source) as backup_connection:
-            with sqlite3.connect(self.paths.database) as target:
+        with closing(sqlite3.connect(source)) as backup_connection:
+            with closing(sqlite3.connect(self.paths.database)) as target:
                 backup_connection.backup(target)
         return safety

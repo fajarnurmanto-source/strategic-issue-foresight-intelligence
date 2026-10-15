@@ -64,15 +64,18 @@ class LocalWebTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as caught:
             self.request("/api/session?id=SESSION-LOCAL", method="POST")
         self.assertEqual(caught.exception.code, 405)
+        caught.exception.close()
 
     def test_003_unknown_and_invalid_requests_fail_closed(self):
         for path, expected in (("/api/session", 400), ("/api/brief?id=missing", 404), ("/../secret", 404)):
             with self.subTest(path=path), self.assertRaises(HTTPError) as caught:
                 self.request(path)
             self.assertEqual(caught.exception.code, expected)
+            caught.exception.close()
         with self.assertRaises(HTTPError) as caught:
             self.request("/health", host="example.com")
         self.assertEqual(caught.exception.code, 403)
+        caught.exception.close()
 
     def test_004_non_loopback_binding_is_rejected(self):
         with self.assertRaises(LocalWebBoundaryError):
