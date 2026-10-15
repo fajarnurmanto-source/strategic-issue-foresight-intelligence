@@ -1,0 +1,26 @@
+{
+  "record_type": "SIFI_PRODUCT_READINESS_ASSESSMENT",
+  "record_version": "0.4",
+  "assessment_date": "2026-10-15",
+  "basis_commit": "3f3918b",
+  "method": "EVIDENCE_WEIGHTED_PLANNING_INDEX_NOT_PROBABILITY",
+  "scores": {
+    "controlled_nonproduction_prototype_percent": 93,
+    "operational_product_percent": 65,
+    "commercial_readiness_percent": 53
+  },
+  "verification": {
+    "windows_local_tests_pass": 383,
+    "local_release_check": "PASS",
+    "automated_cb22_rehearsal": "PASS_EXCLUDED_FROM_RESULT",
+    "actual_local_database_integrity": "OK"
+  },
+  "cb22": {
+    "engineering_ready": true,
+    "counted_gate_ready": false,
+    "real_counted_participants": 0,
+    "result": "NOT_READY",
+    "claim_allowed": false
+  },
+  "reason_score_unchanged": "Engineering and rehearsal evidence increased, but representative-user and production/commercial evidence did not."
+}

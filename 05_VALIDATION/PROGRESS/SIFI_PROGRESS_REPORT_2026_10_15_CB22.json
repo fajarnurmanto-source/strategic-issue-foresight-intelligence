@@ -2,8 +2,8 @@
   "record_type": "SIFI_PROGRESS_HANDOFF",
   "record_version": "1.0",
   "date": "2026-10-15",
-  "basis_commit": "8a0f1b2",
-  "windows_local_tests_pass": 382,
+  "basis_commit": "3f3918b",
+  "windows_local_tests_pass": 383,
   "local_release_check": "PASS",
   "scores": {
     "controlled_nonproduction_prototype_percent": 93,

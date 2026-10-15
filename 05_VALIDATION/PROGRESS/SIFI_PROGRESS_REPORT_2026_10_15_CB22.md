@@ -2,8 +2,8 @@
 
 Date: 15 October 2026 (Asia/Jakarta)  
 Workspace: `D:\Research\SIFI`  
-Latest basis commit: `8a0f1b2`  
-Verification: 382 Windows-local tests PASS; release check PASS
+Latest basis commit: `3f3918b`  
+Verification: 383 Windows-local tests PASS; release check PASS
 
 ## Delivered in this work session
 
