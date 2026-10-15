@@ -19,6 +19,7 @@ class LocalReleaseCheck:
     loopback_health: bool
     write_methods_rejected: bool
     required_files_present: bool
+    cb22_task_available: bool
     local_only: bool = True
     production_ready_claimed: bool = False
 
@@ -39,6 +40,13 @@ def check_local_release(root: str | Path) -> LocalReleaseCheck:
         paths.root / "scripts" / "restore-local.ps1",
         paths.root / "src" / "sifi" / "web" / "static" / "index.html",
         paths.root / "LOCAL_OPERATOR_GUIDE.md",
+        paths.root / "scripts" / "prepare-cb22.ps1",
+        paths.root / "scripts" / "status-cb22.ps1",
+        paths.root / "scripts" / "export-cb22.ps1",
+        paths.root / "scripts" / "adjudicate-cb22.ps1",
+        paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_7_FROZEN_PROTOCOL_v1_0.md",
+        paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
+        paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_TASK_PACKAGE_v1_0.json",
     )
     files_ok = all(item.is_file() and item.resolve().is_relative_to(paths.root) for item in required)
     server = create_local_server(paths.root, port=0)
@@ -47,6 +55,7 @@ def check_local_release(root: str | Path) -> LocalReleaseCheck:
     base = f"http://127.0.0.1:{server.server_port}"
     health_ok = False
     writes_rejected = False
+    cb22_task_ok = False
     try:
         with urlopen(base + "/health", timeout=3) as response:
             payload = json.load(response)
@@ -62,17 +71,28 @@ def check_local_release(root: str | Path) -> LocalReleaseCheck:
                 writes_rejected = exc.code == 405
             finally:
                 exc.close()
+        with urlopen(base + "/api/cb22/task", timeout=3) as response:
+            task = json.load(response)
+            cb22_task_ok = (
+                response.status == 200
+                and len(task.get("evidence", ())) == 5
+                and len(task.get("steps", {})) == 11
+            )
     finally:
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
-    passed = status.integrity == "OK" and health_ok and writes_rejected and files_ok
+    passed = (
+        status.integrity == "OK" and health_ok and writes_rejected
+        and files_ok and cb22_task_ok
+    )
     return LocalReleaseCheck(
         status="PASS" if passed else "FAIL",
         database_integrity=status.integrity,
         loopback_health=health_ok,
         write_methods_rejected=writes_rejected,
         required_files_present=files_ok,
+        cb22_task_available=cb22_task_ok,
     )
 
 
