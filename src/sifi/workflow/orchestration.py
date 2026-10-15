@@ -9,6 +9,7 @@ from sifi.issues import IssueObject
 from sifi.review import ProtectedTransition, ReviewRecord
 from sifi.rights import AdmissionDecision, RightsPolicyEvaluator
 
+from .brief import EvidenceLinkedBrief
 from .runtime import LocalWorkflowRuntime
 from .service import (
     GEOGRAPHY_DIMENSIONS,
@@ -47,27 +48,6 @@ class AnalystCaseContext:
     @property
     def decision_map(self) -> dict[str, AdmissionDecision]:
         return dict(self.evidence_decisions)
-
-
-@dataclass(frozen=True, slots=True)
-class EvidenceLinkedBrief:
-    brief_id: str
-    issue_id: str
-    summary: str
-    evidence_refs: tuple[str, ...]
-    created_at: datetime
-    analytical_cutoff: datetime
-    analytical_only: bool = True
-    production_action_authorized: bool = False
-
-    def __post_init__(self) -> None:
-        for name in ("brief_id", "issue_id", "summary"):
-            if not getattr(self, name).strip():
-                raise OrchestrationBoundaryError(f"{name} must be nonblank")
-        if not self.evidence_refs:
-            raise OrchestrationBoundaryError("brief requires evidence references")
-        require_aware_datetime(self.created_at, "created_at")
-        require_aware_datetime(self.analytical_cutoff, "analytical_cutoff")
 
 
 class LocalDomainOrchestrator:
@@ -190,6 +170,8 @@ class LocalDomainOrchestrator:
             raise OrchestrationBoundaryError("attention alone cannot establish priority")
         if not priority_rationale.strip():
             raise OrchestrationBoundaryError("priority rationale must be explicit")
+        if self._runtime.latest_brief(brief_id) is not None:
+            raise OrchestrationBoundaryError("brief_id already exists")
 
         correction_requested = correction_review is not None
         correction_authorized = not correction_requested
@@ -254,4 +236,5 @@ class LocalDomainOrchestrator:
             created_at=recorded_at,
             analytical_cutoff=context.analytical_cutoff,
         )
+        self._runtime.record_brief(brief, recorded_at=recorded_at)
         return session, brief

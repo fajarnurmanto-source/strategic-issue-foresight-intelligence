@@ -7,6 +7,8 @@ from sifi.persistence import SQLiteVersionStore
 from sifi.local import LocalSIFIPaths
 
 from .repository import WorkflowSessionRepository
+from .brief import EvidenceLinkedBrief
+from .brief_repository import EvidenceBriefRepository
 from .service import BoundedAnalystWorkflow, WorkflowSession, WorkflowStepSubmission
 
 
@@ -28,6 +30,7 @@ class LocalWorkflowRuntime:
         self.database_path = path
         self._store = SQLiteVersionStore(path)
         self._repository = WorkflowSessionRepository(self._store)
+        self._brief_repository = EvidenceBriefRepository(self._store)
         self._workflow = BoundedAnalystWorkflow()
 
     def close(self) -> None:
@@ -79,3 +82,18 @@ class LocalWorkflowRuntime:
     def as_of(self, session_id: str, cutoff: datetime) -> WorkflowSession | None:
         item = self._repository.as_of(session_id, cutoff)
         return item.session if item else None
+
+    def record_brief(
+        self, brief: EvidenceLinkedBrief, *, recorded_at: datetime
+    ) -> EvidenceLinkedBrief:
+        latest = self._brief_repository.latest(brief.brief_id)
+        version = 1 if latest is None else latest.version + 1
+        self._brief_repository.append(
+            brief, version=version, effective_at=brief.created_at,
+            recorded_at=recorded_at,
+        )
+        return brief
+
+    def latest_brief(self, brief_id: str) -> EvidenceLinkedBrief | None:
+        item = self._brief_repository.latest(brief_id)
+        return item.brief if item else None

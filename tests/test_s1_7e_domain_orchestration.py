@@ -105,6 +105,9 @@ class DomainOrchestrationTests(unittest.TestCase):
                 self.assertEqual(brief.issue_id, "ISSUE-ORCH-1")
                 self.assertTrue(brief.analytical_only)
                 self.assertFalse(brief.production_action_authorized)
+            with LocalWorkflowRuntime(Path(directory) / "sifi.sqlite") as reopened:
+                recovered = reopened.latest_brief("BRIEF-1")
+                self.assertEqual(recovered, brief)
 
     def test_002_z1_supporting_evidence_fails_before_session_creation(self):
         z1 = decision(AdmissionZone.Z1_RESEARCH_ONLY)
