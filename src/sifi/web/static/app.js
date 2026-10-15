@@ -39,7 +39,7 @@ function showRecord(kind, data) {
   result.replaceChildren();
   const title = document.createElement('h3');
   title.className = 'record-title';
-  title.textContent = kind === 'session' ? 'Sesi analisis' : 'Brief berbasis bukti';
+  title.textContent = kind === 'session' ? 'Sesi analisis' : kind === 'study' ? 'Observasi CB22' : 'Brief berbasis bukti';
   const grid = document.createElement('div');
   grid.className = 'record-grid';
   Object.entries(data).forEach(([key, value]) => {
@@ -104,6 +104,22 @@ async function loadStudyStatus() {
         brief:null,
       }));
       active.append(button);
+    });
+    const history = document.querySelector('#studyHistory');
+    history.replaceChildren();
+    data.observations.forEach((item) => {
+      const button = document.createElement('button'); button.type = 'button';
+      button.textContent = `${item.observation_id} · ${item.mode} · ${item.task_completed ? 'selesai' : item.ended ? 'berakhir' : 'aktif'}`;
+      button.addEventListener('click', async () => {
+        try {
+          const response = await fetch(`/api/cb22/observation?id=${encodeURIComponent(item.observation_id)}`);
+          const observation = await response.json();
+          if (!response.ok) throw new Error(observation.error || 'Observasi tidak tersedia');
+          showRecord('study', observation);
+          result.scrollIntoView({behavior:'smooth', block:'start'});
+        } catch (error) { showError(error); }
+      });
+      history.append(button);
     });
   } catch { target.textContent = 'Status studi tidak tersedia'; }
 }

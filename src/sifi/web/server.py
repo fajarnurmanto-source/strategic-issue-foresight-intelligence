@@ -179,6 +179,8 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 "evidence": task["scenario"]["evidence"],
                 "steps": {step.value: public_step_spec(step) for step in WorkflowStep},
             })
+        elif parsed.path == "/api/cb22/observation":
+            self._serve_cb22_observation(parse_qs(parsed.query))
         elif parsed.path in {"/api/session", "/api/brief"}:
             self._serve_record(parsed.path, parse_qs(parsed.query))
         else:
@@ -208,7 +210,31 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 }
                 for item in observations if item.completed_at is None
             ],
+            "observations": [
+                {"observation_id": item.observation_id,
+                 "participant_code": item.participant_code,
+                 "mode": item.mode, "task_completed": item.task_completed,
+                 "ended": item.completed_at is not None}
+                for item in observations
+            ],
         })
+
+    def _serve_cb22_observation(self, query: dict[str, list[str]]) -> None:
+        values = query.get("id", [])
+        if len(values) != 1 or not values[0].strip() or len(values[0]) > 128:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "one valid id is required"})
+            return
+        if not self.server.paths.database.is_file():
+            self._send_json(HTTPStatus.NOT_FOUND, {"error": "local database is not initialized"})
+            return
+        with CB22StudyRuntime(
+            self.server.paths.database, workspace_root=self.server.paths.root
+        ) as runtime:
+            item = runtime.latest(values[0])
+        if item is None:
+            self._send_json(HTTPStatus.NOT_FOUND, {"error": "observation not found"})
+            return
+        self._send_json(HTTPStatus.OK, item)
 
     def _serve_catalog(self) -> None:
         if not self.server.paths.database.is_file():

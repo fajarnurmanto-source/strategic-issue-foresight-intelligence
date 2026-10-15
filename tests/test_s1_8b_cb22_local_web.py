@@ -9,6 +9,8 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from sifi.web.server import create_local_server
+from sifi.validation.study_task import STUDY_STEP_SPECS
+from sifi.workflow import WorkflowStep
 
 
 class CB22LocalWebTests(unittest.TestCase):
@@ -80,6 +82,28 @@ class CB22LocalWebTests(unittest.TestCase):
         self.assertEqual(len(payload["evidence"]), 5)
         self.assertIn("WF-01", payload["steps"])
         self.assertGreaterEqual(len(payload["steps"]["WF-01"]["options"]), 2)
+
+    def test_006_web_rehearsal_completes_all_structured_steps_and_stays_excluded(self):
+        with self.post("/api/cb22/start", self.payload()) as response:
+            state = json.load(response)
+        for _ in range(11):
+            step = WorkflowStep(state["next_step"])
+            with self.post("/api/cb22/advance", {
+                "observation_id":state["observation"]["observation_id"],
+                "participant_code":state["observation"]["participant_code"],
+                "answer_code":STUDY_STEP_SPECS[step].accepted_code,
+            }) as response:
+                state = json.load(response)
+        self.assertIsNone(state["next_step"])
+        self.assertTrue(state["observation"]["task_completed"])
+        with urlopen(self.base + "/api/cb22/status", timeout=2) as response:
+            status = json.load(response)
+        self.assertEqual(status["assessment"]["result"], "NOT_READY")
+        self.assertEqual(status["assessment"]["analyzable_participants"], 0)
+        observation_id = state["observation"]["observation_id"]
+        with urlopen(self.base + "/api/cb22/observation?id=" + observation_id, timeout=2) as response:
+            observation = json.load(response)
+        self.assertEqual(observation["completed_stage_ids"][-1], "WF-11")
 
 
 if __name__ == "__main__":
