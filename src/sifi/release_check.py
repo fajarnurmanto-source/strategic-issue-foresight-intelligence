@@ -44,6 +44,7 @@ def check_local_release(root: str | Path) -> LocalReleaseCheck:
         paths.root / "scripts" / "status-cb22.ps1",
         paths.root / "scripts" / "export-cb22.ps1",
         paths.root / "scripts" / "adjudicate-cb22.ps1",
+        paths.root / "scripts" / "configure-cb22.ps1",
         paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_7_FROZEN_PROTOCOL_v1_0.md",
         paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
         paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_TASK_PACKAGE_v1_0.json",

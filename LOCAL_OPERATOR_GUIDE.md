@@ -93,6 +93,11 @@ yang berbeda ditetapkan, pemeriksaan konflik selesai, dan kebutuhan review
 eksternal/institusional dicatat sebagai terpenuhi atau tidak diwajibkan. Jangan
 pernah memasukkan nama atau kontak peserta ke file ini atau dashboard.
 
+Setelah dua peran nyata ditetapkan dan keputusan kebutuhan review sudah
+didokumentasikan, gunakan `scripts\configure-cb22.ps1` dengan kode staf
+pseudonim yang berbeda. Perintah menolak satu orang pada kedua peran dan tidak
+akan membuka gerbang bila review konflik belum selesai.
+
 Gunakan bagian `CB22` di dashboard untuk rehearsal sebelum melibatkan peserta
 counted. Rehearsal tidak pernah memengaruhi hasil CB22. Sebelum sesi counted,
 kustodian wajib menyelesaikan screening dan consent di luar database SIFI,

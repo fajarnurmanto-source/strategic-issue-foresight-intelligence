@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from sifi.domain import TrajectoryDimension
 from sifi.local import LocalSIFIPaths
+from sifi.domain.versioning import VersionedSnapshot
 from sifi.workflow import EvidenceLinkedBrief, LocalWorkflowRuntime, WorkflowStep, WorkflowStepSubmission
 from sifi.workflow.service import GEOGRAPHY_DIMENSIONS, WorkflowBoundaryError
 
@@ -15,7 +16,10 @@ from .model import (
     Intervention, StudyMode, StudyObservation,
 )
 from .repository import StudyObservationRepository
-from .gate import cb22_gate_status
+from .gate import (
+    GATE_LOCK_OBJECT_ID, GATE_LOCK_OBJECT_TYPE, cb22_gate_status,
+    current_gate_configuration,
+)
 from .study_task import require_accepted_answer
 
 
@@ -56,6 +60,9 @@ class LocalCB22Workflow:
                 raise CB22WorkflowError(
                     "counted study gate is closed: " + ", ".join(gate.reasons)
                 )
+            gate_configuration = current_gate_configuration(self.paths.root)
+        else:
+            gate_configuration = None
         suffix = uuid4().hex.upper()
         session_id = "CB22-SES-" + suffix
         observation = StudyObservation(
@@ -84,6 +91,21 @@ class LocalCB22Workflow:
                     raise CB22WorkflowError(
                         "participant_code already has a counted CB22 session"
                     )
+                if gate_configuration is not None:
+                    lock = runtime.version_store.latest(
+                        GATE_LOCK_OBJECT_TYPE, GATE_LOCK_OBJECT_ID
+                    )
+                    if lock is None:
+                        runtime.version_store.append(VersionedSnapshot(
+                            object_type=GATE_LOCK_OBJECT_TYPE,
+                            object_id=GATE_LOCK_OBJECT_ID, version=1,
+                            effective_at=recorded, recorded_at=recorded,
+                            payload=gate_configuration,
+                        ))
+                    elif lock.payload.get("configuration_sha256") != gate_configuration["configuration_sha256"]:
+                        raise CB22WorkflowError(
+                            "current gate configuration differs from the counted-study lock"
+                        )
                 session = runtime.start_session(
                     session_id=session_id,
                     task_id=CB22_TASK_PACKAGE_VERSION,

@@ -12,7 +12,10 @@ from sifi.local import LocalSIFIPaths
 from sifi.persistence import SQLiteVersionStore
 
 from .adjudication import CB22Result
-from .gate import cb22_gate_status
+from .gate import (
+    GATE_LOCK_OBJECT_ID, GATE_LOCK_OBJECT_TYPE, cb22_gate_status,
+    current_gate_configuration,
+)
 
 
 VOTE_OBJECT_TYPE = "CB22_ADJUDICATION_VOTE"
@@ -64,6 +67,12 @@ class CB22AdjudicationRuntime:
         gate = cb22_gate_status(self.paths.root)
         if not gate.ready_for_counted_sessions:
             raise ValueError("adjudication gate is closed: " + ", ".join(gate.reasons))
+        configuration = current_gate_configuration(self.paths.root)
+        lock = self._store.latest(GATE_LOCK_OBJECT_TYPE, GATE_LOCK_OBJECT_ID)
+        if lock is None:
+            raise ValueError("counted-study gate lock is missing")
+        if lock.payload.get("configuration_sha256") != configuration["configuration_sha256"]:
+            raise ValueError("gate configuration differs from the counted-study lock")
         if not conflict_free:
             raise ValueError("conflicted adjudicator cannot record a vote")
         bundle, digest = self._load_bundle(bundle_path)
@@ -72,11 +81,10 @@ class CB22AdjudicationRuntime:
             raise ValueError("bundle has no adjudicable automated result")
         if decision not in {automated, CB22Result.INCONCLUSIVE}:
             raise ValueError("vote may confirm automated result or mark it inconclusive")
-        config = json.loads((self.paths.config / "cb22-execution-gate.json").read_text(encoding="utf-8"))
         expected = (
-            config["primary_adjudicator_staff_code"]
+            lock.payload["primary_adjudicator_staff_code"]
             if role is AdjudicationRole.PRIMARY_ADJUDICATOR
-            else config["independent_checker_staff_code"]
+            else lock.payload["independent_checker_staff_code"]
         )
         if staff_code != expected:
             raise ValueError("staff code is not assigned to this adjudication role")
@@ -151,6 +159,12 @@ class CB22AdjudicationRuntime:
             raise ValueError("adjudication bundle is invalid JSON") from exc
         if payload.get("record_type") != "SIFI_CB22_ADJUDICATION_BUNDLE":
             raise ValueError("file is not a CB22 adjudication bundle")
+        stored_lock = self._store.latest(GATE_LOCK_OBJECT_TYPE, GATE_LOCK_OBJECT_ID)
+        bundle_lock = payload.get("counted_study_gate_lock")
+        if stored_lock is None or not isinstance(bundle_lock, dict):
+            raise ValueError("bundle or database is missing the counted-study gate lock")
+        if bundle_lock.get("configuration_sha256") != stored_lock.payload.get("configuration_sha256"):
+            raise ValueError("bundle gate lock does not match the local counted study")
         return payload, hashlib.sha256(content).hexdigest().upper()
 
     @staticmethod

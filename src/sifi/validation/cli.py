@@ -46,6 +46,9 @@ def status(root: Path) -> dict:
             "forbidden_output_participants": assessment.forbidden_output_participants,
             "evidence_link_failures": assessment.evidence_link_failures,
             "reasons": assessment.reasons,
+            "completion_rate": assessment.completion_rate,
+            "routine_help_rate": assessment.routine_help_rate,
+            "median_duration_seconds": assessment.median_duration_seconds,
         }
     else:
         assessment_payload = {"result": "NOT_READY", "analyzable_participants": 0,

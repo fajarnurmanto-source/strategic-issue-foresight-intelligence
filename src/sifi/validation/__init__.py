@@ -12,7 +12,10 @@ from .model import (
 )
 from .runtime import CB22StudyRuntime
 from .workflow import CB22WorkflowError, CB22WorkflowState, LocalCB22Workflow
-from .gate import CB22GateStatus, cb22_gate_status
+from .gate import (
+    CB22GateStatus, cb22_gate_status, configure_cb22_gate,
+    current_gate_configuration,
+)
 from .export import export_adjudication_bundle
 from .decision import (
     AdjudicationReceipt, AdjudicationRole, AdjudicationVote,
@@ -40,5 +43,7 @@ __all__ = [
     "StudyObservation",
     "assess_cb22",
     "cb22_gate_status",
+    "configure_cb22_gate",
+    "current_gate_configuration",
     "export_adjudication_bundle",
 ]

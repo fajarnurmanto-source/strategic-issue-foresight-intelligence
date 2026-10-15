@@ -89,7 +89,8 @@ async function loadStudyStatus() {
     const response = await fetch('/api/cb22/status');
     const data = await response.json();
     const gate = data.gate.ready_for_counted_sessions ? 'COUNTED SIAP' : `COUNTED TERKUNCI · ${data.gate.reasons.join(', ')}`;
-    target.textContent = `${gate} · hasil ${data.assessment.result} · n=${data.assessment.analyzable_participants}`;
+    const rate = data.assessment.completion_rate === null ? '—' : `${Math.round(data.assessment.completion_rate * 100)}% selesai`;
+    target.textContent = `${gate} · hasil ${data.assessment.result} · n=${data.assessment.analyzable_participants} · ${rate}`;
     const active = document.querySelector('#studyActive');
     active.replaceChildren();
     data.active_sessions.forEach((item) => {

@@ -12,6 +12,7 @@ from sifi.validation import (
     EvidenceLinkCheck, Intervention, InterventionCategory,
     LocalCB22Workflow, StudyMode, StudyObservation, assess_cb22, cb22_gate_status,
     export_adjudication_bundle,
+    configure_cb22_gate,
 )
 from sifi.validation.study_task import STUDY_STEP_SPECS
 
@@ -84,6 +85,8 @@ class CB22StudyKernelTests(unittest.TestCase):
                                   completed_at=NOW + timedelta(hours=1),
                                   evidence_link_check=EvidenceLinkCheck.PASS) for n in range(1, 6))
         self.assertEqual(assess_cb22(items).result, CB22Result.PASS)
+        self.assertEqual(assess_cb22(items).completion_rate, 1.0)
+        self.assertEqual(assess_cb22(items).median_duration_seconds, 3540.0)
 
     def test_007_forbidden_output_forces_failure(self):
         stages = tuple(f"WF-{n:02d}" for n in range(1, 12))
@@ -202,6 +205,13 @@ class CB22StudyKernelTests(unittest.TestCase):
             root = Path(directory)
             (root / "src" / "sifi").mkdir(parents=True)
             install_frozen_materials(root); install_ready_gate(root)
+            LocalCB22Workflow(root).start(
+                participant_code="P-LOCK", screening_record_id="SCR-LOCK",
+                consent_record_id="CON-LOCK", consent_confirmed_at=NOW,
+                governance_authorization_id="GOV-001", representative_profile_met=True,
+                participant_is_sifi_developer=False, mode=StudyMode.COUNTED,
+                now=NOW + timedelta(minutes=1),
+            )
             stages = tuple(f"WF-{n:02d}" for n in range(1, 12))
             items = tuple(observation(n, completed_stage_ids=stages, task_completed=True,
                                       completed_at=NOW + timedelta(hours=1),
@@ -246,6 +256,49 @@ class CB22StudyKernelTests(unittest.TestCase):
             ) as runtime:
                 stored = runtime.latest(state.observation.observation_id)
             self.assertIn("BOUNDARY-RETRY-WF-01", stored.blocker_codes)
+
+    def test_019_gate_configuration_rejects_same_person_in_both_roles(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, "distinct"):
+                configure_cb22_gate(
+                    root, primary_staff_code="STAFF-1", checker_staff_code="STAFF-1",
+                    external_review_requirement="SATISFIED",
+                    conflict_review_complete=True,
+                )
+
+    def test_020_gate_configuration_freezes_after_first_counted_session(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            database = root / "runtime" / "data" / "sifi.sqlite"
+            with CB22StudyRuntime(database, workspace_root=root) as runtime:
+                runtime.record(observation(), recorded_at=NOW + timedelta(minutes=2))
+            with self.assertRaisesRegex(ValueError, "frozen"):
+                configure_cb22_gate(
+                    root, primary_staff_code="ADJ-002", checker_staff_code="CHK-002",
+                    external_review_requirement="SATISFIED",
+                    conflict_review_complete=True,
+                )
+
+    def test_021_manual_gate_change_after_counted_start_is_detected(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            install_frozen_materials(root); install_ready_gate(root)
+            LocalCB22Workflow(root).start(
+                participant_code="P-401", screening_record_id="SCR-401",
+                consent_record_id="CON-401", consent_confirmed_at=NOW,
+                governance_authorization_id="GOV-001", representative_profile_met=True,
+                participant_is_sifi_developer=False, mode=StudyMode.COUNTED,
+                now=NOW + timedelta(minutes=1),
+            )
+            gate_file = root / "runtime" / "config" / "cb22-execution-gate.json"
+            changed = json.loads(gate_file.read_text(encoding="utf-8"))
+            changed["independent_checker_staff_code"] = "CHK-999"
+            gate_file.write_text(json.dumps(changed), encoding="utf-8")
+            self.assertIn(
+                "CURRENT_CONFIGURATION_DIFFERS_FROM_COUNTED_STUDY_LOCK",
+                cb22_gate_status(root).reasons,
+            )
 
 
 if __name__ == "__main__":

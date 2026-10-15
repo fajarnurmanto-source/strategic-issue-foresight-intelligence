@@ -8,9 +8,13 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from sifi.local import LocalSIFIPaths
+from sifi.persistence import SQLiteVersionStore
 
 from .adjudication import assess_cb22
-from .gate import TASK_PACKAGE_SHA256, cb22_gate_status
+from .gate import (
+    GATE_LOCK_OBJECT_ID, GATE_LOCK_OBJECT_TYPE, TASK_PACKAGE_SHA256,
+    cb22_gate_status,
+)
 from .model import CB22_PROTOCOL_VERSION, CB22_TASK_PACKAGE_VERSION, StudyObservation
 
 
@@ -52,6 +56,12 @@ def export_adjudication_bundle(root: str | Path, items: tuple[StudyObservation, 
     paths.initialize()
     assessment = assess_cb22(items)
     gate = cb22_gate_status(paths.root)
+    gate_lock = None
+    if paths.database.is_file():
+        with SQLiteVersionStore(paths.database) as store:
+            snapshot = store.latest(GATE_LOCK_OBJECT_TYPE, GATE_LOCK_OBJECT_ID)
+            if snapshot is not None:
+                gate_lock = dict(snapshot.payload)
     payload = {
         "record_type": "SIFI_CB22_ADJUDICATION_BUNDLE",
         "record_version": "1.0",
@@ -61,6 +71,7 @@ def export_adjudication_bundle(root: str | Path, items: tuple[StudyObservation, 
         "task_package_sha256": TASK_PACKAGE_SHA256,
         "gate": {"ready_for_counted_sessions": gate.ready_for_counted_sessions,
                  "reasons": gate.reasons},
+        "counted_study_gate_lock": gate_lock,
         "assessment": {
             "result": assessment.result.value,
             "analyzable_participants": assessment.analyzable_participants,
@@ -69,6 +80,9 @@ def export_adjudication_bundle(root: str | Path, items: tuple[StudyObservation, 
             "forbidden_output_participants": assessment.forbidden_output_participants,
             "evidence_link_failures": assessment.evidence_link_failures,
             "reasons": assessment.reasons,
+            "completion_rate": assessment.completion_rate,
+            "routine_help_rate": assessment.routine_help_rate,
+            "median_duration_seconds": assessment.median_duration_seconds,
         },
         "observations": [_observation(item) for item in items],
         "claim_boundary": "AUTOMATED_RESULT_IS_PROVISIONAL_UNTIL_TWO_ROLE_ADJUDICATION",

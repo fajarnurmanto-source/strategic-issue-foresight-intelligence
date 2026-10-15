@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from statistics import median
 
 from .model import EvidenceLinkCheck, StudyMode, StudyObservation
 
@@ -28,6 +29,9 @@ class CB22Assessment:
     forbidden_output_participants: int
     evidence_link_failures: int
     reasons: tuple[str, ...]
+    completion_rate: float | None = None
+    routine_help_rate: float | None = None
+    median_duration_seconds: float | None = None
 
 
 def assess_cb22(items: tuple[StudyObservation, ...]) -> CB22Assessment:
@@ -52,6 +56,12 @@ def assess_cb22(items: tuple[StudyObservation, ...]) -> CB22Assessment:
         for item in counted
     )
     reasons: list[str] = []
+    completion_rate = completed / len(counted) if counted else None
+    help_rate = helped / len(counted) if counted else None
+    median_duration = (
+        float(median((item.completed_at - item.started_at).total_seconds() for item in counted))
+        if counted else None
+    )
     if not started:
         result = CB22Result.NOT_READY
         reasons.append("NO_COUNTED_PARTICIPANTS")
@@ -62,8 +72,7 @@ def assess_cb22(items: tuple[StudyObservation, ...]) -> CB22Assessment:
         result = CB22Result.IN_PROGRESS
         reasons.append("MINIMUM_SAMPLE_NOT_REACHED")
     else:
-        completion_rate = completed / len(counted)
-        help_rate = helped / len(counted)
+        assert completion_rate is not None and help_rate is not None
         if forbidden:
             reasons.append("FORBIDDEN_OUTPUT_OBSERVED")
         if evidence_failures:
@@ -81,4 +90,7 @@ def assess_cb22(items: tuple[StudyObservation, ...]) -> CB22Assessment:
         forbidden_output_participants=forbidden,
         evidence_link_failures=evidence_failures,
         reasons=tuple(reasons),
+        completion_rate=completion_rate,
+        routine_help_rate=help_rate,
+        median_duration_seconds=median_duration,
     )
