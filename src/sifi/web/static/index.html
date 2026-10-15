@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIFI Lokal</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">SIFI · ruang kerja analitis</p>
+        <h1>Intelijen yang dapat ditelusuri, tetap di perangkat Anda.</h1>
+        <p class="lede">Dashboard ini membaca penyimpanan SIFI lokal. Tidak ada unggahan, sinkronisasi cloud, atau tindakan produksi.</p>
+      </div>
+      <div class="badge" id="healthBadge"><span></span>Memeriksa sistem…</div>
+    </header>
+
+    <section class="status-grid" aria-label="Status SIFI">
+      <article><p>Status data</p><strong id="integrity">—</strong></article>
+      <article><p>Mode operasi</p><strong>Lokal saja</strong></article>
+      <article><p>Batas keputusan</p><strong>Analitis</strong></article>
+    </section>
+
+    <section class="workspace">
+      <div class="section-heading">
+        <div><p class="eyebrow">Penelusuran</p><h2>Buka rekam kerja</h2></div>
+        <p>Cari dengan ID persis. Data tidak diubah oleh halaman ini.</p>
+      </div>
+      <div class="lookup-grid">
+        <form data-kind="session">
+          <label for="sessionId">ID sesi analisis</label>
+          <div class="control"><input id="sessionId" name="id" autocomplete="off" maxlength="128" required><button type="submit">Buka sesi</button></div>
+        </form>
+        <form data-kind="brief">
+          <label for="briefId">ID brief berbasis bukti</label>
+          <div class="control"><input id="briefId" name="id" autocomplete="off" maxlength="128" required><button type="submit">Buka brief</button></div>
+        </form>
+      </div>
+      <article class="result" id="result" aria-live="polite">
+        <p class="empty">Masukkan ID untuk melihat rekam lokal beserta jejak bukti dan batas analitisnya.</p>
+      </article>
+    </section>
+
+    <footer>Data tetap berada di folder SIFI · Akses hanya dari komputer lokal</footer>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>
