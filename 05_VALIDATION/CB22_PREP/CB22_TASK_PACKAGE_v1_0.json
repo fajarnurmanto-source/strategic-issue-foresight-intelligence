@@ -1,0 +1,26 @@
+{
+  "record_type": "SIFI_CB22_RIGHTS_SAFE_TASK_PACKAGE",
+  "package_version": "CB22-TASK-v1.0",
+  "status": "FROZEN_FOR_COUNTED_USE",
+  "rights_basis": "ORIGINAL_SYNTHETIC_CONTENT_CREATED_FOR_SIFI_VALIDATION",
+  "redistribution_restriction": "NONE",
+  "scenario": {
+    "issue_id": "CB22-ISSUE-001",
+    "title": "Synthetic regional logistics continuity signal",
+    "analytical_cutoff": "2026-01-01T08:00:00+00:00",
+    "instruction": "Inspect the fixed synthetic evidence set through WF-01 to WF-11 and produce an evidence-linked analytical brief.",
+    "evidence": [
+      {"id": "CB22-EV-001", "class": "SUPPORTING", "text": "Three fictional operators report a two-day increase in transfer time."},
+      {"id": "CB22-EV-002", "class": "SUPPORTING", "text": "A synthetic schedule records reduced capacity for the same bounded interval."},
+      {"id": "CB22-EV-C01", "class": "CONTRADICTORY", "text": "One fictional operator reports normal transfer time."},
+      {"id": "CB22-EV-X01", "class": "CONTEXT_ONLY", "text": "A fictional seasonal pattern can also affect transfer time."},
+      {"id": "CB22-EV-Z101", "class": "EXCLUDED", "text": "An unattributed synthetic rumor is excluded from production-admitted evidence."}
+    ],
+    "expected_boundaries": [
+      "ANALYTICAL_ONLY",
+      "UNCERTAINTY_MUST_REMAIN_EXPLICIT",
+      "NO_REAL_WORLD_FACTUAL_CLAIM",
+      "NO_PRODUCTION_ACTION_AUTHORIZATION"
+    ]
+  }
+}

@@ -18,6 +18,10 @@ from sifi.local_ops import LocalOperations
 from sifi.demo_workflow import DemoWorkflowError, LocalDemoWorkflow
 from sifi.brief_export import BriefExportError, export_brief_markdown
 from sifi.workflow import LocalWorkflowRuntime
+from sifi.validation import (
+    CB22StudyRuntime, Intervention, InterventionCategory, LocalCB22Workflow,
+    StudyMode, cb22_gate_status,
+)
 
 
 class LocalWebBoundaryError(ValueError):
@@ -160,10 +164,24 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, {"token": self.server.csrf_token})
         elif parsed.path == "/api/catalog":
             self._serve_catalog()
+        elif parsed.path == "/api/cb22/status":
+            self._serve_cb22_status()
         elif parsed.path in {"/api/session", "/api/brief"}:
             self._serve_record(parsed.path, parse_qs(parsed.query))
         else:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+
+    def _serve_cb22_status(self) -> None:
+        gate = cb22_gate_status(self.server.paths.root)
+        if self.server.paths.database.is_file():
+            with CB22StudyRuntime(
+                self.server.paths.database, workspace_root=self.server.paths.root
+            ) as runtime:
+                assessment = runtime.assessment()
+        else:
+            from sifi.validation import assess_cb22
+            assessment = assess_cb22(())
+        self._send_json(HTTPStatus.OK, {"gate": gate, "assessment": assessment})
 
     def _serve_catalog(self) -> None:
         if not self.server.paths.database.is_file():
@@ -251,7 +269,9 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlsplit(self.path)
         if parsed.path not in {
-            "/api/demo/start", "/api/demo/advance", "/api/brief/export"
+            "/api/demo/start", "/api/demo/advance", "/api/brief/export",
+            "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
+            "/api/cb22/stop", "/api/cb22/incident",
         }:
             self._reject_write()
             return
@@ -269,6 +289,9 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                     {"export": str(destination.relative_to(self.server.paths.root))},
                 )
                 return
+            if parsed.path.startswith("/api/cb22/"):
+                self._handle_cb22_write(parsed.path, payload)
+                return
             workflow = LocalDemoWorkflow(self.server.paths.root)
             if parsed.path.endswith("start"):
                 state = workflow.start(analyst_id=str(payload.get("analyst_id", "")))
@@ -278,7 +301,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                     analyst_id=str(payload.get("analyst_id", "")),
                     note=str(payload.get("note", "")),
                 )
-        except (DemoWorkflowError, BriefExportError) as exc:
+        except (DemoWorkflowError, BriefExportError, ValueError, TypeError) as exc:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         self._send_json(
@@ -290,6 +313,71 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 "synthetic": state.synthetic,
             },
         )
+
+    def _handle_cb22_write(self, path: str, payload: dict) -> None:
+        workflow = LocalCB22Workflow(self.server.paths.root)
+        if path.endswith("/start"):
+            try:
+                consent_at = datetime.fromisoformat(str(payload.get("consent_confirmed_at", "")))
+            except ValueError as exc:
+                raise ValueError("consent_confirmed_at must be an ISO date-time with timezone") from exc
+            if consent_at.tzinfo is None or consent_at.utcoffset() is None:
+                raise ValueError("consent_confirmed_at must include a timezone")
+            state = workflow.start(
+                participant_code=str(payload.get("participant_code", "")),
+                screening_record_id=str(payload.get("screening_record_id", "")),
+                consent_record_id=str(payload.get("consent_record_id", "")),
+                consent_confirmed_at=consent_at,
+                governance_authorization_id=str(payload.get("governance_authorization_id", "")),
+                representative_profile_met=payload.get("representative_profile_met") is True,
+                participant_is_sifi_developer=payload.get("participant_is_sifi_developer") is True,
+                mode=StudyMode(str(payload.get("mode", ""))),
+            )
+            self._send_json(HTTPStatus.CREATED, {
+                "observation": state.observation,
+                "session": state.session,
+                "next_step": state.session.next_step,
+            })
+            return
+        if path.endswith("/advance"):
+            state = workflow.advance(
+                observation_id=str(payload.get("observation_id", "")),
+                participant_code=str(payload.get("participant_code", "")),
+            )
+            self._send_json(HTTPStatus.OK, {
+                "observation": state.observation,
+                "session": state.session,
+                "next_step": state.session.next_step,
+                "brief": state.brief,
+            })
+            return
+        if path.endswith("/stop"):
+            observation = workflow.stop_incomplete(
+                observation_id=str(payload.get("observation_id", "")),
+                participant_code=str(payload.get("participant_code", "")),
+                reason_code=str(payload.get("reason_code", "")),
+            )
+            self._send_json(HTTPStatus.OK, {"observation": observation})
+            return
+        if path.endswith("/incident"):
+            observation = workflow.record_incident(
+                observation_id=str(payload.get("observation_id", "")),
+                kind=str(payload.get("kind", "")),
+                code=str(payload.get("code", "")),
+            )
+            self._send_json(HTTPStatus.OK, {"observation": observation})
+            return
+        intervention = Intervention(
+            category=InterventionCategory(str(payload.get("category", ""))),
+            reason_code=str(payload.get("reason_code", "")),
+            duration_seconds=int(payload.get("duration_seconds", -1)),
+            routine_developer_help=payload.get("routine_developer_help") is True,
+        )
+        observation = workflow.record_intervention(
+            observation_id=str(payload.get("observation_id", "")),
+            intervention=intervention,
+        )
+        self._send_json(HTTPStatus.OK, {"observation": observation})
 
     def _reject_write(self) -> None:
         self._send_json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "local dashboard is read-only"})

@@ -71,7 +71,32 @@ cadangan ke luar folder SIFI melalui alat aplikasi; batas path akan menolaknya.
 
 ## Batas tahap ini
 
-Katalog dan penampil rekam hanya membaca data; wizard latihan hanya menulis
-sesi sintetis lokal melalui token sesi dan pemeriksaan same-origin. SIFI belum
-mengklaim ingestion sumber langsung, deployment produksi, validasi pengguna
-representatif, nilai keputusan komparatif, CB22 PASS, atau kesiapan komersial.
+Katalog dan penampil rekam hanya membaca data. Wizard latihan menulis sesi
+sintetis lokal; mode CB22 menulis sesi studi berpseudonim melalui token sesi
+dan pemeriksaan same-origin. SIFI belum mengklaim ingestion sumber langsung,
+deployment produksi, validasi pengguna representatif, nilai keputusan
+komparatif, CB22 PASS, atau kesiapan komersial.
+
+## Studi pengguna representatif CB22
+
+CB22 terpisah dari latihan sintetis biasa. Siapkan konfigurasi lokal yang
+tertutup secara default dengan:
+
+```powershell
+.\scripts\prepare-cb22.ps1
+.\scripts\status-cb22.ps1
+```
+
+Perintah pertama hanya membuat `runtime\config\cb22-execution-gate.json` di
+dalam folder SIFI. Sesi counted tetap terkunci sampai dua kode staf berwenang
+yang berbeda ditetapkan, pemeriksaan konflik selesai, dan kebutuhan review
+eksternal/institusional dicatat sebagai terpenuhi atau tidak diwajibkan. Jangan
+pernah memasukkan nama atau kontak peserta ke file ini atau dashboard.
+
+Gunakan bagian `CB22` di dashboard untuk rehearsal sebelum melibatkan peserta
+counted. Rehearsal tidak pernah memengaruhi hasil CB22. Sebelum sesi counted,
+kustodian wajib menyelesaikan screening dan consent di luar database SIFI,
+lalu hanya memasukkan kode pseudonim serta waktu konfirmasi consent.
+
+Materi beku berada di `05_VALIDATION\CB22_PREP`. Perubahan checksum task
+package akan otomatis menutup gerbang sesi counted.

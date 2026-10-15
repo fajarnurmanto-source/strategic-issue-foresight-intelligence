@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sifi:cb22:observation:v1.0",
+  "title": "SIFI CB22 Pseudonymous Observation Record v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observation_id", "protocol_version", "mode", "participant_code",
+    "screening_record_id", "consent_record_id", "consent_confirmed_at",
+    "governance_authorization_id", "workflow_session_id",
+    "task_package_version", "representative_profile_met",
+    "participant_is_sifi_developer", "started_at", "completed_stage_ids",
+    "task_completed", "interventions", "forbidden_output_observed",
+    "evidence_link_check", "application_failure_codes", "blocker_codes",
+    "direct_identifier_collected"
+  ],
+  "properties": {
+    "observation_id": {"$ref": "#/$defs/code"},
+    "protocol_version": {"const": "CB22-v1.0"},
+    "mode": {"enum": ["REHEARSAL", "COUNTED"]},
+    "participant_code": {"$ref": "#/$defs/code"},
+    "screening_record_id": {"$ref": "#/$defs/code"},
+    "consent_record_id": {"$ref": "#/$defs/code"},
+    "consent_confirmed_at": {"type": "string", "format": "date-time"},
+    "governance_authorization_id": {"$ref": "#/$defs/code"},
+    "workflow_session_id": {"$ref": "#/$defs/code"},
+    "task_package_version": {"const": "CB22-TASK-v1.0"},
+    "representative_profile_met": {"type": "boolean"},
+    "participant_is_sifi_developer": {"type": "boolean"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "noncompletion_reason_code": {"anyOf": [{"$ref": "#/$defs/code"}, {"type": "null"}]},
+    "completed_stage_ids": {
+      "type": "array", "uniqueItems": true,
+      "items": {"enum": ["WF-01", "WF-02", "WF-03", "WF-04", "WF-05", "WF-06", "WF-07", "WF-08", "WF-09", "WF-10", "WF-11"]}
+    },
+    "task_completed": {"type": "boolean"},
+    "interventions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["category", "reason_code", "duration_seconds", "routine_developer_help"],
+        "properties": {
+          "category": {"enum": ["SAFETY", "TECHNICAL_FAILURE", "NAVIGATION", "ANALYTICAL", "OTHER"]},
+          "reason_code": {"$ref": "#/$defs/code"},
+          "duration_seconds": {"type": "integer", "minimum": 0, "maximum": 14400},
+          "routine_developer_help": {"type": "boolean"}
+        }
+      }
+    },
+    "forbidden_output_observed": {"type": "boolean"},
+    "evidence_link_check": {"enum": ["NOT_ASSESSED", "PASS", "FAIL"]},
+    "application_failure_codes": {"type": "array", "items": {"$ref": "#/$defs/code"}},
+    "blocker_codes": {"type": "array", "items": {"$ref": "#/$defs/code"}},
+    "direct_identifier_collected": {"const": false}
+  },
+  "$defs": {
+    "code": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9_-]{2,63}$"}
+  }
+}

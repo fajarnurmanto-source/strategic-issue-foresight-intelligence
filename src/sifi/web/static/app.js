@@ -14,6 +14,7 @@ const advanceStep = document.querySelector('#advanceStep');
 const exerciseMessage = document.querySelector('#exerciseMessage');
 let localToken = '';
 let activeExercise = null;
+let activeStudy = null;
 
 const steps = {
   'WF-01':['Inspeksi cakupan','Tinjau profil cakupan dan keterbatasan skenario.'],
@@ -78,6 +79,16 @@ async function loadStatus() {
     integrity.textContent = 'TIDAK TERHUBUNG';
     badge.lastChild.textContent = ' Server lokal tidak tersedia';
   }
+}
+
+async function loadStudyStatus() {
+  const target = document.querySelector('#studyStatus');
+  try {
+    const response = await fetch('/api/cb22/status');
+    const data = await response.json();
+    const gate = data.gate.ready_for_counted_sessions ? 'COUNTED SIAP' : `COUNTED TERKUNCI · ${data.gate.reasons.join(', ')}`;
+    target.textContent = `${gate} · hasil ${data.assessment.result} · n=${data.assessment.analyzable_participants}`;
+  } catch { target.textContent = 'Status studi tidak tersedia'; }
 }
 
 async function openRecord(kind, id) {
@@ -204,6 +215,93 @@ advanceStep.addEventListener('click', async () => {
   }
 });
 
+function renderStudy(data) {
+  activeStudy = data;
+  const completed = data.session.completed_steps.length;
+  document.querySelector('#studyProgress').style.width = `${Math.round(completed / 11 * 100)}%`;
+  if (!data.next_step) {
+    document.querySelector('#studyPanel').hidden = true;
+    document.querySelector('#studyStart').hidden = false;
+    document.querySelector('#studyMessage').textContent = `Sesi selesai · observasi ${data.observation.observation_id} tersimpan.`;
+    loadStudyStatus(); loadCatalog(); return;
+  }
+  const [title, guidance] = steps[data.next_step];
+  document.querySelector('#studyStepCode').textContent = `${data.next_step} · tahap ${completed + 1} dari 11`;
+  document.querySelector('#studyStepTitle').textContent = title;
+  document.querySelector('#studyStepGuidance').textContent = guidance;
+  document.querySelector('#studyPanel').hidden = false;
+  document.querySelector('#studyStart').hidden = true;
+  document.querySelector('#studyMessage').textContent = data.observation.mode === 'COUNTED' ? 'Sesi dihitung · ikuti protokol beku.' : 'Rehearsal · tidak masuk hasil CB22.';
+}
+
+document.querySelector('#studyStart').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const local = document.querySelector('#consentAt').value;
+  try {
+    renderStudy(await postLocal('/api/cb22/start', {
+      participant_code:document.querySelector('#participantCode').value.trim().toUpperCase(),
+      screening_record_id:document.querySelector('#screeningCode').value.trim().toUpperCase(),
+      consent_record_id:document.querySelector('#consentCode').value.trim().toUpperCase(),
+      consent_confirmed_at:new Date(local).toISOString(),
+      governance_authorization_id:document.querySelector('#governanceCode').value.trim().toUpperCase(),
+      representative_profile_met:document.querySelector('#profileMet').checked,
+      participant_is_sifi_developer:!document.querySelector('#notDeveloper').checked,
+      mode:document.querySelector('#studyMode').value,
+    }));
+  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
+});
+
+document.querySelector('#studyAdvance').addEventListener('click', async () => {
+  const button = document.querySelector('#studyAdvance'); button.disabled = true;
+  try {
+    renderStudy(await postLocal('/api/cb22/advance', {
+      observation_id:activeStudy.observation.observation_id,
+      participant_code:activeStudy.observation.participant_code,
+    }));
+  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
+  finally { button.disabled = false; }
+});
+
+document.querySelector('#recordIntervention').addEventListener('click', async () => {
+  try {
+    const data = await postLocal('/api/cb22/intervention', {
+      observation_id:activeStudy.observation.observation_id,
+      category:document.querySelector('#interventionCategory').value,
+      reason_code:document.querySelector('#interventionReason').value.trim().toUpperCase(),
+      duration_seconds:Number(document.querySelector('#interventionDuration').value),
+      routine_developer_help:document.querySelector('#routineHelp').checked,
+    });
+    activeStudy.observation = data.observation;
+    document.querySelector('#studyMessage').textContent = 'Intervensi tercatat secara lokal.';
+  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
+});
+
+document.querySelector('#recordIncident').addEventListener('click', async () => {
+  try {
+    const data = await postLocal('/api/cb22/incident', {
+      observation_id:activeStudy.observation.observation_id,
+      kind:document.querySelector('#incidentKind').value,
+      code:document.querySelector('#incidentCode').value.trim().toUpperCase() || 'OBSERVED',
+    });
+    activeStudy.observation = data.observation;
+    document.querySelector('#studyMessage').textContent = 'Insiden tercatat secara lokal.';
+  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
+});
+
+document.querySelector('#stopStudy').addEventListener('click', async () => {
+  try {
+    const data = await postLocal('/api/cb22/stop', {
+      observation_id:activeStudy.observation.observation_id,
+      participant_code:activeStudy.observation.participant_code,
+      reason_code:document.querySelector('#stopReason').value.trim().toUpperCase(),
+    });
+    document.querySelector('#studyPanel').hidden = true;
+    document.querySelector('#studyStart').hidden = false;
+    document.querySelector('#studyMessage').textContent = `Sesi diakhiri · ${data.observation.noncompletion_reason_code}`;
+    loadStudyStatus();
+  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
+});
+
 document.querySelectorAll('form[data-kind]').forEach((form) => {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -218,4 +316,5 @@ document.querySelectorAll('form[data-kind]').forEach((form) => {
 });
 
 loadStatus();
+loadStudyStatus();
 loadCatalog();

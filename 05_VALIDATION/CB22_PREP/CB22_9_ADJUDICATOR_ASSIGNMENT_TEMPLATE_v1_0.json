@@ -1,0 +1,11 @@
+{
+  "record_type": "SIFI_CB22_ADJUDICATOR_ASSIGNMENT",
+  "record_version": "1.0",
+  "protocol_version": "CB22-v1.0",
+  "status": "UNASSIGNED_BLOCKING_EXECUTION",
+  "primary_adjudicator_staff_code": null,
+  "independent_checker_staff_code": null,
+  "conflict_review_complete": false,
+  "assigned_at": null,
+  "note": "Use stable authorized staff codes; keep real-name mapping outside SIFI."
+}

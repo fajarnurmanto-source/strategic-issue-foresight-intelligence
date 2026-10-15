@@ -1,0 +1,9 @@
+{
+  "record_type": "SIFI_CB22_TASK_PACKAGE_INTEGRITY",
+  "record_version": "1.0",
+  "task_package_version": "CB22-TASK-v1.0",
+  "file": "CB22_TASK_PACKAGE_v1_0.json",
+  "sha256": "6371EF15A5431809C1111B2E4E2DCA9237A0EB585F7C9E9D3C5CDD4C7A845FE1",
+  "rights_basis": "ORIGINAL_SYNTHETIC_CONTENT_CREATED_FOR_SIFI_VALIDATION",
+  "status": "FROZEN"
+}

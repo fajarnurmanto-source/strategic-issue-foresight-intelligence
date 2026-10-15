@@ -45,6 +45,44 @@
       <p class="exercise-message" id="exerciseMessage" aria-live="polite"></p>
     </section>
 
+    <section class="study" aria-labelledby="studyTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">CB22 · studi pengguna representatif</p><h2 id="studyTitle">Mode studi terkontrol</h2></div>
+        <p id="studyStatus">Memeriksa gerbang studi…</p>
+      </div>
+      <p class="study-warning">Jangan masukkan nama, kontak, organisasi, tanda tangan, atau pernyataan bebas peserta. Consent individual harus sudah tercatat oleh kustodian sebelum sesi dimulai.</p>
+      <form id="studyStart" class="study-form">
+        <label>Kode peserta<input id="participantCode" maxlength="64" required placeholder="P-001"></label>
+        <label>Kode screening<input id="screeningCode" maxlength="64" required placeholder="SCR-001"></label>
+        <label>Kode consent<input id="consentCode" maxlength="64" required placeholder="CON-001"></label>
+        <label>Waktu consent (dengan zona waktu)<input id="consentAt" type="datetime-local" required></label>
+        <label>Kode otorisasi studi<input id="governanceCode" maxlength="64" required value="GOV-001"></label>
+        <label>Jenis sesi<select id="studyMode"><option value="REHEARSAL">Rehearsal (tidak dihitung)</option><option value="COUNTED">Counted (memerlukan gerbang terbuka)</option></select></label>
+        <label class="check"><input id="profileMet" type="checkbox"> Profil representatif terpenuhi</label>
+        <label class="check"><input id="notDeveloper" type="checkbox"> Peserta bukan pengembang/penulis SIFI</label>
+        <button type="submit" class="advance">Mulai sesi CB22</button>
+      </form>
+      <div id="studyPanel" class="exercise-panel" hidden>
+        <div class="progress"><span id="studyProgress"></span></div>
+        <p class="step-code" id="studyStepCode"></p><h3 id="studyStepTitle"></h3>
+        <p id="studyStepGuidance"></p>
+        <button type="button" class="advance" id="studyAdvance">Selesaikan pemeriksaan tahap</button>
+        <details class="facilitator-tools">
+          <summary>Alat fasilitator</summary>
+          <div class="tool-grid">
+            <label>Kategori intervensi<select id="interventionCategory"><option>NAVIGATION</option><option>TECHNICAL_FAILURE</option><option>SAFETY</option><option>ANALYTICAL</option><option>OTHER</option></select></label>
+            <label>Kode alasan<input id="interventionReason" maxlength="64" placeholder="MENU-HELP"></label>
+            <label>Durasi detik<input id="interventionDuration" type="number" min="0" max="14400" value="0"></label>
+            <label class="check"><input id="routineHelp" type="checkbox"> Termasuk bantuan developer rutin</label>
+            <button type="button" id="recordIntervention">Catat intervensi</button>
+          </div>
+          <div class="stop-row"><select id="incidentKind"><option value="APPLICATION_FAILURE">Kegagalan aplikasi</option><option value="BLOCKER">Blocker</option><option value="FORBIDDEN_OUTPUT">Output terlarang</option></select><input id="incidentCode" maxlength="64" placeholder="Kode insiden"><button type="button" id="recordIncident">Catat insiden</button></div>
+          <div class="stop-row"><input id="stopReason" maxlength="64" placeholder="Kode alasan berhenti"><button type="button" id="stopStudy">Akhiri tanpa selesai</button></div>
+        </details>
+      </div>
+      <p class="exercise-message" id="studyMessage" aria-live="polite"></p>
+    </section>
+
     <section class="workspace">
       <div class="section-heading">
         <div><p class="eyebrow">Penelusuran</p><h2>Buka rekam kerja</h2></div>

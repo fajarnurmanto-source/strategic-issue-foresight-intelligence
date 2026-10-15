@@ -48,6 +48,11 @@ class LocalWorkflowRuntime:
         with self._store.transaction():
             yield self
 
+    @property
+    def version_store(self) -> SQLiteVersionStore:
+        """Shared append-only store for atomic local bounded-domain extensions."""
+        return self._store
+
     def start_session(
         self, *, session_id: str, task_id: str, analyst_id: str,
         issue_id: str, analytical_cutoff: datetime, started_at: datetime,
