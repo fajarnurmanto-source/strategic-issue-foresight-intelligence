@@ -1,0 +1,31 @@
+{
+  "record_type": "SIFI_S1_8A_CB22_STUDY_RUNTIME_RESULT",
+  "record_version": "0.1",
+  "assessment_date": "2026-10-15",
+  "basis_commit": "17c43ec",
+  "status": "ENGINEERING_READY_EXECUTION_BLOCKED",
+  "protocol_version": "CB22-v1.0",
+  "task_package_version": "CB22-TASK-v1.0",
+  "verified_windows_local_tests": 370,
+  "implemented": [
+    "PSEUDONYMOUS_SCREENING_AND_CONSENT_REFERENCES",
+    "COUNTED_VERSUS_REHEARSAL_SEPARATION",
+    "CHECKSUM_PINNED_RIGHTS_SAFE_TASK_PACKAGE",
+    "COUNTED_SESSION_FAIL_CLOSED_GATE",
+    "ATOMIC_WORKFLOW_OBSERVATION_PERSISTENCE",
+    "INTERVENTION_INCIDENT_AND_NONCOMPLETION_RECORDING",
+    "RESUMABLE_ACTIVE_STUDY_SESSIONS",
+    "DETERMINISTIC_THRESHOLD_ASSESSMENT",
+    "CONFINED_ADJUDICATION_EXPORT"
+  ],
+  "current_gate_reasons": [
+    "PRIMARY_ADJUDICATOR_UNASSIGNED",
+    "INDEPENDENT_CHECKER_UNASSIGNED",
+    "CONFLICT_REVIEW_INCOMPLETE",
+    "EXTERNAL_REVIEW_REQUIREMENT_UNRESOLVED"
+  ],
+  "representative_participant_sessions_executed": 0,
+  "cb22_result": "NOT_READY",
+  "cb22_pass_claim_allowed": false,
+  "l5_claim_allowed": false
+}
