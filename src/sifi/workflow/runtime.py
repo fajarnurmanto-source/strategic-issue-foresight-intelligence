@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from sifi.persistence import SQLiteVersionStore
+from sifi.local import LocalSIFIPaths
 
 from .repository import WorkflowSessionRepository
 from .service import BoundedAnalystWorkflow, WorkflowSession, WorkflowStepSubmission
@@ -12,10 +13,17 @@ from .service import BoundedAnalystWorkflow, WorkflowSession, WorkflowStepSubmis
 class LocalWorkflowRuntime:
     """Local-only durable application boundary for bounded workflow sessions."""
 
-    def __init__(self, database_path: str | Path) -> None:
+    def __init__(
+        self,
+        database_path: str | Path,
+        *,
+        workspace_root: str | Path | None = None,
+    ) -> None:
         path = Path(database_path).resolve()
         if path.name == "":
             raise ValueError("database_path must identify a file")
+        if workspace_root is not None:
+            LocalSIFIPaths.from_root(workspace_root).require_inside(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         self.database_path = path
         self._store = SQLiteVersionStore(path)

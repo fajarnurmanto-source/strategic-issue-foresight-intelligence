@@ -22,6 +22,7 @@ Thumbs.db
 .cache/
 tmp/
 logs/
+runtime/
 
 # Local data that must not be committed by default
 data/raw/
