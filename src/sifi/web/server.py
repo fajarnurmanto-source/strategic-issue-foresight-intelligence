@@ -180,6 +180,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                         "id": item.session_id,
                         "issue_id": item.issue_id,
                         "complete": item.is_complete,
+                        "next_step": item.next_step,
                         "analytical_only": item.analytical_only,
                     }
                     for item in catalog["sessions"]

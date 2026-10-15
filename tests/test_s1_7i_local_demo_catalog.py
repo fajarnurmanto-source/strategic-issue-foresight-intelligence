@@ -55,6 +55,8 @@ class LocalDemoCatalogTests(unittest.TestCase):
                     payload = json.load(response)
                 self.assertEqual(payload["sessions"][0]["id"], DEMO_SESSION_ID)
                 self.assertEqual(payload["briefs"][0]["id"], DEMO_BRIEF_ID)
+                self.assertTrue(payload["sessions"][0]["complete"])
+                self.assertIsNone(payload["sessions"][0]["next_step"])
                 self.assertTrue(payload["sessions"][0]["analytical_only"])
                 self.assertNotIn("summary", payload["briefs"][0])
             finally:

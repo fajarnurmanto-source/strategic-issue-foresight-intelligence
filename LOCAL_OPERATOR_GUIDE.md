@@ -19,8 +19,8 @@ Bagian **Latihan terpandu** pada halaman lokal memungkinkan operator menjalani
 WF-01 sampai WF-11 satu per satu. Setiap konfirmasi menambah jejak audit ke
 database lokal. Setelah WF-11, SIFI membuat brief sintetis yang dapat dibuka
 dari katalog rekam. Menutup halaman di tengah latihan tidak menghapus jejak
-yang sudah tersimpan, tetapi tahap ini belum menyediakan tombol melanjutkan
-sesi latihan yang terputus.
+yang sudah tersimpan. Sesi belum selesai muncul sebagai **Lanjutkan sesi** di
+katalog dan kembali ke tahap berikutnya saat dipilih.
 
 Pilihan launcher:
 

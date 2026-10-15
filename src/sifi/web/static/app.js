@@ -74,6 +74,16 @@ async function openRecord(kind, id) {
   result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+async function resumeExercise(item) {
+  const response = await fetch(`/api/session?id=${encodeURIComponent(item.id)}`);
+  const session = await response.json();
+  if (!response.ok) throw new Error(session.error || 'Sesi tidak dapat dilanjutkan');
+  document.querySelector('#analystId').value = session.analyst_id;
+  renderExercise({session, next_step:item.next_step, brief:null, synthetic:true});
+  document.querySelector('#exerciseTitle').scrollIntoView({behavior:'smooth', block:'start'});
+  exerciseMessage.textContent = 'Sesi lokal dipulihkan · lanjutkan dari tahap tersimpan.';
+}
+
 async function loadCatalog() {
   try {
     const response = await fetch('/api/catalog');
@@ -97,9 +107,12 @@ async function loadCatalog() {
       button.type = 'button';
       button.textContent = item.id;
       const meta = document.createElement('small');
-      meta.textContent = `${item.kind === 'session' ? 'Sesi' : 'Brief'} · ${item.issue_id}`;
+      const resumable = item.kind === 'session' && !item.complete;
+      meta.textContent = `${resumable ? 'Lanjutkan sesi' : item.kind === 'session' ? 'Sesi selesai' : 'Brief'} · ${item.issue_id}`;
       button.append(meta);
-      button.addEventListener('click', () => openRecord(item.kind, item.id).catch(showError));
+      button.addEventListener('click', () => (
+        resumable ? resumeExercise(item) : openRecord(item.kind, item.id)
+      ).catch(showError));
       catalog.append(button);
     });
   } catch {
