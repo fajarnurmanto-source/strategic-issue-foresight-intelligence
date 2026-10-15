@@ -98,6 +98,11 @@ counted. Rehearsal tidak pernah memengaruhi hasil CB22. Sebelum sesi counted,
 kustodian wajib menyelesaikan screening dan consent di luar database SIFI,
 lalu hanya memasukkan kode pseudonim serta waktu konfirmasi consent.
 
+Setiap tahap CB22 menampilkan paket bukti sintetis yang sama dan meminta
+pilihan terstruktur. Jawaban yang melanggar boundary tidak memajukan workflow
+dan percobaannya dicatat sebagai blocker berkode. Tidak ada catatan bebas yang
+diperlukan dari peserta.
+
 Materi beku berada di `05_VALIDATION\CB22_PREP`. Perubahan checksum task
 package akan otomatis menutup gerbang sesi counted.
 

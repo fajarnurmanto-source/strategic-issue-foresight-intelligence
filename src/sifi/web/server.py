@@ -17,12 +17,13 @@ from sifi.local import LocalSIFIPaths
 from sifi.local_ops import LocalOperations
 from sifi.demo_workflow import DemoWorkflowError, LocalDemoWorkflow
 from sifi.brief_export import BriefExportError, export_brief_markdown
-from sifi.workflow import LocalWorkflowRuntime
+from sifi.workflow import LocalWorkflowRuntime, WorkflowStep
 from sifi.validation import (
     CB22StudyRuntime, Intervention, InterventionCategory, LocalCB22Workflow,
     StudyMode, cb22_gate_status,
     export_adjudication_bundle,
 )
+from sifi.validation.study_task import public_step_spec
 
 
 class LocalWebBoundaryError(ValueError):
@@ -167,6 +168,17 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._serve_catalog()
         elif parsed.path == "/api/cb22/status":
             self._serve_cb22_status()
+        elif parsed.path == "/api/cb22/task":
+            task_path = (
+                self.server.paths.root / "05_VALIDATION" / "CB22_PREP"
+                / "CB22_TASK_PACKAGE_v1_0.json"
+            )
+            task = json.loads(task_path.read_text(encoding="utf-8"))
+            self._send_json(HTTPStatus.OK, {
+                "scenario": task["scenario"]["title"],
+                "evidence": task["scenario"]["evidence"],
+                "steps": {step.value: public_step_spec(step) for step in WorkflowStep},
+            })
         elif parsed.path in {"/api/session", "/api/brief"}:
             self._serve_record(parsed.path, parse_qs(parsed.query))
         else:
@@ -371,6 +383,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             state = workflow.advance(
                 observation_id=str(payload.get("observation_id", "")),
                 participant_code=str(payload.get("participant_code", "")),
+                answer_code=str(payload.get("answer_code", "")),
             )
             self._send_json(HTTPStatus.OK, {
                 "observation": state.observation,

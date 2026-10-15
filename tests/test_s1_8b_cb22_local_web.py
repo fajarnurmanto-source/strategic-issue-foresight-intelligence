@@ -16,6 +16,10 @@ class CB22LocalWebTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(dir=Path.cwd())
         self.root = Path(self.temp.name) / "SIFI"
         (self.root / "src" / "sifi").mkdir(parents=True)
+        task_dir = self.root / "05_VALIDATION" / "CB22_PREP"
+        task_dir.mkdir(parents=True)
+        source = Path.cwd() / "05_VALIDATION" / "CB22_PREP" / "CB22_TASK_PACKAGE_v1_0.json"
+        (task_dir / source.name).write_bytes(source.read_bytes())
         self.server = create_local_server(self.root, port=0)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -69,6 +73,13 @@ class CB22LocalWebTests(unittest.TestCase):
         with self.post("/api/cb22/export", {}) as response:
             payload = json.load(response)
         self.assertTrue((self.root / payload["export"]).is_file())
+
+    def test_005_task_endpoint_exposes_fixed_evidence_and_structured_choices(self):
+        with urlopen(self.base + "/api/cb22/task", timeout=2) as response:
+            payload = json.load(response)
+        self.assertEqual(len(payload["evidence"]), 5)
+        self.assertIn("WF-01", payload["steps"])
+        self.assertGreaterEqual(len(payload["steps"]["WF-01"]["options"]), 2)
 
 
 if __name__ == "__main__":

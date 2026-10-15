@@ -13,6 +13,7 @@ from sifi.validation import (
     LocalCB22Workflow, StudyMode, StudyObservation, assess_cb22, cb22_gate_status,
     export_adjudication_bundle,
 )
+from sifi.validation.study_task import STUDY_STEP_SPECS
 
 
 NOW = datetime(2026, 10, 15, 9, 0, tzinfo=timezone.utc)
@@ -122,7 +123,9 @@ class CB22StudyKernelTests(unittest.TestCase):
             for minute in range(2, 13):
                 state = workflow.advance(
                     observation_id=state.observation.observation_id,
-                    participant_code="P-101", now=NOW + timedelta(minutes=minute),
+                    participant_code="P-101",
+                    answer_code=STUDY_STEP_SPECS[state.session.next_step].accepted_code,
+                    now=NOW + timedelta(minutes=minute),
                 )
             self.assertTrue(state.observation.task_completed)
             self.assertEqual(state.observation.evidence_link_check, EvidenceLinkCheck.PASS)
@@ -220,6 +223,29 @@ class CB22StudyKernelTests(unittest.TestCase):
                 self.assertEqual(receipt.status, "FINAL")
                 final_path = runtime.export_final_receipt(bundle)
                 self.assertTrue(final_path.is_file())
+
+    def test_018_study_workflow_rejects_boundary_breaking_answer(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            workflow = LocalCB22Workflow(root)
+            state = workflow.start(
+                participant_code="P-301", screening_record_id="SCR-301",
+                consent_record_id="CON-301", consent_confirmed_at=NOW,
+                governance_authorization_id="GOV-001", representative_profile_met=True,
+                participant_is_sifi_developer=False, mode=StudyMode.REHEARSAL,
+                now=NOW + timedelta(minutes=1),
+            )
+            with self.assertRaisesRegex(ValueError, "does not preserve"):
+                workflow.advance(
+                    observation_id=state.observation.observation_id,
+                    participant_code="P-301", answer_code="COVERAGE-GLOBAL",
+                    now=NOW + timedelta(minutes=2),
+                )
+            with CB22StudyRuntime(
+                root / "runtime" / "data" / "sifi.sqlite", workspace_root=root
+            ) as runtime:
+                stored = runtime.latest(state.observation.observation_id)
+            self.assertIn("BOUNDARY-RETRY-WF-01", stored.blocker_codes)
 
 
 if __name__ == "__main__":

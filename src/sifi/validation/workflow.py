@@ -16,6 +16,7 @@ from .model import (
 )
 from .repository import StudyObservationRepository
 from .gate import cb22_gate_status
+from .study_task import require_accepted_answer
 
 
 STUDY_CUTOFF = datetime(2026, 1, 1, 8, 0, tzinfo=timezone.utc)
@@ -95,6 +96,7 @@ class LocalCB22Workflow:
         return CB22WorkflowState(observation, session)
 
     def advance(self, *, observation_id: str, participant_code: str,
+                answer_code: str,
                 now: datetime | None = None) -> CB22WorkflowState:
         recorded = now or datetime.now(timezone.utc)
         with LocalWorkflowRuntime(self.paths.database, workspace_root=self.paths.root) as runtime:
@@ -110,9 +112,19 @@ class LocalCB22Workflow:
             if session is None or session.next_step is None:
                 raise CB22WorkflowError("study workflow is missing or already complete")
             try:
+                answer = require_accepted_answer(session.next_step, answer_code)
+            except ValueError as exc:
+                retried = replace(
+                    observation,
+                    blocker_codes=observation.blocker_codes
+                    + (f"BOUNDARY-RETRY-{session.next_step.value}",),
+                )
+                repository.append(retried, recorded_at=recorded)
+                raise CB22WorkflowError(str(exc)) from exc
+            try:
                 with runtime.transaction():
                     session = runtime.submit_step(
-                        session.session_id, self._submission(session.next_step),
+                        session.session_id, self._submission(session.next_step, answer),
                         analyst_id=participant_code, recorded_at=recorded,
                     )
                     brief = None
@@ -191,28 +203,29 @@ class LocalCB22Workflow:
             return updated
 
     @staticmethod
-    def _submission(step: WorkflowStep) -> WorkflowStepSubmission:
+    def _submission(step: WorkflowStep, answer_code: str) -> WorkflowStepSubmission:
         common = {"step": step}
+        answer_finding = f"participant_selection={answer_code}"
         if step == WorkflowStep.COVERAGE_INSPECTION:
-            return WorkflowStepSubmission(**common, findings=("fixed synthetic coverage inspected",))
+            return WorkflowStepSubmission(**common, findings=("fixed synthetic coverage inspected", answer_finding))
         if step == WorkflowStep.ADMITTED_SIGNAL_REVIEW:
-            return WorkflowStepSubmission(**common, findings=("admitted evidence inspected",), evidence_refs=EVIDENCE_REFS, production_evidence_eligible=True)
+            return WorkflowStepSubmission(**common, findings=("admitted evidence inspected", answer_finding), evidence_refs=EVIDENCE_REFS, production_evidence_eligible=True)
         if step == WorkflowStep.PERSISTENT_ISSUE_INSPECTION:
-            return WorkflowStepSubmission(**common, findings=("fixed issue identity inspected",))
+            return WorkflowStepSubmission(**common, findings=("fixed issue identity inspected", answer_finding))
         if step == WorkflowStep.EVIDENCE_CONTRADICTION_INSPECTION:
-            return WorkflowStepSubmission(**common, findings=("evidence classes inspected",), evidence_refs=EVIDENCE_REFS + ("CB22-EV-C01", "CB22-EV-X01", "CB22-EV-Z101"))
+            return WorkflowStepSubmission(**common, findings=("evidence classes inspected", answer_finding), evidence_refs=EVIDENCE_REFS + ("CB22-EV-C01", "CB22-EV-X01", "CB22-EV-Z101"))
         if step == WorkflowStep.GEOGRAPHIC_RELEVANCE_INSPECTION:
-            return WorkflowStepSubmission(**common, findings=("geography dimensions inspected",), inspected_dimensions=tuple(sorted(GEOGRAPHY_DIMENSIONS)))
+            return WorkflowStepSubmission(**common, findings=("geography dimensions inspected", answer_finding), inspected_dimensions=tuple(sorted(GEOGRAPHY_DIMENSIONS)))
         if step == WorkflowStep.UNCERTAINTY_INSPECTION:
-            return WorkflowStepSubmission(**common, findings=("uncertainty and gaps inspected",))
+            return WorkflowStepSubmission(**common, findings=("uncertainty and gaps inspected", answer_finding))
         if step == WorkflowStep.TRAJECTORY_INSPECTION:
-            return WorkflowStepSubmission(**common, findings=("trajectory dimensions inspected",), inspected_dimensions=tuple(item.value for item in TrajectoryDimension))
+            return WorkflowStepSubmission(**common, findings=("trajectory dimensions inspected", answer_finding), inspected_dimensions=tuple(item.value for item in TrajectoryDimension))
         if step == WorkflowStep.AUTHORIZED_CORRECTION:
-            return WorkflowStepSubmission(**common, findings=("correction boundary inspected",), correction_requested=False, correction_authority_verified=True)
+            return WorkflowStepSubmission(**common, findings=("correction boundary inspected", answer_finding), correction_requested=False, correction_authority_verified=True)
         if step == WorkflowStep.EVIDENCE_LINKED_BRIEF:
-            return WorkflowStepSubmission(**common, findings=("evidence-linked assertions inspected",), evidence_refs=EVIDENCE_REFS, brief_assertions_supported=True)
+            return WorkflowStepSubmission(**common, findings=("evidence-linked assertions inspected", answer_finding), evidence_refs=EVIDENCE_REFS, brief_assertions_supported=True)
         if step == WorkflowStep.HISTORICAL_RETRIEVAL:
-            return WorkflowStepSubmission(**common, findings=("point-in-time state inspected",), historical_cutoff=STUDY_CUTOFF)
+            return WorkflowStepSubmission(**common, findings=("point-in-time state inspected", answer_finding), historical_cutoff=STUDY_CUTOFF)
         if step == WorkflowStep.CANDIDATE_PRIORITIZATION:
-            return WorkflowStepSubmission(**common, findings=("bounded materiality inspected",))
+            return WorkflowStepSubmission(**common, findings=("bounded materiality inspected", answer_finding))
         raise CB22WorkflowError("unsupported workflow step")

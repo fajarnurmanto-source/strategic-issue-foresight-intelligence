@@ -27,6 +27,11 @@ h1 { max-width:820px; margin:0; font-family:Georgia,serif; font-size:clamp(2.6re
 .study-form .check { display:flex; gap:10px; align-items:center; }
 .study-form .check input { width:auto; margin:0; }
 .study-form button { justify-self:start; }
+.evidence-board { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:20px; }
+.evidence-board div { padding:11px; border:1px solid var(--line); border-radius:9px; background:#101312; }
+.evidence-board strong { display:block; color:var(--teal); font-size:.78rem; }
+.evidence-board span { color:var(--muted); font-size:.84rem; line-height:1.4; }
+#studyAnswer { width:100%; border:1px solid var(--line); border-radius:9px; padding:11px; background:#0e1211; color:var(--ink); }
 .facilitator-tools { margin-top:20px; padding:14px; border:1px solid var(--line); border-radius:10px; }
 .facilitator-tools summary { cursor:pointer; color:var(--muted); }
 .tool-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px; }

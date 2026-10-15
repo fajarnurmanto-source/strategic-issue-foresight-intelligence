@@ -15,6 +15,7 @@ const exerciseMessage = document.querySelector('#exerciseMessage');
 let localToken = '';
 let activeExercise = null;
 let activeStudy = null;
+let studyTask = null;
 
 const steps = {
   'WF-01':['Inspeksi cakupan','Tinjau profil cakupan dan keterbatasan skenario.'],
@@ -104,6 +105,20 @@ async function loadStudyStatus() {
       active.append(button);
     });
   } catch { target.textContent = 'Status studi tidak tersedia'; }
+}
+
+async function loadStudyTask() {
+  const response = await fetch('/api/cb22/task');
+  studyTask = await response.json();
+  const board = document.querySelector('#studyEvidence');
+  board.replaceChildren();
+  studyTask.evidence.forEach((item) => {
+    const card = document.createElement('div');
+    const heading = document.createElement('strong');
+    heading.textContent = `${item.id} · ${item.class}`;
+    const body = document.createElement('span'); body.textContent = item.text;
+    card.append(heading, body); board.append(card);
+  });
 }
 
 async function openRecord(kind, id) {
@@ -241,9 +256,16 @@ function renderStudy(data) {
     loadStudyStatus(); loadCatalog(); return;
   }
   const [title, guidance] = steps[data.next_step];
+  const spec = studyTask.steps[data.next_step];
   document.querySelector('#studyStepCode').textContent = `${data.next_step} · tahap ${completed + 1} dari 11`;
   document.querySelector('#studyStepTitle').textContent = title;
-  document.querySelector('#studyStepGuidance').textContent = guidance;
+  document.querySelector('#studyStepGuidance').textContent = `${guidance} ${spec.prompt}`;
+  const answer = document.querySelector('#studyAnswer');
+  answer.replaceChildren();
+  spec.options.forEach((item) => {
+    const option = document.createElement('option');
+    option.value = item.code; option.textContent = item.label; answer.append(option);
+  });
   document.querySelector('#studyPanel').hidden = false;
   document.querySelector('#studyStart').hidden = true;
   document.querySelector('#studyMessage').textContent = data.observation.mode === 'COUNTED' ? 'Sesi dihitung · ikuti protokol beku.' : 'Rehearsal · tidak masuk hasil CB22.';
@@ -272,6 +294,7 @@ document.querySelector('#studyAdvance').addEventListener('click', async () => {
     renderStudy(await postLocal('/api/cb22/advance', {
       observation_id:activeStudy.observation.observation_id,
       participant_code:activeStudy.observation.participant_code,
+      answer_code:document.querySelector('#studyAnswer').value,
     }));
   } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
   finally { button.disabled = false; }
@@ -338,5 +361,5 @@ document.querySelectorAll('form[data-kind]').forEach((form) => {
 });
 
 loadStatus();
-loadStudyStatus();
+loadStudyTask().then(loadStudyStatus);
 loadCatalog();
