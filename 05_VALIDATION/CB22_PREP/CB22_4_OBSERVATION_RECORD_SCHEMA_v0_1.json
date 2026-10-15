@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sifi:cb22:observation:v0.1",
+  "title": "SIFI CB22 Pseudonymous Observation Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol_version",
+    "participant_code",
+    "screening_record_id",
+    "consent_record_id",
+    "governance_authorization_id",
+    "workflow_session_id",
+    "task_package_version",
+    "counted_session",
+    "started_at",
+    "completed_stage_ids",
+    "task_completed",
+    "interventions",
+    "forbidden_output_observed",
+    "direct_identifier_collected"
+  ],
+  "properties": {
+    "protocol_version": {"const": "CB22-v0.1-UNAPPROVED"},
+    "participant_code": {"type": "string", "minLength": 1, "maxLength": 64},
+    "screening_record_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "consent_record_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "governance_authorization_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "workflow_session_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "task_package_version": {"type": "string", "minLength": 1, "maxLength": 64},
+    "counted_session": {"type": "boolean"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "completed_stage_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["WF-01", "WF-02", "WF-03", "WF-04", "WF-05", "WF-06", "WF-07", "WF-08", "WF-09", "WF-10", "WF-11"]}
+    },
+    "task_completed": {"type": "boolean"},
+    "noncompletion_reason_code": {"type": ["string", "null"], "maxLength": 128},
+    "interventions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "reason", "duration_seconds", "routine_developer_help"],
+        "properties": {
+          "category": {"enum": ["SAFETY", "TECHNICAL_FAILURE", "NAVIGATION", "ANALYTICAL", "OTHER"]},
+          "reason": {"type": "string", "minLength": 1, "maxLength": 500},
+          "duration_seconds": {"type": "integer", "minimum": 0},
+          "routine_developer_help": {"type": "boolean"}
+        }
+      }
+    },
+    "forbidden_output_observed": {"type": "boolean"},
+    "evidence_link_check": {"enum": ["NOT_ASSESSED", "PASS", "FAIL"]},
+    "application_failure_codes": {"type": "array", "items": {"type": "string", "maxLength": 128}},
+    "blocker_codes": {"type": "array", "items": {"type": "string", "maxLength": 128}},
+    "direct_identifier_collected": {"const": false}
+  }
+}
