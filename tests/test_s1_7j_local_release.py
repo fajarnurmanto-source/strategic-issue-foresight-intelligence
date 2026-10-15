@@ -16,6 +16,7 @@ class LocalReleaseCheckTests(unittest.TestCase):
             for relative in (
                 "scripts/setup-local.ps1", "scripts/demo-local.ps1",
                 "scripts/start-local.ps1", "scripts/backup-local.ps1",
+                "scripts/start-sifi.ps1", "scripts/stop-sifi.ps1",
                 "scripts/restore-local.ps1", "src/sifi/web/static/index.html",
                 "LOCAL_OPERATOR_GUIDE.md",
             ):

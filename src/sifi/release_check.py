@@ -33,6 +33,8 @@ def check_local_release(root: str | Path) -> LocalReleaseCheck:
         paths.root / "scripts" / "setup-local.ps1",
         paths.root / "scripts" / "demo-local.ps1",
         paths.root / "scripts" / "start-local.ps1",
+        paths.root / "scripts" / "start-sifi.ps1",
+        paths.root / "scripts" / "stop-sifi.ps1",
         paths.root / "scripts" / "backup-local.ps1",
         paths.root / "scripts" / "restore-local.ps1",
         paths.root / "src" / "sifi" / "web" / "static" / "index.html",

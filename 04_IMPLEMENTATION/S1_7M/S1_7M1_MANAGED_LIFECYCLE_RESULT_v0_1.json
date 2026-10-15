@@ -1,0 +1,23 @@
+{
+  "record_type": "SIFI_S1_7M_MANAGED_LOCAL_LIFECYCLE_RESULT",
+  "record_version": "0.1",
+  "status": "PASS_MANAGED_WINDOWS_START_STOP_VERIFIED",
+  "implementation_references": [
+    "scripts/start-sifi.ps1",
+    "scripts/stop-sifi.ps1",
+    "LOCAL_OPERATOR_GUIDE.md",
+    "src/sifi/release_check.py"
+  ],
+  "full_windows_test_pass_count": 337,
+  "managed_start_verified": true,
+  "health_before_ready_verified": true,
+  "hidden_background_process": true,
+  "pid_and_command_identity_guard": true,
+  "managed_stop_verified": true,
+  "state_cleanup_verified": true,
+  "test_port": 8891,
+  "runtime_state_location": "D:/Research/SIFI/runtime/config/sifi-server.json",
+  "runtime_log_location": "D:/Research/SIFI/runtime/logs",
+  "external_runtime_dependency": false,
+  "production_ready_claimed": false
+}

@@ -7,9 +7,9 @@ folder `D:\Research\SIFI`.
 ## Menjalankan aplikasi
 
 1. Buka PowerShell di folder `D:\Research\SIFI`.
-2. Jalankan `scripts\start-local.ps1`.
+2. Jalankan `scripts\start-sifi.ps1`.
 3. Browser akan membuka `http://127.0.0.1:8765`.
-4. Tekan `Ctrl+C` pada PowerShell untuk menghentikan SIFI.
+4. Saat selesai, jalankan `scripts\stop-sifi.ps1`.
 
 Pada pemakaian pertama, launcher membuat lingkungan Python lokal, database
 lokal, dan dua rekam demonstrasi sintetis. Proses ini tidak mengunduh data,
@@ -24,9 +24,16 @@ sesi latihan yang terputus.
 
 Pilihan launcher:
 
-- `scripts\start-local.ps1 -NoDemo` untuk tidak membuat data demo;
-- `scripts\start-local.ps1 -NoBrowser` untuk tidak membuka browser otomatis;
-- `scripts\start-local.ps1 -Port 9000` untuk memakai port loopback lain.
+- `scripts\start-sifi.ps1 -NoDemo` untuk tidak membuat data demo;
+- `scripts\start-sifi.ps1 -NoBrowser` untuk tidak membuka browser otomatis;
+- `scripts\start-sifi.ps1 -Port 9000` untuk memakai port loopback lain;
+- `scripts\start-local.ps1` untuk menjalankan server di depan layar dan
+  menghentikannya dengan `Ctrl+C`.
+
+Launcher terkelola menyimpan identitas proses di `runtime\config` dan output
+server di `runtime\logs`. Perintah stop memeriksa executable serta command line
+sebelum menghentikan proses, sehingga PID yang telah dipakai ulang oleh proses
+lain tidak dihentikan secara keliru.
 
 ## Pemeriksaan kesehatan
 
