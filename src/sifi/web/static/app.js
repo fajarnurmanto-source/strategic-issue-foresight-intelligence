@@ -3,6 +3,31 @@ const integrity = document.querySelector('#integrity');
 const result = document.querySelector('#result');
 const catalog = document.querySelector('#catalog');
 const recordCount = document.querySelector('#recordCount');
+const exerciseStart = document.querySelector('#exerciseStart');
+const exercisePanel = document.querySelector('#exercisePanel');
+const exerciseProgress = document.querySelector('#exerciseProgress');
+const stepCode = document.querySelector('#stepCode');
+const stepTitle = document.querySelector('#stepTitle');
+const stepGuidance = document.querySelector('#stepGuidance');
+const stepNote = document.querySelector('#stepNote');
+const advanceStep = document.querySelector('#advanceStep');
+const exerciseMessage = document.querySelector('#exerciseMessage');
+let localToken = '';
+let activeExercise = null;
+
+const steps = {
+  'WF-01':['Inspeksi cakupan','Tinjau profil cakupan dan keterbatasan skenario.'],
+  'WF-02':['Tinjau sinyal yang diterima','Pastikan hanya bukti yang memenuhi keputusan hak digunakan.'],
+  'WF-03':['Inspeksi Issue persisten','Tinjau identitas dan versi Issue tanpa membuat identitas otomatis.'],
+  'WF-04':['Bukti dan kontradiksi','Periksa dukungan, kontradiksi, konteks, dan pengecualian secara terpisah.'],
+  'WF-05':['Relevansi geografis','Periksa seluruh dimensi geografi tanpa menggabungkannya.'],
+  'WF-06':['Ketidakpastian','Catat ketidakpastian, gap bukti, dan keterbatasan.'],
+  'WF-07':['Trajektori','Periksa setiap dimensi trajektori secara terpisah.'],
+  'WF-08':['Koreksi berotoritas','Pastikan koreksi memerlukan kewenangan manusia eksplisit.'],
+  'WF-09':['Prioritisasi kandidat','Gunakan materialitas terbatas, bukan perhatian semata.'],
+  'WF-10':['Brief berbasis bukti','Pastikan setiap pernyataan terhubung ke bukti yang diterima.'],
+  'WF-11':['Penelusuran historis','Periksa keadaan pada cutoff waktu eksplisit.'],
+};
 
 const text = (value) => value === null || value === undefined ? '—' :
   typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
@@ -89,6 +114,67 @@ function showError(error) {
   message.textContent = error.message;
   result.append(message);
 }
+
+async function postLocal(path, body) {
+  if (!localToken) {
+    const tokenResponse = await fetch('/api/local-token');
+    localToken = (await tokenResponse.json()).token;
+  }
+  const response = await fetch(path, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-SIFI-Token':localToken},
+    body:JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Latihan tidak dapat diproses');
+  return data;
+}
+
+function renderExercise(data) {
+  activeExercise = data;
+  const completed = data.session.completed_steps.length;
+  exerciseProgress.style.width = `${Math.round(completed / 11 * 100)}%`;
+  if (!data.next_step) {
+    exercisePanel.hidden = true;
+    exerciseStart.hidden = false;
+    exerciseMessage.textContent = `Latihan selesai. Brief ${data.brief.brief_id} tersimpan secara lokal.`;
+    loadCatalog();
+    return;
+  }
+  const [title, guidance] = steps[data.next_step];
+  stepCode.textContent = `${data.next_step} · tahap ${completed + 1} dari 11`;
+  stepTitle.textContent = title;
+  stepGuidance.textContent = guidance;
+  stepNote.value = '';
+  exercisePanel.hidden = false;
+  exerciseStart.hidden = true;
+  exerciseMessage.textContent = 'Skenario sintetis · tidak ada data yang dikirim keluar.';
+}
+
+exerciseStart.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  try {
+    const analystId = document.querySelector('#analystId').value.trim();
+    renderExercise(await postLocal('/api/demo/start', {analyst_id:analystId}));
+  } catch (error) {
+    exerciseMessage.textContent = error.message;
+  }
+});
+
+advanceStep.addEventListener('click', async () => {
+  advanceStep.disabled = true;
+  try {
+    renderExercise(await postLocal('/api/demo/advance', {
+      session_id:activeExercise.session.session_id,
+      analyst_id:activeExercise.session.analyst_id,
+      note:stepNote.value,
+    }));
+  } catch (error) {
+    exerciseMessage.textContent = error.message;
+  } finally {
+    advanceStep.disabled = false;
+  }
+});
 
 document.querySelectorAll('form[data-kind]').forEach((form) => {
   form.addEventListener('submit', async (event) => {

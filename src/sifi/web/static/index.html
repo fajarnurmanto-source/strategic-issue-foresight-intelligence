@@ -23,6 +23,28 @@
       <article><p>Batas keputusan</p><strong>Analitis</strong></article>
     </section>
 
+    <section class="exercise" aria-labelledby="exerciseTitle">
+      <div>
+        <p class="eyebrow">Latihan terpandu · data sintetis</p>
+        <h2 id="exerciseTitle">Jalani 11 tahap analisis</h2>
+        <p class="exercise-copy">Latihan ini menyimpan jejak lokal dan membuat brief sintetis. Hasilnya bukan klaim faktual, validasi pengguna, atau tindakan produksi.</p>
+      </div>
+      <form id="exerciseStart" class="exercise-start">
+        <label for="analystId">Nama atau ID operator latihan</label>
+        <div class="control"><input id="analystId" maxlength="80" required value="OPERATOR-LOKAL"><button type="submit">Mulai latihan</button></div>
+      </form>
+      <div class="exercise-panel" id="exercisePanel" hidden>
+        <div class="progress"><span id="exerciseProgress"></span></div>
+        <p class="step-code" id="stepCode"></p>
+        <h3 id="stepTitle"></h3>
+        <p id="stepGuidance"></p>
+        <label for="stepNote">Catatan operator (opsional)</label>
+        <textarea id="stepNote" maxlength="1000" rows="3"></textarea>
+        <button type="button" class="advance" id="advanceStep">Saya sudah memeriksa tahap ini</button>
+      </div>
+      <p class="exercise-message" id="exerciseMessage" aria-live="polite"></p>
+    </section>
+
     <section class="workspace">
       <div class="section-heading">
         <div><p class="eyebrow">Penelusuran</p><h2>Buka rekam kerja</h2></div>

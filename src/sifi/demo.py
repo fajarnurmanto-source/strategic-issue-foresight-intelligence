@@ -13,7 +13,7 @@ from sifi.workflow import AnalystCaseContext, LocalDomainOrchestrator, LocalWork
 
 DEMO_SESSION_ID = "DEMO-SESSION-001"
 DEMO_BRIEF_ID = "DEMO-BRIEF-001"
-DEMO_BASE = datetime(2026, 10, 15, 8, 0, tzinfo=timezone.utc)
+DEMO_BASE = datetime(2026, 1, 1, 8, 0, tzinfo=timezone.utc)
 
 
 class LocalDemoError(RuntimeError):
@@ -39,7 +39,7 @@ def _decision() -> AdmissionDecision:
     )
 
 
-def _context() -> AnalystCaseContext:
+def demo_context(analyst_id: str = "DEMO-ANALYST") -> AnalystCaseContext:
     issue = IssueObject(
         issue_id="DEMO-ISSUE-001",
         title="Contoh isu sintetis untuk eksplorasi lokal",
@@ -81,7 +81,7 @@ def _context() -> AnalystCaseContext:
     decision = _decision()
     return AnalystCaseContext(
         task_id="DEMO-TASK-001",
-        analyst_id="DEMO-ANALYST",
+        analyst_id=analyst_id,
         issue=issue,
         issue_version=1,
         coverage_profile_id="DEMO-COVERAGE-001",
@@ -101,7 +101,7 @@ def seed_local_demo(root: str | Path) -> LocalDemoResult:
             if session is None or brief is None or not session.is_complete:
                 raise LocalDemoError("existing demo records are incomplete or inconsistent")
             return LocalDemoResult(DEMO_SESSION_ID, DEMO_BRIEF_ID, created=False)
-        context = _context()
+        context = demo_context()
         orchestrator = LocalDomainOrchestrator(runtime)
         orchestrator.start_inspection(
             session_id=DEMO_SESSION_ID,

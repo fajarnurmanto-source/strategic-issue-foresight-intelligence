@@ -15,6 +15,13 @@ Pada pemakaian pertama, launcher membuat lingkungan Python lokal, database
 lokal, dan dua rekam demonstrasi sintetis. Proses ini tidak mengunduh data,
 tidak mengirim data, dan aman dijalankan ulang.
 
+Bagian **Latihan terpandu** pada halaman lokal memungkinkan operator menjalani
+WF-01 sampai WF-11 satu per satu. Setiap konfirmasi menambah jejak audit ke
+database lokal. Setelah WF-11, SIFI membuat brief sintetis yang dapat dibuka
+dari katalog rekam. Menutup halaman di tengah latihan tidak menghapus jejak
+yang sudah tersimpan, tetapi tahap ini belum menyediakan tombol melanjutkan
+sesi latihan yang terputus.
+
 Pilihan launcher:
 
 - `scripts\start-local.ps1 -NoDemo` untuk tidak membuat data demo;
@@ -51,6 +58,7 @@ cadangan ke luar folder SIFI melalui alat aplikasi; batas path akan menolaknya.
 
 ## Batas tahap ini
 
-Dashboard hanya membaca data. Rekam demo sepenuhnya sintetis. SIFI belum
+Katalog dan penampil rekam hanya membaca data; wizard latihan hanya menulis
+sesi sintetis lokal melalui token sesi dan pemeriksaan same-origin. SIFI belum
 mengklaim ingestion sumber langsung, deployment produksi, validasi pengguna
 representatif, nilai keputusan komparatif, CB22 PASS, atau kesiapan komersial.

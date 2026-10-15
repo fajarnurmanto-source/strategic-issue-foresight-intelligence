@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from enum import Enum
@@ -11,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from sifi.local import LocalSIFIPaths
 from sifi.local_ops import LocalOperations
+from sifi.demo_workflow import DemoWorkflowError, LocalDemoWorkflow
 from sifi.workflow import LocalWorkflowRuntime
 
 
@@ -42,6 +44,7 @@ class LocalSIFIWebServer(ThreadingHTTPServer):
             raise LocalWebBoundaryError("SIFI web server must bind to loopback only")
         self.paths = LocalSIFIPaths.from_root(workspace_root)
         self.static_root = Path(__file__).with_name("static").resolve()
+        self.csrf_token = secrets.token_urlsafe(32)
         super().__init__(server_address, handler_class)
 
 
@@ -104,6 +107,8 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._send_json(code, {"service": "sifi-local", "status": status.integrity, "local_only": True})
         elif parsed.path == "/api/status":
             self._send_json(HTTPStatus.OK, LocalOperations(self.server.paths.root).status())
+        elif parsed.path == "/api/local-token":
+            self._send_json(HTTPStatus.OK, {"token": self.server.csrf_token})
         elif parsed.path == "/api/catalog":
             self._serve_catalog()
         elif parsed.path in {"/api/session", "/api/brief"}:
@@ -163,10 +168,71 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
     def do_HEAD(self) -> None:
         self._headers(HTTPStatus.METHOD_NOT_ALLOWED, "application/json; charset=utf-8", 0)
 
+    def _valid_write_request(self) -> bool:
+        origin = self.headers.get("Origin", "")
+        valid_origins = {
+            f"http://127.0.0.1:{self.server.server_port}",
+            f"http://localhost:{self.server.server_port}",
+        }
+        return (
+            self._valid_host()
+            and origin in valid_origins
+            and secrets.compare_digest(
+                self.headers.get("X-SIFI-Token", ""), self.server.csrf_token
+            )
+            and self.headers.get_content_type() == "application/json"
+        )
+
+    def _read_json(self) -> dict:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError as exc:
+            raise DemoWorkflowError("invalid content length") from exc
+        if length < 2 or length > 8192:
+            raise DemoWorkflowError("request body must contain 2 to 8192 bytes")
+        try:
+            payload = json.loads(self.rfile.read(length))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise DemoWorkflowError("request body must be valid JSON") from exc
+        if not isinstance(payload, dict):
+            raise DemoWorkflowError("request body must be an object")
+        return payload
+
+    def do_POST(self) -> None:
+        parsed = urlsplit(self.path)
+        if parsed.path not in {"/api/demo/start", "/api/demo/advance"}:
+            self._reject_write()
+            return
+        if not self._valid_write_request():
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "valid local request token required"})
+            return
+        try:
+            payload = self._read_json()
+            workflow = LocalDemoWorkflow(self.server.paths.root)
+            if parsed.path.endswith("start"):
+                state = workflow.start(analyst_id=str(payload.get("analyst_id", "")))
+            else:
+                state = workflow.advance(
+                    session_id=str(payload.get("session_id", "")),
+                    analyst_id=str(payload.get("analyst_id", "")),
+                    note=str(payload.get("note", "")),
+                )
+        except DemoWorkflowError as exc:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+            return
+        self._send_json(
+            HTTPStatus.CREATED if parsed.path.endswith("start") else HTTPStatus.OK,
+            {
+                "session": state.session,
+                "next_step": state.session.next_step,
+                "brief": state.brief,
+                "synthetic": state.synthetic,
+            },
+        )
+
     def _reject_write(self) -> None:
         self._send_json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "local dashboard is read-only"})
 
-    do_POST = _reject_write
     do_PUT = _reject_write
     do_PATCH = _reject_write
     do_DELETE = _reject_write
