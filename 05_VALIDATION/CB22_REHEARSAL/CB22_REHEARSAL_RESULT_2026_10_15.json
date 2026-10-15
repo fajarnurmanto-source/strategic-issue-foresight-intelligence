@@ -1,0 +1,21 @@
+{
+  "record_type": "SIFI_CB22_AUTOMATED_REHEARSAL_RESULT",
+  "record_version": "1.0",
+  "executed_at_local_date": "2026-10-15",
+  "basis_commit": "e5f24e8",
+  "workspace": "D:\\Research\\SIFI",
+  "mode": "REHEARSAL",
+  "counted": false,
+  "participant_type": "AUTOMATED_DEVELOPER_REHEARSAL",
+  "observation_id": "CB22-OBS-3D6DB28E200E4CD08166DA276A64D1DC",
+  "workflow_session_id": "CB22-SES-3D6DB28E200E4CD08166DA276A64D1DC",
+  "brief_id": "BRIEF-CB22-SES-3D6DB28E200E4CD08166DA276A64D1DC",
+  "completed_stages": 11,
+  "backup": "runtime\\backups\\sifi-CB22_REHEARSAL_20261015.sqlite",
+  "full_windows_test_pass_count": 381,
+  "local_release_check": "PASS",
+  "cb22_result_after_rehearsal": "NOT_READY",
+  "analyzable_participants_after_rehearsal": 0,
+  "cb22_result_effect": "NONE_REHEARSAL_EXCLUDED",
+  "claim_allowed": false
+}
