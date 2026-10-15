@@ -23,6 +23,13 @@ class DuplicateVersionError(PersistenceError):
     """Raised when an existing object version would be overwritten."""
 
 
+class UnsupportedSchemaVersionError(PersistenceError):
+    """Raised when a database is newer than this SIFI runtime."""
+
+
+CURRENT_SCHEMA_VERSION = 1
+
+
 def _utc_iso(value: datetime) -> str:
     require_aware_datetime(value, "datetime")
     return value.astimezone(timezone.utc).isoformat()
@@ -49,6 +56,15 @@ class SQLiteVersionStore:
         self._initialize()
 
     def _initialize(self) -> None:
+        stored_version = int(
+            self._connection.execute("PRAGMA user_version").fetchone()[0]
+        )
+        if stored_version > CURRENT_SCHEMA_VERSION:
+            self._connection.close()
+            raise UnsupportedSchemaVersionError(
+                f"database schema {stored_version} is newer than supported "
+                f"schema {CURRENT_SCHEMA_VERSION}"
+            )
         self._connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS object_versions (
@@ -79,6 +95,8 @@ class SQLiteVersionStore:
             );
             """
         )
+        if stored_version < CURRENT_SCHEMA_VERSION:
+            self._connection.execute(f"PRAGMA user_version = {CURRENT_SCHEMA_VERSION}")
         self._connection.commit()
 
     def append(self, snapshot: VersionedSnapshot) -> None:

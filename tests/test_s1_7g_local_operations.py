@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +25,7 @@ class LocalOperationsTests(unittest.TestCase):
             status = operations.initialize()
             self.assertTrue(status.database_exists)
             self.assertEqual(status.integrity, "OK")
+            self.assertEqual(status.schema_version, 1)
             backup = operations.backup(label="TEST_001")
             self.assertTrue(backup.is_file())
             safety = operations.restore(backup)
@@ -52,6 +55,29 @@ class LocalOperationsTests(unittest.TestCase):
             root = self.root(directory)
             self.assertEqual(main(["init", "--root", str(root)]), 0)
             self.assertTrue((root / "runtime" / "data" / "sifi.sqlite").is_file())
+
+    def test_005_valid_sqlite_without_sifi_schema_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.root(directory)
+            operations = LocalOperations(root)
+            operations.initialize()
+            candidate = root / "runtime" / "backups" / "not-sifi.sqlite"
+            with closing(sqlite3.connect(candidate)) as connection:
+                connection.execute("CREATE TABLE unrelated (id INTEGER)")
+                connection.commit()
+            with self.assertRaisesRegex(LocalOperationsError, "not a SIFI database"):
+                operations.restore(candidate)
+
+    def test_006_future_schema_backup_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.root(directory)
+            operations = LocalOperations(root)
+            operations.initialize()
+            candidate = operations.backup(label="FUTURE")
+            with closing(sqlite3.connect(candidate)) as connection:
+                connection.execute("PRAGMA user_version = 999")
+            with self.assertRaisesRegex(LocalOperationsError, "newer"):
+                operations.restore(candidate)
 
 
 if __name__ == "__main__":
