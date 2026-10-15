@@ -7,7 +7,32 @@ Stage 0 — Foundation
 S0.0 — PASS
 
 ## Current Work Item
-S1.6D — Canonical Fixture and Executor Materialization
+S1.8B — CB22 Study Runtime and Evidence Integrity Engineering
+
+## Current Work Item Status
+CLOSED — ENGINEERING AND LOCAL REHEARSAL VERIFIED
+
+Latest verified basis: 383 Windows-local tests PASS; release check PASS.
+
+## Active Successor Gate
+CB22 — Representative User Study Counted Execution
+
+Status: HOLD — GOVERNED HUMAN COORDINATION REQUIRED
+
+The engineering runtime, frozen protocol, frozen synthetic task package,
+observation schema, evidence-integrity checks, local rehearsal, export, and
+two-role adjudication mechanism are present. No counted representative session
+or final adjudication receipt exists. CB22, L5, production, and commercial
+claims remain unauthorized.
+
+Required external facts before counted execution:
+
+1. a real primary adjudicator and a different independent checker;
+2. a documented external/institutional-review determination;
+3. representative participant recruitment by an authorized human coordinator;
+4. individual screening and informed consent;
+5. at least five unique finalized counted sessions under the frozen package;
+6. matching independent votes against the same adjudication bundle hash.
 
 ## Stage0 Foundation Status
 FROZEN — S0.7 VERIFIED
