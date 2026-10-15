@@ -17,6 +17,7 @@ from sifi.validation import (
 )
 from sifi.validation.study_task import STUDY_STEP_SPECS
 from sifi.validation.cli import status as cb22_status
+from sifi.validation.rehearsal_cli import run_rehearsal
 
 
 NOW = datetime(2026, 10, 15, 9, 0, tzinfo=timezone.utc)
@@ -374,6 +375,15 @@ class CB22StudyKernelTests(unittest.TestCase):
                     participant_code="P-501", answer_code="COVERAGE-SYNTHETIC",
                     now=NOW + timedelta(minutes=2),
                 )
+
+    def test_026_automated_rehearsal_completes_but_never_counts(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            result = run_rehearsal(root)
+            self.assertEqual(result["status"], "PASS")
+            self.assertFalse(result["counted"])
+            self.assertEqual(result["cb22_result_effect"], "NONE_REHEARSAL_EXCLUDED")
+            self.assertEqual(cb22_status(root)["assessment"]["result"], "NOT_READY")
 
 
 if __name__ == "__main__":

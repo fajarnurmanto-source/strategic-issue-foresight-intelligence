@@ -22,6 +22,7 @@ class LocalReleaseCheckTests(unittest.TestCase):
                 "scripts/status-cb22.ps1", "scripts/export-cb22.ps1",
                 "scripts/adjudicate-cb22.ps1",
                 "scripts/configure-cb22.ps1",
+                "scripts/rehearse-cb22.ps1",
                 "05_VALIDATION/CB22_PREP/CB22_7_FROZEN_PROTOCOL_v1_0.md",
                 "05_VALIDATION/CB22_PREP/CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
                 "05_VALIDATION/CB22_PREP/CB22_TASK_PACKAGE_v1_0.json",

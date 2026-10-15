@@ -103,6 +103,10 @@ counted. Rehearsal tidak pernah memengaruhi hasil CB22. Sebelum sesi counted,
 kustodian wajib menyelesaikan screening dan consent di luar database SIFI,
 lalu hanya memasukkan kode pseudonim serta waktu konfirmasi consent.
 
+Untuk smoke rehearsal otomatis yang selalu dikecualikan dari hasil, jalankan
+`scripts\rehearse-cb22.ps1`. Perintah ini memakai kode `REHEARSAL-AUTOMATED`,
+menyelesaikan task lokal, lalu memastikan asesmen CB22 tetap tanpa peserta.
+
 Setiap tahap CB22 menampilkan paket bukti sintetis yang sama dan meminta
 pilihan terstruktur. Jawaban yang melanggar boundary tidak memajukan workflow
 dan percobaannya dicatat sebagai blocker berkode. Tidak ada catatan bebas yang
