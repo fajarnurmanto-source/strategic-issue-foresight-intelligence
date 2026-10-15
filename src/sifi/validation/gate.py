@@ -14,9 +14,9 @@ from sifi.persistence import SQLiteVersionStore
 from .model import CB22_PROTOCOL_VERSION, CB22_TASK_PACKAGE_VERSION
 
 
-TASK_PACKAGE_SHA256 = "6371EF15A5431809C1111B2E4E2DCA9237A0EB585F7C9E9D3C5CDD4C7A845FE1"
+TASK_PACKAGE_SHA256 = "B222F121927292C802C7D8CF57939720BD628FBD0B964EEC595687E08FB1460B"
 PROTOCOL_SHA256 = "27758189FE7520D6209C1AB213126614F2EA38B7B062DEDADA3A3D302045D197"
-OBSERVATION_SCHEMA_SHA256 = "972E82B6B921C6451728CC065B2D84F7304D70B91D028E485FF91E0682F3275A"
+OBSERVATION_SCHEMA_SHA256 = "F4985C84AFBAF88E6408D211AE1797E5B5F629CBBB01BA7530C99FF86413C3E2"
 _STAFF_CODE = re.compile(r"^[A-Z0-9][A-Z0-9_-]{2,63}$")
 GATE_LOCK_OBJECT_TYPE = "CB22_EXECUTION_GATE_LOCK"
 GATE_LOCK_OBJECT_ID = "CB22-v1.0"
@@ -44,6 +44,33 @@ def _controlled_configuration(config: dict) -> dict:
         json.dumps(controlled, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest().upper()
     return controlled
+
+
+def _canonical_json_sha256(path: Path) -> str:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    canonical = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest().upper()
+
+
+def _normalized_text_sha256(path: Path) -> str:
+    normalized = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest().upper()
+
+
+def _matches_json_hash(path: Path, expected: str) -> bool:
+    try:
+        return path.is_file() and _canonical_json_sha256(path) == expected
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+
+
+def _matches_text_hash(path: Path, expected: str) -> bool:
+    try:
+        return path.is_file() and _normalized_text_sha256(path) == expected
+    except (OSError, UnicodeDecodeError):
+        return False
 
 
 def current_gate_configuration(root: str | Path) -> dict:
@@ -106,13 +133,13 @@ def cb22_gate_status(root: str | Path) -> CB22GateStatus:
     paths = LocalSIFIPaths.from_root(root)
     reasons: list[str] = []
     task_path = paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_TASK_PACKAGE_v1_0.json"
-    if not task_path.is_file() or hashlib.sha256(task_path.read_bytes()).hexdigest().upper() != TASK_PACKAGE_SHA256:
+    if not _matches_json_hash(task_path, TASK_PACKAGE_SHA256):
         reasons.append("TASK_PACKAGE_MISSING_OR_CHANGED")
     protocol_path = paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_7_FROZEN_PROTOCOL_v1_0.md"
-    if not protocol_path.is_file() or hashlib.sha256(protocol_path.read_bytes()).hexdigest().upper() != PROTOCOL_SHA256:
+    if not _matches_text_hash(protocol_path, PROTOCOL_SHA256):
         reasons.append("FROZEN_PROTOCOL_MISSING_OR_CHANGED")
     schema_path = paths.root / "05_VALIDATION" / "CB22_PREP" / "CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json"
-    if not schema_path.is_file() or hashlib.sha256(schema_path.read_bytes()).hexdigest().upper() != OBSERVATION_SCHEMA_SHA256:
+    if not _matches_json_hash(schema_path, OBSERVATION_SCHEMA_SHA256):
         reasons.append("OBSERVATION_SCHEMA_MISSING_OR_CHANGED")
     config_path = paths.config / "cb22-execution-gate.json"
     if not config_path.is_file():

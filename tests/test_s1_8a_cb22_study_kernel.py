@@ -385,6 +385,20 @@ class CB22StudyKernelTests(unittest.TestCase):
             self.assertEqual(result["cb22_result_effect"], "NONE_REHEARSAL_EXCLUDED")
             self.assertEqual(cb22_status(root)["assessment"]["result"], "NOT_READY")
 
+    def test_027_frozen_hashes_are_stable_across_windows_line_endings(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            install_frozen_materials(root); install_ready_gate(root)
+            frozen = root / "05_VALIDATION" / "CB22_PREP"
+            for name in (
+                "CB22_TASK_PACKAGE_v1_0.json",
+                "CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
+                "CB22_7_FROZEN_PROTOCOL_v1_0.md",
+            ):
+                path = frozen / name
+                path.write_text(path.read_text(encoding="utf-8").replace("\n", "\r\n"), encoding="utf-8", newline="")
+            self.assertTrue(cb22_gate_status(root).ready_for_counted_sessions)
+
 
 if __name__ == "__main__":
     unittest.main()
