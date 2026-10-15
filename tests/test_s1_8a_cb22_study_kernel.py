@@ -13,8 +13,10 @@ from sifi.validation import (
     LocalCB22Workflow, StudyMode, StudyObservation, assess_cb22, cb22_gate_status,
     export_adjudication_bundle,
     configure_cb22_gate,
+    StudyObservationVersionError,
 )
 from sifi.validation.study_task import STUDY_STEP_SPECS
+from sifi.validation.cli import status as cb22_status
 
 
 NOW = datetime(2026, 10, 15, 9, 0, tzinfo=timezone.utc)
@@ -299,6 +301,36 @@ class CB22StudyKernelTests(unittest.TestCase):
                 "CURRENT_CONFIGURATION_DIFFERS_FROM_COUNTED_STUDY_LOCK",
                 cb22_gate_status(root).reasons,
             )
+
+    def test_022_observation_identity_and_history_are_append_only(self):
+        from dataclasses import replace
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            database = root / "runtime" / "data" / "sifi.sqlite"
+            original = observation()
+            with CB22StudyRuntime(database, workspace_root=root) as runtime:
+                runtime.record(original, recorded_at=NOW + timedelta(minutes=2))
+                with self.assertRaises(StudyObservationVersionError):
+                    runtime.record(
+                        replace(original, participant_code="P-999"),
+                        recorded_at=NOW + timedelta(minutes=3),
+                    )
+
+    def test_023_automated_pass_never_sets_claim_allowed(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory); (root / "src" / "sifi").mkdir(parents=True)
+            stages = tuple(f"WF-{n:02d}" for n in range(1, 12))
+            database = root / "runtime" / "data" / "sifi.sqlite"
+            with CB22StudyRuntime(database, workspace_root=root) as runtime:
+                for n in range(1, 6):
+                    runtime.record(observation(
+                        n, completed_stage_ids=stages, task_completed=True,
+                        completed_at=NOW + timedelta(hours=1),
+                        evidence_link_check=EvidenceLinkCheck.PASS,
+                    ), recorded_at=NOW + timedelta(hours=2))
+            result = cb22_status(root)
+            self.assertTrue(result["automated_pass_candidate"])
+            self.assertFalse(result["claim_allowed"])
 
 
 if __name__ == "__main__":

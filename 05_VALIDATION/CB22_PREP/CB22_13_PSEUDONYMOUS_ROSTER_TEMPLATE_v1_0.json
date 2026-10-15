@@ -1,0 +1,24 @@
+{
+  "record_type": "SIFI_CB22_PSEUDONYMOUS_RECRUITMENT_ROSTER",
+  "record_version": "1.0",
+  "protocol_version": "CB22-v1.0",
+  "direct_identifiers_allowed": false,
+  "entries": [
+    {
+      "participant_code": "P-EXAMPLE",
+      "screening_record_id": "SCR-EXAMPLE",
+      "consent_record_id": null,
+      "status": "PROSPECTIVE_NOT_SCREENED",
+      "allowed_statuses": [
+        "PROSPECTIVE_NOT_SCREENED",
+        "INELIGIBLE_NOT_COUNTED",
+        "ELIGIBLE_NOT_CONSENTED",
+        "CONSENTED_NOT_STARTED",
+        "COUNTED_STARTED",
+        "COUNTED_FINALIZED",
+        "WITHDREW"
+      ]
+    }
+  ],
+  "instruction": "Delete the example before use. Keep real identity/contact mapping outside SIFI."
+}

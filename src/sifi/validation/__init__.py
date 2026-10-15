@@ -21,6 +21,7 @@ from .decision import (
     AdjudicationReceipt, AdjudicationRole, AdjudicationVote,
     CB22AdjudicationRuntime,
 )
+from .repository import StudyObservationVersionError
 
 __all__ = [
     "CB22Assessment",
@@ -41,6 +42,7 @@ __all__ = [
     "LocalCB22Workflow",
     "StudyMode",
     "StudyObservation",
+    "StudyObservationVersionError",
     "assess_cb22",
     "cb22_gate_status",
     "configure_cb22_gate",

@@ -90,7 +90,7 @@ async function loadStudyStatus() {
     const data = await response.json();
     const gate = data.gate.ready_for_counted_sessions ? 'COUNTED SIAP' : `COUNTED TERKUNCI · ${data.gate.reasons.join(', ')}`;
     const rate = data.assessment.completion_rate === null ? '—' : `${Math.round(data.assessment.completion_rate * 100)}% selesai`;
-    target.textContent = `${gate} · hasil ${data.assessment.result} · n=${data.assessment.analyzable_participants} · ${rate}`;
+    target.textContent = `${gate} · asesmen otomatis ${data.assessment.result} · n=${data.assessment.analyzable_participants} · ${rate} · klaim menunggu receipt dua peran`;
     const active = document.querySelector('#studyActive');
     active.replaceChildren();
     data.active_sessions.forEach((item) => {

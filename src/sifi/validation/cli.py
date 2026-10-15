@@ -57,7 +57,9 @@ def status(root: Path) -> dict:
         "gate": {"ready_for_counted_sessions": gate.ready_for_counted_sessions,
                  "reasons": gate.reasons},
         "assessment": assessment_payload,
-        "claim_allowed": assessment_payload["result"] == "PASS",
+        "automated_pass_candidate": assessment_payload["result"] == "PASS",
+        "claim_allowed": False,
+        "claim_hold": "TWO_ROLE_FINAL_ADJUDICATION_RECEIPT_REQUIRED",
     }
 
 
