@@ -59,6 +59,12 @@ membuat safety backup terlebih dahulu bila database aktif sudah ada.
 - cadangan: `runtime\backups`;
 - konfigurasi lokal: `runtime\config`;
 - log lokal: `runtime\logs`.
+- ekspor brief: `runtime\exports`.
+
+Saat sebuah brief dibuka, tombol **Ekspor Markdown ke folder SIFI** membuat
+salinan yang dapat dibaca manusia di `runtime\exports`. Nama file diturunkan
+dari hash ID brief sehingga ID yang mengandung karakter path tidak dapat
+keluar dari folder ekspor.
 
 Folder `runtime` dan `.venv` tidak masuk Git. Jangan memindahkan database atau
 cadangan ke luar folder SIFI melalui alat aplikasi; batas path akan menolaknya.

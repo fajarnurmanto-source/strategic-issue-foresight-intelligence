@@ -50,6 +50,21 @@ function showRecord(kind, data) {
     grid.append(box);
   });
   result.append(title, grid);
+  if (kind === 'brief') {
+    const exportButton = document.createElement('button');
+    exportButton.className = 'advance';
+    exportButton.type = 'button';
+    exportButton.textContent = 'Ekspor Markdown ke folder SIFI';
+    exportButton.addEventListener('click', async () => {
+      try {
+        const exported = await postLocal('/api/brief/export', {brief_id:data.brief_id});
+        exerciseMessage.textContent = `Brief tersimpan di ${exported.export}`;
+      } catch (error) {
+        showError(error);
+      }
+    });
+    result.append(exportButton);
+  }
 }
 
 async function loadStatus() {

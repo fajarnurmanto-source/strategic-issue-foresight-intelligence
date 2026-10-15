@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, urlsplit
 from sifi.local import LocalSIFIPaths
 from sifi.local_ops import LocalOperations
 from sifi.demo_workflow import DemoWorkflowError, LocalDemoWorkflow
+from sifi.brief_export import BriefExportError, export_brief_markdown
 from sifi.workflow import LocalWorkflowRuntime
 
 
@@ -249,7 +250,9 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlsplit(self.path)
-        if parsed.path not in {"/api/demo/start", "/api/demo/advance"}:
+        if parsed.path not in {
+            "/api/demo/start", "/api/demo/advance", "/api/brief/export"
+        }:
             self._reject_write()
             return
         if not self._valid_write_request():
@@ -257,6 +260,15 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             payload = self._read_json()
+            if parsed.path == "/api/brief/export":
+                destination = export_brief_markdown(
+                    self.server.paths.root, str(payload.get("brief_id", ""))
+                )
+                self._send_json(
+                    HTTPStatus.CREATED,
+                    {"export": str(destination.relative_to(self.server.paths.root))},
+                )
+                return
             workflow = LocalDemoWorkflow(self.server.paths.root)
             if parsed.path.endswith("start"):
                 state = workflow.start(analyst_id=str(payload.get("analyst_id", "")))
@@ -266,7 +278,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                     analyst_id=str(payload.get("analyst_id", "")),
                     note=str(payload.get("note", "")),
                 )
-        except DemoWorkflowError as exc:
+        except (DemoWorkflowError, BriefExportError) as exc:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         self._send_json(

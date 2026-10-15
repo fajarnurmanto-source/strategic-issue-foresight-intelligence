@@ -16,6 +16,7 @@ class LocalSIFIPaths:
     logs: Path
     backups: Path
     config: Path
+    exports: Path
     database: Path
 
     @classmethod
@@ -31,12 +32,14 @@ class LocalSIFIPaths:
             logs=runtime / "logs",
             backups=runtime / "backups",
             config=runtime / "config",
+            exports=runtime / "exports",
             database=runtime / "data" / "sifi.sqlite",
         )
 
     def initialize(self) -> None:
         for directory in (
-            self.runtime, self.data, self.logs, self.backups, self.config
+            self.runtime, self.data, self.logs, self.backups, self.config,
+            self.exports,
         ):
             self.require_inside(directory)
             directory.mkdir(parents=True, exist_ok=True)
