@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from contextlib import contextmanager
 from pathlib import Path
 
 from sifi.persistence import SQLiteVersionStore
@@ -41,6 +42,11 @@ class LocalWorkflowRuntime:
 
     def __exit__(self, *_args) -> None:
         self.close()
+
+    @contextmanager
+    def transaction(self):
+        with self._store.transaction():
+            yield self
 
     def start_session(
         self, *, session_id: str, task_id: str, analyst_id: str,

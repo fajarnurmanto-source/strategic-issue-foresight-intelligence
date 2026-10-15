@@ -82,14 +82,6 @@ class LocalDomainOrchestrator:
                 "all supporting evidence must be production eligible"
             )
 
-        session = self._runtime.start_session(
-            session_id=session_id,
-            task_id=context.task_id,
-            analyst_id=context.analyst_id,
-            issue_id=issue.issue_id,
-            analytical_cutoff=context.analytical_cutoff,
-            started_at=started_at,
-        )
         evidence_categories = (
             issue.evidence.supporting_evidence_ids
             + issue.evidence.contradictory_evidence_ids
@@ -138,13 +130,22 @@ class LocalDomainOrchestrator:
                 inspected_dimensions=tuple(item.dimension.value for item in issue.trajectories),
             ),
         )
-        for submission in submissions:
-            session = self._runtime.submit_step(
-                session_id,
-                submission,
+        with self._runtime.transaction():
+            session = self._runtime.start_session(
+                session_id=session_id,
+                task_id=context.task_id,
                 analyst_id=context.analyst_id,
-                recorded_at=recorded_at,
+                issue_id=issue.issue_id,
+                analytical_cutoff=context.analytical_cutoff,
+                started_at=started_at,
             )
+            for submission in submissions:
+                session = self._runtime.submit_step(
+                    session_id,
+                    submission,
+                    analyst_id=context.analyst_id,
+                    recorded_at=recorded_at,
+                )
         return session
 
     def complete_case(
@@ -223,18 +224,19 @@ class LocalDomainOrchestrator:
         session = self._runtime.latest(session_id)
         if session is None or session.issue_id != context.issue.issue_id:
             raise OrchestrationBoundaryError("workflow session and case do not match")
-        for submission in steps:
-            session = self._runtime.submit_step(
-                session_id, submission, analyst_id=context.analyst_id,
-                recorded_at=recorded_at,
+        with self._runtime.transaction():
+            for submission in steps:
+                session = self._runtime.submit_step(
+                    session_id, submission, analyst_id=context.analyst_id,
+                    recorded_at=recorded_at,
+                )
+            brief = EvidenceLinkedBrief(
+                brief_id=brief_id,
+                issue_id=context.issue.issue_id,
+                summary=brief_summary,
+                evidence_refs=brief_evidence_refs,
+                created_at=recorded_at,
+                analytical_cutoff=context.analytical_cutoff,
             )
-        brief = EvidenceLinkedBrief(
-            brief_id=brief_id,
-            issue_id=context.issue.issue_id,
-            summary=brief_summary,
-            evidence_refs=brief_evidence_refs,
-            created_at=recorded_at,
-            analytical_cutoff=context.analytical_cutoff,
-        )
-        self._runtime.record_brief(brief, recorded_at=recorded_at)
+            self._runtime.record_brief(brief, recorded_at=recorded_at)
         return session, brief

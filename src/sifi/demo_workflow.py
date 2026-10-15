@@ -74,29 +74,30 @@ class LocalDemoWorkflow:
                 raise DemoWorkflowError("workflow session is already complete")
             context = demo_context(session.analyst_id)
             submission = self._submission(session.next_step, note)
-            try:
-                session = runtime.submit_step(
-                    session_id,
-                    submission,
-                    analyst_id=session.analyst_id,
-                    recorded_at=recorded,
-                )
-            except WorkflowBoundaryError as exc:
-                raise DemoWorkflowError(str(exc)) from exc
-            brief = None
-            if session.is_complete:
-                brief = EvidenceLinkedBrief(
-                    brief_id="BRIEF-" + session.session_id,
-                    issue_id=context.issue.issue_id,
-                    summary=(
-                        "Hasil latihan analitis lokal berbasis skenario sintetis. "
-                        "Bukan klaim faktual dan bukan otorisasi tindakan produksi."
-                    ),
-                    evidence_refs=context.issue.evidence.supporting_evidence_ids,
-                    created_at=recorded,
-                    analytical_cutoff=context.analytical_cutoff,
-                )
-                runtime.record_brief(brief, recorded_at=recorded)
+            with runtime.transaction():
+                try:
+                    session = runtime.submit_step(
+                        session_id,
+                        submission,
+                        analyst_id=session.analyst_id,
+                        recorded_at=recorded,
+                    )
+                except WorkflowBoundaryError as exc:
+                    raise DemoWorkflowError(str(exc)) from exc
+                brief = None
+                if session.is_complete:
+                    brief = EvidenceLinkedBrief(
+                        brief_id="BRIEF-" + session.session_id,
+                        issue_id=context.issue.issue_id,
+                        summary=(
+                            "Hasil latihan analitis lokal berbasis skenario sintetis. "
+                            "Bukan klaim faktual dan bukan otorisasi tindakan produksi."
+                        ),
+                        evidence_refs=context.issue.evidence.supporting_evidence_ids,
+                        created_at=recorded,
+                        analytical_cutoff=context.analytical_cutoff,
+                    )
+                    runtime.record_brief(brief, recorded_at=recorded)
         return DemoWorkflowState(session, brief)
 
     @staticmethod

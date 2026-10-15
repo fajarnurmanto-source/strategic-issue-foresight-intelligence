@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,7 @@ class SQLiteVersionStore:
         self._database = str(database)
         self._connection = sqlite3.connect(self._database)
         self._connection.row_factory = sqlite3.Row
+        self._transaction_depth = 0
         self._initialize()
 
     def _initialize(self) -> None:
@@ -109,12 +111,35 @@ class SQLiteVersionStore:
                     payload_json,
                 ),
             )
-            self._connection.commit()
+            if self._transaction_depth == 0:
+                self._connection.commit()
 
         except sqlite3.IntegrityError as exc:
             raise DuplicateVersionError(
                 "existing object version cannot be overwritten"
             ) from exc
+
+    @contextmanager
+    def transaction(self):
+        outermost = self._transaction_depth == 0
+        if outermost:
+            self._connection.execute("BEGIN IMMEDIATE")
+        self._transaction_depth += 1
+        try:
+            yield self
+        except Exception:
+            self._transaction_depth -= 1
+            if outermost:
+                self._connection.rollback()
+            raise
+        else:
+            self._transaction_depth -= 1
+            if outermost:
+                try:
+                    self._connection.commit()
+                except Exception:
+                    self._connection.rollback()
+                    raise
 
     def get(
         self,
