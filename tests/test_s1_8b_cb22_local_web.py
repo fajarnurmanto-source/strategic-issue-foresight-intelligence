@@ -65,6 +65,11 @@ class CB22LocalWebTests(unittest.TestCase):
         self.assertIn("gate is closed", caught.exception.read().decode())
         caught.exception.close()
 
+    def test_004_adjudication_bundle_exports_inside_workspace(self):
+        with self.post("/api/cb22/export", {}) as response:
+            payload = json.load(response)
+        self.assertTrue((self.root / payload["export"]).is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

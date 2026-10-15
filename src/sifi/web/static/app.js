@@ -29,6 +29,7 @@ const steps = {
   'WF-10':['Brief berbasis bukti','Pastikan setiap pernyataan terhubung ke bukti yang diterima.'],
   'WF-11':['Penelusuran historis','Periksa keadaan pada cutoff waktu eksplisit.'],
 };
+const stepOrder = Object.keys(steps);
 
 const text = (value) => value === null || value === undefined ? '—' :
   typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
@@ -88,6 +89,20 @@ async function loadStudyStatus() {
     const data = await response.json();
     const gate = data.gate.ready_for_counted_sessions ? 'COUNTED SIAP' : `COUNTED TERKUNCI · ${data.gate.reasons.join(', ')}`;
     target.textContent = `${gate} · hasil ${data.assessment.result} · n=${data.assessment.analyzable_participants}`;
+    const active = document.querySelector('#studyActive');
+    active.replaceChildren();
+    data.active_sessions.forEach((item) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `Lanjutkan ${item.participant_code} · ${item.mode} · ${item.completed_stage_ids.length}/11`;
+      button.addEventListener('click', () => renderStudy({
+        observation:item,
+        session:{completed_steps:item.completed_stage_ids},
+        next_step:stepOrder[item.completed_stage_ids.length] || null,
+        brief:null,
+      }));
+      active.append(button);
+    });
   } catch { target.textContent = 'Status studi tidak tersedia'; }
 }
 
@@ -260,6 +275,13 @@ document.querySelector('#studyAdvance').addEventListener('click', async () => {
     }));
   } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
   finally { button.disabled = false; }
+});
+
+document.querySelector('#exportStudy').addEventListener('click', async () => {
+  try {
+    const data = await postLocal('/api/cb22/export', {});
+    document.querySelector('#studyMessage').textContent = `Bundle tersimpan di ${data.export}`;
+  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
 });
 
 document.querySelector('#recordIntervention').addEventListener('click', async () => {

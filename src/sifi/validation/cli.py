@@ -8,6 +8,7 @@ from sifi.local import LocalSIFIPaths
 
 from .gate import cb22_gate_status
 from .runtime import CB22StudyRuntime
+from .export import export_adjudication_bundle
 
 
 def prepare(root: Path) -> dict:
@@ -59,10 +60,22 @@ def status(root: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="SIFI CB22 local study operations")
-    parser.add_argument("command", choices=("prepare", "status"))
+    parser.add_argument("command", choices=("prepare", "status", "export"))
     parser.add_argument("--root", default=str(Path.cwd()))
     args = parser.parse_args()
-    payload = prepare(Path(args.root)) if args.command == "prepare" else status(Path(args.root))
+    if args.command == "prepare":
+        payload = prepare(Path(args.root))
+    elif args.command == "status":
+        payload = status(Path(args.root))
+    else:
+        paths = LocalSIFIPaths.from_root(Path(args.root))
+        if paths.database.exists():
+            with CB22StudyRuntime(paths.database, workspace_root=paths.root) as runtime:
+                items = runtime.observations()
+        else:
+            items = ()
+        destination = export_adjudication_bundle(paths.root, items)
+        payload = {"export": str(destination.relative_to(paths.root))}
     print(json.dumps(payload, indent=2))
     return 0
 

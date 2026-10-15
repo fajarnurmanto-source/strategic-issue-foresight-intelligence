@@ -10,6 +10,7 @@ from sifi.validation import (
     CB22_PROTOCOL_VERSION, CB22_TASK_PACKAGE_VERSION, CB22Result,
     CB22StudyRuntime, EvidenceLinkCheck, Intervention, InterventionCategory,
     LocalCB22Workflow, StudyMode, StudyObservation, assess_cb22, cb22_gate_status,
+    export_adjudication_bundle,
 )
 
 
@@ -168,6 +169,17 @@ class CB22StudyKernelTests(unittest.TestCase):
         assessment = assess_cb22((first, second))
         self.assertEqual(assessment.result, CB22Result.INCONCLUSIVE)
         self.assertIn("DUPLICATE_COUNTED_PARTICIPANT_CODE", assessment.reasons)
+
+    def test_016_adjudication_export_is_confined_and_pseudonymous(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory)
+            (root / "src" / "sifi").mkdir(parents=True)
+            destination = export_adjudication_bundle(root, (observation(),))
+            self.assertTrue(destination.is_relative_to(root))
+            payload = json.loads(destination.read_text(encoding="utf-8"))
+            self.assertEqual(payload["observations"][0]["participant_code"], "P-001")
+            self.assertFalse(payload["observations"][0]["direct_identifier_collected"])
+            self.assertNotIn("name", json.dumps(payload).lower())
 
 
 if __name__ == "__main__":

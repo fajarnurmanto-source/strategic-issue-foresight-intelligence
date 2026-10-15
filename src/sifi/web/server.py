@@ -21,6 +21,7 @@ from sifi.workflow import LocalWorkflowRuntime
 from sifi.validation import (
     CB22StudyRuntime, Intervention, InterventionCategory, LocalCB22Workflow,
     StudyMode, cb22_gate_status,
+    export_adjudication_bundle,
 )
 
 
@@ -178,10 +179,24 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 self.server.paths.database, workspace_root=self.server.paths.root
             ) as runtime:
                 assessment = runtime.assessment()
+                observations = runtime.observations()
         else:
             from sifi.validation import assess_cb22
             assessment = assess_cb22(())
-        self._send_json(HTTPStatus.OK, {"gate": gate, "assessment": assessment})
+            observations = ()
+        self._send_json(HTTPStatus.OK, {
+            "gate": gate,
+            "assessment": assessment,
+            "active_sessions": [
+                {
+                    "observation_id": item.observation_id,
+                    "participant_code": item.participant_code,
+                    "mode": item.mode,
+                    "completed_stage_ids": item.completed_stage_ids,
+                }
+                for item in observations if item.completed_at is None
+            ],
+        })
 
     def _serve_catalog(self) -> None:
         if not self.server.paths.database.is_file():
@@ -271,7 +286,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
         if parsed.path not in {
             "/api/demo/start", "/api/demo/advance", "/api/brief/export",
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
-            "/api/cb22/stop", "/api/cb22/incident",
+            "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
         }:
             self._reject_write()
             return
@@ -315,6 +330,19 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
         )
 
     def _handle_cb22_write(self, path: str, payload: dict) -> None:
+        if path.endswith("/export"):
+            if self.server.paths.database.is_file():
+                with CB22StudyRuntime(
+                    self.server.paths.database, workspace_root=self.server.paths.root
+                ) as runtime:
+                    items = runtime.observations()
+            else:
+                items = ()
+            destination = export_adjudication_bundle(self.server.paths.root, items)
+            self._send_json(HTTPStatus.CREATED, {
+                "export": str(destination.relative_to(self.server.paths.root))
+            })
+            return
         workflow = LocalCB22Workflow(self.server.paths.root)
         if path.endswith("/start"):
             try:
