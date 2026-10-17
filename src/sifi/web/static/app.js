@@ -66,7 +66,82 @@ function showRecord(kind, data) {
         showError(error);
       }
     });
+    const readinessPanel = document.createElement('section');
+    readinessPanel.className = 'readiness-panel';
+    readinessPanel.setAttribute('aria-label', 'Kesiapan bukti historis');
+    readinessPanel.setAttribute('aria-live', 'polite');
+    result.append(readinessPanel);
+    void loadBriefReadiness(data.brief_id, readinessPanel);
     result.append(exportButton);
+  }
+}
+
+async function loadBriefReadiness(briefId, panel) {
+  panel.replaceChildren();
+
+  const heading = document.createElement('h4');
+  heading.textContent = 'Kesiapan bukti historis';
+  const message = document.createElement('p');
+  message.textContent = 'Memeriksa rekam bukti pada analytical cutoff…';
+  panel.append(heading, message);
+
+  try {
+    const response = await fetch(
+      `/api/brief/readiness?id=${encodeURIComponent(briefId)}`,
+      {cache: 'no-store'}
+    );
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || 'Penilaian tidak tersedia');
+    }
+
+    const assessment = payload.assessment;
+    if (!assessment ||
+        !['READY_FOR_HUMAN_REVIEW', 'NEEDS_REMEDIATION'].includes(assessment.status) ||
+        !Array.isArray(assessment.checked_refs) ||
+        !Array.isArray(assessment.missing_refs) ||
+        !Array.isArray(assessment.restricted_refs) ||
+        assessment.human_approval_granted !== false ||
+        assessment.production_action_authorized !== false ||
+        payload.analytical_only !== true ||
+        payload.human_approval_granted !== false ||
+        payload.production_action_authorized !== false) {
+      throw new Error('Kontrak readiness tidak valid');
+    }
+
+    if (!result.contains(panel)) return;
+    message.textContent = assessment.status === 'READY_FOR_HUMAN_REVIEW'
+      ? 'Referensi historis memenuhi preflight terbatas. Menunggu tinjauan manusia.'
+      : 'Perlu remediasi: referensi historis belum memenuhi preflight.';
+
+    const details = [
+      ['Referensi diperiksa', assessment.checked_refs],
+      ['Tidak tersedia pada cutoff', assessment.missing_refs],
+      ['Admission dibatasi', assessment.restricted_refs],
+    ];
+
+    for (const [label, refs] of details) {
+      const row = document.createElement('p');
+      const strong = document.createElement('strong');
+      strong.textContent = `${label}: `;
+      const value = document.createElement('span');
+      value.textContent = refs.length ? refs.join(', ') : 'Tidak ada';
+      row.append(strong, value);
+      panel.append(row);
+    }
+
+    const warning = document.createElement('p');
+    warning.className = 'readiness-note';
+    warning.textContent = 'Tidak membuktikan kebenaran empiris, kelengkapan provenance, '
+      + 'persetujuan manusia, atau otorisasi produksi.';
+    panel.append(warning);
+  } catch (error) {
+    if (!result.contains(panel)) return;
+    message.textContent = `Penilaian belum tersedia: ${error.message}`;
+    const warning = document.createElement('p');
+    warning.className = 'readiness-note';
+    warning.textContent = 'Status tidak dapat ditetapkan. Jangan menganggap brief siap.';
+    panel.append(warning);
   }
 }
 

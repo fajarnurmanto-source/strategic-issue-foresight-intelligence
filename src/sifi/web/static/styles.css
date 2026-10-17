@@ -78,3 +78,10 @@ button { border:0; border-radius:0 10px 10px 0; padding:0 17px; background:var(-
 .record-link small { display:block; margin-top:5px; color:var(--muted); }
 footer { padding-top:28px; color:#71766f; font-size:.8rem; text-align:center; }
 @media (max-width:720px) { .shell{width:min(100% - 24px,1120px);padding-top:32px}.hero,.exercise{grid-template-columns:1fr}.badge{justify-self:start}.status-grid,.lookup-grid,.catalog,.study-form,.study-history{grid-template-columns:1fr}.status-grid article{border-right:0;border-bottom:1px solid var(--line)}.section-heading{display:block}.section-heading>p{margin-top:12px}.workspace,.exercise,.study{padding:22px}.record-grid{grid-template-columns:1fr} }
+
+.readiness-context { margin:0 0 18px; color:var(--muted); line-height:1.6; }
+.readiness-panel { margin:22px 0; padding:18px; border:1px solid var(--line); border-radius:12px; background:rgba(21,25,24,.85); }
+.readiness-panel h4 { margin:0 0 10px; font-size:1rem; }
+.readiness-panel p { overflow-wrap:anywhere; line-height:1.55; }
+.readiness-panel strong { color:var(--ink); }
+.readiness-note { color:var(--muted); font-size:.85rem; }
