@@ -1,4 +1,4 @@
-﻿name: SIFI Engineering Verification
+name: SIFI Engineering Verification
 
 on:
   pull_request:
@@ -15,11 +15,13 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout full history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -27,6 +29,27 @@ jobs:
         shell: pwsh
         run: |
           python -m compileall -q src tests
+
+      - name: Verify historical evidence availability
+        shell: pwsh
+        run: |
+          $required = @(
+            "0f67266437260b192dc8e9361aa2eb42ff112c34",
+            "45dcb1f615daafcb169f52daef8e56b41723c8a3",
+            "92a67eb9863e30907b7461c2bb64030fd8868cc1",
+            "0f7a8caf4c37fe65ffa7c7e88e1eca1adc52faa7",
+            "302f21b1efe8e29f49a19cc6130c1d62278be85e",
+            "b322db1108e174567b2991cf4e53154f30ec3531"
+          )
+
+          foreach ($commit in $required) {
+            git cat-file -e "$commit^{commit}"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Required historical commit unavailable: $commit"
+            }
+          }
+
+          Write-Host "HISTORICAL_EVIDENCE_AVAILABLE=PASS"
 
       - name: Run deterministic test suite
         shell: pwsh
@@ -37,16 +60,22 @@ jobs:
       - name: Governance boundary check
         shell: pwsh
         run: |
-          $forbidden = @(
-            "runtime",
-            "logs",
-            "data/raw",
-            "data/private"
+          $forbiddenPatterns = @(
+            '^runtime/',
+            '^logs/',
+            '^data/raw/',
+            '^data/private/'
           )
 
-          foreach ($path in $forbidden) {
-            if (Test-Path $path) {
-              throw "Forbidden CI runtime path exists: $path"
+          $tracked = @(git ls-files)
+
+          foreach ($pattern in $forbiddenPatterns) {
+            $matches = @($tracked | Where-Object { $_ -match $pattern })
+
+            if ($matches.Count -gt 0) {
+              Write-Host "FORBIDDEN_TRACKED_PATHS:"
+              $matches
+              throw "Forbidden tracked governance surface detected: $pattern"
             }
           }
 
