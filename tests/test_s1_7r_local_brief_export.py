@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -24,7 +25,12 @@ class LocalBriefExportTests(unittest.TestCase):
             root = self.root(directory)
             seed_local_demo(root)
             exported = export_brief_markdown(root, DEMO_BRIEF_ID)
-            self.assertEqual(exported.parent, root / "runtime" / "exports")
+            self.assertEqual(
+                os.path.normcase(os.path.realpath(exported.parent)),
+                os.path.normcase(
+                    os.path.realpath(root / "runtime" / "exports")
+                ),
+            )
             content = exported.read_text(encoding="utf-8")
             self.assertIn("analytical only:** `true`", content.lower())
             self.assertIn("production action authorized:** `false`", content.lower())
