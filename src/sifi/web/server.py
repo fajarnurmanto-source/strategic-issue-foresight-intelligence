@@ -181,10 +181,55 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             })
         elif parsed.path == "/api/cb22/observation":
             self._serve_cb22_observation(parse_qs(parsed.query))
+        elif parsed.path == "/api/brief/readiness":
+            self._serve_brief_readiness(parse_qs(parsed.query))
         elif parsed.path in {"/api/session", "/api/brief"}:
             self._serve_record(parsed.path, parse_qs(parsed.query))
         else:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+
+    def _serve_brief_readiness(self, query: dict[str, list[str]]) -> None:
+        """Read-only historical evidence preflight; not human approval."""
+        values = query.get("id", [])
+        if len(values) != 1 or not values[0].strip() or len(values[0]) > 128:
+            self._send_json(
+                HTTPStatus.BAD_REQUEST,
+                {"error": "one valid id is required"},
+            )
+            return
+
+        if not self.server.paths.database.is_file():
+            self._send_json(
+                HTTPStatus.NOT_FOUND,
+                {"error": "local database is not initialized"},
+            )
+            return
+
+        with LocalWorkflowRuntime(
+            self.server.paths.database,
+            workspace_root=self.server.paths.root,
+        ) as runtime:
+            try:
+                result = runtime.assess_brief_readiness(values[0])
+            except ValueError as exc:
+                if str(exc) != "brief not found":
+                    raise
+                self._send_json(
+                    HTTPStatus.NOT_FOUND,
+                    {"error": "brief not found"},
+                )
+                return
+
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "assessment": result,
+                "analytical_only": True,
+                "human_approval_granted": False,
+                "production_action_authorized": False,
+                "scope": "historical_reference_and_admission_preflight",
+            },
+        )
 
     def _serve_cb22_status(self) -> None:
         gate = cb22_gate_status(self.server.paths.root)
