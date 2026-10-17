@@ -5,11 +5,14 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from sifi.persistence import SQLiteVersionStore
+from sifi.evidence.repository import EvidenceItemRepository
 from sifi.local import LocalSIFIPaths
 
 from .repository import WorkflowSessionRepository
 from .brief import EvidenceLinkedBrief
 from .brief_repository import EvidenceBriefRepository
+from .brief_readiness import BriefReadinessAssessment
+from .repository_preflight import assess_brief_from_repository
 from .service import BoundedAnalystWorkflow, WorkflowSession, WorkflowStepSubmission
 
 
@@ -32,6 +35,7 @@ class LocalWorkflowRuntime:
         self._store = SQLiteVersionStore(path)
         self._repository = WorkflowSessionRepository(self._store)
         self._brief_repository = EvidenceBriefRepository(self._store)
+        self._evidence_repository = EvidenceItemRepository(self._store)
         self._workflow = BoundedAnalystWorkflow()
 
     def close(self) -> None:
@@ -108,6 +112,21 @@ class LocalWorkflowRuntime:
     def latest_brief(self, brief_id: str) -> EvidenceLinkedBrief | None:
         item = self._brief_repository.latest(brief_id)
         return item.brief if item else None
+
+    def assess_brief_readiness(
+        self, brief_id: str
+    ) -> BriefReadinessAssessment:
+        """Read-only historical evidence-reference preflight.
+
+        This does not grant review approval, rights admission,
+        publication permission, or production authorization.
+        """
+        brief = self.latest_brief(brief_id)
+        if brief is None:
+            raise ValueError("brief not found")
+        return assess_brief_from_repository(
+            brief, repository=self._evidence_repository
+        )
 
     def catalog(self, *, limit: int = 100) -> dict[str, tuple]:
         return {
