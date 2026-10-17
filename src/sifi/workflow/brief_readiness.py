@@ -29,6 +29,7 @@ class BriefReadinessAssessment:
     checked_refs: tuple[str, ...]
     human_approval_granted: bool = False
     production_action_authorized: bool = False
+    restricted_refs: tuple[str, ...] = ()
 
 
 def assess_brief_readiness(
