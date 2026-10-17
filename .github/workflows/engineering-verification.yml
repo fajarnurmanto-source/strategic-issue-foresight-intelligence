@@ -1,0 +1,61 @@
+﻿name: SIFI Engineering Verification
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-verification:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile source
+        shell: pwsh
+        run: |
+          python -m compileall -q src tests
+
+      - name: Run deterministic test suite
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Governance boundary check
+        shell: pwsh
+        run: |
+          $forbidden = @(
+            "runtime",
+            "logs",
+            "data/raw",
+            "data/private"
+          )
+
+          foreach ($path in $forbidden) {
+            if (Test-Path $path) {
+              throw "Forbidden CI runtime path exists: $path"
+            }
+          }
+
+          Write-Host "CI_GOVERNANCE_BOUNDARY=PASS"
+
+      - name: CB22 non-claim boundary
+        shell: pwsh
+        run: |
+          Write-Host "CB22_COUNTED_EXECUTION=PROHIBITED_IN_CI"
+          Write-Host "CB22_FINAL_ADJUDICATION=PROHIBITED_IN_CI"
+          Write-Host "LIVE_ACQUISITION=PROHIBITED_IN_CI"
+          Write-Host "PRODUCTION_ACTIVATION=PROHIBITED_IN_CI"
