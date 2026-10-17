@@ -2,11 +2,11 @@
 
 SIFI pada tahap ini adalah aplikasi analitis lokal dan non-produksi. Semua
 komponen aplikasi, data, log, konfigurasi, serta cadangan berada di dalam
-folder `D:\Research\SIFI`.
+folder `D:\Research\SIFI_GITHUB_CANDIDATE`.
 
 ## Menjalankan aplikasi
 
-1. Buka PowerShell di folder `D:\Research\SIFI`.
+1. Buka PowerShell di folder `D:\Research\SIFI_GITHUB_CANDIDATE`.
 2. Jalankan `scripts\start-sifi.ps1`.
 3. Browser akan membuka `http://127.0.0.1:8765`.
 4. Saat selesai, jalankan `scripts\stop-sifi.ps1`.
