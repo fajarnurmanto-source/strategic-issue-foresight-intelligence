@@ -58,6 +58,21 @@
       <div id="foresightResult" style="background: white; padding: 1rem; border-radius: 4px; border: 1px solid #ddd; min-height: 50px; font-family: monospace; font-size: 0.85rem;"></div>
     </section>
 
+    
+    <section class="foresight" aria-labelledby="createIssueTitle" style="margin-top: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fafafa;">
+      <div class="section-heading">
+        <div><p class="eyebrow">Mesin Analitis · Input</p><h2 id="createIssueTitle">Buat Isu Baru</h2></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <input id="newIssueId" type="text" placeholder="Issue ID (misal: ISSUE-002)" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <input id="newIssueTitle" type="text" placeholder="Judul Isu" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <input id="newIssueSupp" type="text" placeholder="Bukti Pendukung (pisahkan dengan koma, misal: EV-1, EV-2)" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <input id="newIssueCont" type="text" placeholder="Bukti Kontradiksi (misal: EV-3)" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <button type="button" id="createIssueBtn" style="padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Simpan Isu</button>
+      </div>
+      <p id="createIssueMsg" style="margin-top: 10px; font-weight: bold;"></p>
+    </section>
+
     <section class="study" aria-labelledby="studyTitle">
       <div class="section-heading">
         <div><p class="eyebrow">CB22 · studi pengguna representatif</p><h2 id="studyTitle">Mode studi terkontrol</h2></div>

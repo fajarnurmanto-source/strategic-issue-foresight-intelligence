@@ -493,3 +493,59 @@ if (fetchForesightBtn && issueIdInput && foresightResult) {
     }
   });
 }
+
+
+// ==========================================
+// FITUR CREATE ISSUE
+// ==========================================
+const createIssueBtn = document.querySelector('#createIssueBtn');
+if (createIssueBtn) {
+  createIssueBtn.addEventListener('click', async () => {
+    const id = document.querySelector('#newIssueId').value.trim();
+    const title = document.querySelector('#newIssueTitle').value.trim();
+    const supp = document.querySelector('#newIssueSupp').value.split(',').map(s => s.trim()).filter(Boolean);
+    const cont = document.querySelector('#newIssueCont').value.split(',').map(s => s.trim()).filter(Boolean);
+    const msg = document.querySelector('#createIssueMsg');
+    
+    if (!id || !title) {
+      msg.textContent = "ID dan Judul wajib diisi.";
+      msg.style.color = "red";
+      return;
+    }
+
+    msg.textContent = "Menyimpan...";
+    msg.style.color = "black";
+
+    try {
+      // 1. Ambil token CSRF terbaru dari server
+      const tokenRes = await fetch('/api/local-token');
+      const tokenData = await tokenRes.json();
+      const token = tokenData.token;
+
+      // 2. Kirim data beserta token
+      const res = await fetch('/api/issue/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-SIFI-Token': token
+        },
+        body: JSON.stringify({
+          issue_id: id,
+          title: title,
+          supporting_evidence: supp,
+          contradictory_evidence: cont
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menyimpan');
+      
+      msg.textContent = "✅ Isu berhasil disimpan! Silakan cek di panel Foresight.";
+      msg.style.color = "green";
+      document.querySelector('#issueIdInput').value = id; 
+    } catch (err) {
+      msg.textContent = "Error: " + err.message;
+      msg.style.color = "red";
+    }
+  });
+}

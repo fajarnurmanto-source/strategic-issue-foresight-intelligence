@@ -393,6 +393,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/demo/start", "/api/demo/advance", "/api/brief/export",
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
+            "/api/issue/create",
         }:
             self._reject_write()
             return
@@ -401,6 +402,56 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             payload = self._read_json()
+
+            if parsed.path == "/api/issue/create":
+                from datetime import datetime, timezone
+                from sifi.domain import PersistenceClass, TrajectoryDimension
+                from sifi.issues.model import IssueObject, IssueEvidenceLinks, IssueGeography, IssueTrajectoryState
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+
+                now = datetime.now(timezone.utc)
+                issue_id = str(payload.get("issue_id", "")).strip()
+                title = str(payload.get("title", "")).strip()
+                if not issue_id or not title:
+                    raise ValueError("issue_id dan title wajib diisi")
+
+                supp = tuple(e.strip() for e in payload.get("supporting_evidence", []) if e.strip())
+                cont = tuple(e.strip() for e in payload.get("contradictory_evidence", []) if e.strip())
+                
+                if set(supp).intersection(set(cont)):
+                    raise ValueError("Bukti tidak boleh sekaligus menjadi pendukung dan kontradiksi")
+
+                all_ev = supp + cont
+                fallback_ev = all_ev if all_ev else ("EV-DEFAULT",)
+
+                issue = IssueObject(
+                    issue_id=issue_id,
+                    title=title,
+                    issue_type="web_created",
+                    persistence_class=PersistenceClass.PC_01_INCIDENT,
+                    lifecycle_state="ACTIVE",
+                    first_seen=now,
+                    last_updated=now,
+                    identity_review_state=None,
+                    evidence=IssueEvidenceLinks(
+                        supporting_evidence_ids=supp,
+                        contradictory_evidence_ids=cont
+                    ),
+                    geography=IssueGeography(),
+                    trajectories=tuple(
+                        IssueTrajectoryState(dimension=d, trajectory_state="stable", as_of=now, evidence_ids=fallback_ev)
+                        for d in TrajectoryDimension
+                    )
+                )
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                if repo.latest(issue_id):
+                    raise ValueError("Issue ID sudah ada di database")
+                    
+                repo.append(issue, version=1, effective_at=now, recorded_at=now)
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "issue_id": issue_id})
+                return
             if parsed.path == "/api/brief/export":
                 destination = export_brief_markdown(
                     self.server.paths.root, str(payload.get("brief_id", ""))
