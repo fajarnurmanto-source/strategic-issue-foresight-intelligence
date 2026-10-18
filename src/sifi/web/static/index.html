@@ -45,6 +45,19 @@
       <p class="exercise-message" id="exerciseMessage" aria-live="polite"></p>
     </section>
 
+    
+    <section class="foresight" aria-labelledby="foresightTitle" style="margin-top: 2rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fafafa;">
+      <div class="section-heading">
+        <div><p class="eyebrow">Mesin Analitis · Foresight</p><h2 id="foresightTitle">Derivasi Risiko & Skenario</h2></div>
+      </div>
+      <p class="lede" style="font-size: 0.9rem; margin-bottom: 1rem;">Fitur ini membaca Issue dari database dan menghitung profil risiko secara otomatis.</p>
+      <div class="control" style="display: flex; gap: 10px; margin-bottom: 1rem;">
+        <input id="issueIdInput" type="text" value="ISSUE-DEMO-001" placeholder="Masukkan Issue ID" style="padding: 8px; flex-grow: 1;">
+        <button type="button" id="fetchForesight" style="padding: 8px 16px;">Analisis Isu</button>
+      </div>
+      <div id="foresightResult" style="background: white; padding: 1rem; border-radius: 4px; border: 1px solid #ddd; min-height: 50px; font-family: monospace; font-size: 0.85rem;"></div>
+    </section>
+
     <section class="study" aria-labelledby="studyTitle">
       <div class="section-heading">
         <div><p class="eyebrow">CB22 · studi pengguna representatif</p><h2 id="studyTitle">Mode studi terkontrol</h2></div>

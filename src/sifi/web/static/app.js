@@ -455,3 +455,41 @@ document.querySelectorAll('form[data-kind]').forEach((form) => {
 loadStatus();
 loadStudyTask().then(loadStudyStatus);
 loadCatalog();
+
+// ==========================================
+// FITUR FORESIGHT ANALYTICS
+// ==========================================
+const fetchForesightBtn = document.querySelector('#fetchForesight');
+const issueIdInput = document.querySelector('#issueIdInput');
+const foresightResult = document.querySelector('#foresightResult');
+
+if (fetchForesightBtn && issueIdInput && foresightResult) {
+  fetchForesightBtn.addEventListener('click', async () => {
+    const issueId = issueIdInput.value.trim();
+    if (!issueId) return;
+    
+    foresightResult.innerHTML = '<p>Menganalisis isu...</p>';
+    
+    try {
+      const res = await fetch(`/api/foresight/${issueId}`);
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Gagal mengambil data');
+      
+      // Format hasil
+      let html = `<h3>Risk Level: <span style="color:${data.risk.level === 'HIGH' ? 'red' : 'orange'}">${data.risk.level}</span> (${data.risk.direction})</h3>`;
+      html += `<p><strong>Rationale:</strong> ${data.risk.rationale}</p>`;
+      
+      if (data.abstained) {
+        html += `<p style="color:red;"><strong>ABSTAINED:</strong> ${data.abstention_reasons.join(', ')}</p>`;
+      } else {
+        html += `<h4>Rekomendasi Strategis:</h4><ul>` + data.recommendation_proposals.map(p => `<li>${p}</li>`).join('') + `</ul>`;
+        html += `<h4>Watch Conditions:</h4><ul>` + data.watch_conditions.map(w => `<li><strong>${w.condition}</strong> — ${w.trigger}</li>`).join('') + `</ul>`;
+      }
+      
+      foresightResult.innerHTML = html;
+    } catch (err) {
+      foresightResult.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    }
+  });
+}
