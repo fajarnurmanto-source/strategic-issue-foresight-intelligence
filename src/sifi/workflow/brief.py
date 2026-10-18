@@ -19,6 +19,8 @@ class EvidenceLinkedBrief:
     created_at: datetime
     analytical_cutoff: datetime
     analytical_only: bool = True
+    foresight_risk: str | None = None
+    foresight_summary: str | None = None
     production_action_authorized: bool = False
 
     def __post_init__(self) -> None:

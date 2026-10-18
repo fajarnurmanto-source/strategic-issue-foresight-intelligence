@@ -37,6 +37,7 @@ def export_brief_markdown(root: str | Path, brief_id: str) -> Path:
         f"**Production action authorized:** "
         f"`{str(brief.production_action_authorized).lower()}`\n\n"
         f"## Summary\n\n{brief.summary}\n\n"
+        f"## Foresight Analysis (AI)\n\n**Risk Level:** {brief.foresight_risk or 'N/A'}\n\n{brief.foresight_summary or 'No foresight data'}\n\n"
         f"## Evidence references\n\n{evidence}\n\n"
         "---\nGenerated locally by SIFI. This document does not authorize production action.\n"
     )

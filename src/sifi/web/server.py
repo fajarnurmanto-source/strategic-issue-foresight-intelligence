@@ -420,6 +420,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
             "/api/issue/create",
+            "/api/ingest/feed", "/api/brief/generate",
         }:
             self._reject_write()
             return
@@ -428,6 +429,79 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             payload = self._read_json()
+
+            if parsed.path == "/api/ingest/feed":
+                from sifi.ingestion.feed_parser import parse_feed
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                
+                # Buat dummy feed file
+                import json, tempfile
+                feed_data = {
+                    "items": [
+                        {"id": "FEED-001", "title": "Supply chain disruption", "supporting": ["EV-F1", "EV-F2"], "contradictory": ["EV-F3"]},
+                        {"id": "FEED-002", "title": "Cyber attack on infrastructure", "supporting": ["EV-F4"], "contradictory": []},
+                        {"id": "FEED-003", "title": "Market volatility increases", "supporting": ["EV-F5"], "contradictory": ["EV-F6", "EV-F7"]}
+                    ]
+                }
+                tmp = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
+                json.dump(feed_data, tmp)
+                tmp.close()
+                
+                issues = parse_feed(tmp.name)
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc)
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                count = 0
+                for issue in issues:
+                    if not repo.latest(issue.issue_id):
+                        repo.append(issue, version=1, effective_at=now, recorded_at=now)
+                        count += 1
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "ingested": count})
+                return
+
+            if parsed.path == "/api/brief/generate":
+                from sifi.analysis.foresight import derive_foresight
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.workflow.brief import EvidenceLinkedBrief
+                from datetime import datetime, timezone
+
+                issue_id = str(payload.get("issue_id", ""))
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                persisted = repo.latest(issue_id)
+                if not persisted:
+                    raise ValueError("Issue not found")
+                
+                proposal = derive_foresight(persisted.issue)
+                now = datetime.now(timezone.utc)
+                
+                brief = EvidenceLinkedBrief(
+                    brief_id=f"BRIEF-{issue_id}",
+                    issue_id=issue_id,
+                    summary="Auto-generated brief based on synthetic ingestion.",
+                    evidence_refs=tuple(persisted.issue.evidence.supporting_evidence_ids),
+                    created_at=now,
+                    analytical_cutoff=now,
+                    foresight_risk=proposal.risk.level,
+                    foresight_summary=" | ".join(proposal.recommendation_proposals)
+                )
+                # Simpan manual ke store untuk demo
+                from sifi.domain.versioning import VersionedSnapshot
+                store.append(VersionedSnapshot(
+                    object_type="EVIDENCE_LINKED_ANALYTICAL_BRIEF",
+                    object_id=brief.brief_id, version=1,
+                    effective_at=now, recorded_at=now,
+                    payload={
+                        **asdict(brief),
+                        "created_at": brief.created_at.isoformat(),
+                        "analytical_cutoff": brief.analytical_cutoff.isoformat()
+                    }
+                ))
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "brief_id": brief.brief_id})
+                return
 
             if parsed.path == "/api/issue/create":
                 from datetime import datetime, timezone
@@ -499,8 +573,8 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                     analyst_id=str(payload.get("analyst_id", "")),
                     note=str(payload.get("note", "")),
                 )
-        except (DemoWorkflowError, BriefExportError, ValueError, TypeError) as exc:
-            self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+        except Exception as exc:
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
             return
         self._send_json(
             HTTPStatus.CREATED if parsed.path.endswith("start") else HTTPStatus.OK,

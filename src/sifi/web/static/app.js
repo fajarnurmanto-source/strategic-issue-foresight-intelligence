@@ -582,3 +582,59 @@ if (fetchSystemicBtn) {
     }
   });
 }
+
+// ==========================================
+// FITUR EKSPLORASI (Ingest & Generate Brief)
+// ==========================================
+const ingestFeedBtn = document.querySelector('#ingestFeedBtn');
+if (ingestFeedBtn) {
+  ingestFeedBtn.addEventListener('click', async () => {
+    const msg = document.querySelector('#exploreMsg');
+    msg.textContent = "Menyerap data...";
+    try {
+      const tokenRes = await fetch('/api/local-token');
+      const token = (await tokenRes.json()).token;
+      
+      const res = await fetch('/api/ingest/feed', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal ingest');
+      msg.textContent = `✅ Berhasil menyerap ${data.ingested} isu baru dari Feed!`;
+      msg.style.color = "green";
+    } catch (err) {
+      msg.textContent = "Error: " + err.message;
+      msg.style.color = "red";
+    }
+  });
+}
+
+const generateBriefBtn = document.querySelector('#generateBriefBtn');
+if (generateBriefBtn) {
+  generateBriefBtn.addEventListener('click', async () => {
+    const id = document.querySelector('#briefIssueId').value.trim();
+    const msg = document.querySelector('#exploreMsg');
+    if (!id) return;
+    
+    msg.textContent = "Membuat Brief...";
+    try {
+      const tokenRes = await fetch('/api/local-token');
+      const token = (await tokenRes.json()).token;
+      
+      const res = await fetch('/api/brief/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
+        body: JSON.stringify({issue_id: id})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal generate');
+      msg.textContent = `✅ Brief ${data.brief_id} berhasil dibuat dan disimpan!`;
+      msg.style.color = "green";
+    } catch (err) {
+      msg.textContent = "Error: " + err.message;
+      msg.style.color = "red";
+    }
+  });
+}
