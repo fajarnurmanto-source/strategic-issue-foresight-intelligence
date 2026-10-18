@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timezone
 from sifi.domain import PersistenceClass, TrajectoryDimension
 from sifi.issues.model import IssueObject, IssueEvidenceLinks, IssueGeography, IssueTrajectoryState
+from sifi.analysis.semantic import analyze_text
 
 def parse_feed(file_path: str):
     with open(file_path, "r") as f:
@@ -15,7 +16,7 @@ def parse_feed(file_path: str):
         issue = IssueObject(
             issue_id=item["id"],
             title=item["title"],
-            issue_type="ingested",
+            issue_type=f"ingested_threat{analyze_text(item['title']).threat_score}",
             persistence_class=PersistenceClass.PC_02_RECURRING,
             lifecycle_state="ACTIVE",
             first_seen=now,

@@ -212,6 +212,33 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.OK, asdict(report))
             except Exception as exc:
                 self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+
+        elif parsed.path == "/api/brief/view":
+            try:
+                from sifi.persistence import SQLiteVersionStore
+                import json
+                query = parse_qs(parsed.query)
+                brief_id = query.get("id", [""])[0]
+                if not brief_id:
+                    raise ValueError("Brief ID required")
+                
+                store = SQLiteVersionStore(self.server.paths.database)
+                snapshot = store.latest("EVIDENCE_LINKED_ANALYTICAL_BRIEF", brief_id)
+                if not snapshot:
+                    raise ValueError("Brief not found")
+                
+                # Render format Markdown sederhana ke teks
+                payload = snapshot.payload
+                md = f"# SIFI Analytical Brief: {brief_id}\n\n"
+                md += f"**Issue ID:** {payload.get('issue_id')}\n"
+                md += f"**Risk Level:** {payload.get('foresight_risk', 'N/A')}\n"
+                md += f"**AI Summary:** {payload.get('foresight_summary', 'N/A')}\n\n"
+                md += f"## Narrative Summary\n{payload.get('summary', '')}\n\n"
+                md += f"**Evidence Refs:** {', '.join(payload.get('evidence_refs', []))}"
+                
+                self._send_json(HTTPStatus.OK, {"content": md})
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
         elif parsed.path.startswith("/api/foresight/"):
             issue_id = parsed.path[len("/api/foresight/"):]
             self._serve_foresight(issue_id)
@@ -420,7 +447,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
             "/api/issue/create",
-            "/api/ingest/feed", "/api/brief/generate",
+            "/api/ingest/feed", "/api/brief/generate", "/api/semantic/test",
         }:
             self._reject_write()
             return
@@ -429,6 +456,13 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             payload = self._read_json()
+
+            if parsed.path == "/api/semantic/test":
+                from sifi.analysis.semantic import analyze_text
+                text_to_analyze = str(payload.get("text", ""))
+                result = analyze_text(text_to_analyze)
+                self._send_json(HTTPStatus.OK, asdict(result))
+                return
 
             if parsed.path == "/api/ingest/feed":
                 from sifi.ingestion.feed_parser import parse_feed

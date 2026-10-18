@@ -638,3 +638,62 @@ if (generateBriefBtn) {
     }
   });
 }
+
+// ==========================================
+// FITUR VIEW BRIEF
+// ==========================================
+const viewBriefBtn = document.querySelector('#viewBriefBtn');
+if (viewBriefBtn) {
+  viewBriefBtn.addEventListener('click', async () => {
+    const id = document.querySelector('#viewBriefId').value.trim();
+    const contentArea = document.querySelector('#briefContent');
+    if (!id) return;
+    
+    contentArea.textContent = "Memuat...";
+    try {
+      const res = await fetch(`/api/brief/view?id=${encodeURIComponent(id)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal memuat brief');
+      
+      contentArea.textContent = data.content;
+    } catch (err) {
+      contentArea.textContent = "Error: " + err.message;
+    }
+  });
+}
+
+// ==========================================
+// FITUR SEMANTIC TESTING
+// ==========================================
+const analyzeTextBtn = document.querySelector('#analyzeTextBtn');
+if (analyzeTextBtn) {
+  analyzeTextBtn.addEventListener('click', async () => {
+    const text = document.querySelector('#semanticText').value.trim();
+    const resDiv = document.querySelector('#semanticResult');
+    if (!text) return;
+
+    resDiv.innerHTML = "Menganalisis...";
+    try {
+      const tokenRes = await fetch('/api/local-token');
+      const token = (await tokenRes.json()).token;
+      
+      const res = await fetch('/api/semantic/test', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
+        body: JSON.stringify({text: text})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      const color = data.threat_score > 5 ? 'red' : (data.threat_score > 0 ? 'orange' : 'green');
+      
+      let html = `<h3>Threat Score: <span style="color:${color}">${data.threat_score} / 10</span></h3>`;
+      html += `<p><strong>Negatif:</strong> ${data.is_negative} | <strong>Hedging (Ketidakpastian):</strong> ${data.is_hedged}</p>`;
+      html += `<p><strong>Entitas Terdeteksi:</strong> ${data.detected_entities.length > 0 ? data.detected_entities.join(', ') : '<em>Tidak ada</em>'}</p>`;
+      
+      resDiv.innerHTML = html;
+    } catch (err) {
+      resDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
+    }
+  });
+}
