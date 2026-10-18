@@ -24,6 +24,9 @@ from sifi.validation import (
     export_adjudication_bundle,
 )
 from sifi.validation.study_task import public_step_spec
+from sifi.analysis.foresight import derive_foresight
+from sifi.issues.repository import IssueObjectRepository
+from sifi.persistence import SQLiteVersionStore
 
 
 class LocalWebBoundaryError(ValueError):
@@ -183,10 +186,31 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._serve_cb22_observation(parse_qs(parsed.query))
         elif parsed.path == "/api/brief/readiness":
             self._serve_brief_readiness(parse_qs(parsed.query))
+        elif parsed.path.startswith("/api/foresight/"):
+            issue_id = parsed.path[len("/api/foresight/"):]
+            self._serve_foresight(issue_id)
         elif parsed.path in {"/api/session", "/api/brief"}:
             self._serve_record(parsed.path, parse_qs(parsed.query))
         else:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+
+    def _serve_foresight(self, issue_id: str) -> None:
+        if not issue_id or len(issue_id) > 128:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "valid issue_id required"})
+            return
+        try:
+            store = SQLiteVersionStore(self.server.paths.database)
+            repo = IssueObjectRepository(store)
+            persisted = repo.latest(issue_id)
+            
+            if persisted is None:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "issue not found"})
+                return
+                
+            proposal = derive_foresight(persisted.issue)
+            self._send_json(HTTPStatus.OK, asdict(proposal))
+        except Exception as exc:
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
 
     def _serve_brief_readiness(self, query: dict[str, list[str]]) -> None:
         """Read-only historical evidence preflight; not human approval."""
@@ -230,7 +254,6 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 "scope": "historical_reference_and_admission_preflight",
             },
         )
-
     def _serve_cb22_status(self) -> None:
         gate = cb22_gate_status(self.server.paths.root)
         if self.server.paths.database.is_file():
