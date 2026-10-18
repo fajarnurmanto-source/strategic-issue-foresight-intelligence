@@ -1,4 +1,5 @@
 from __future__ import annotations
+from sifi.ingestion.worker import IngestionWorker
 
 import argparse
 import threading
@@ -22,6 +23,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     LocalOperations(args.root).initialize()
     server = create_local_server(args.root, port=args.port)
+    worker = IngestionWorker(server.paths.database)
+    worker.start()
+    print('🤖 Background Worker Aktif!')
     url = f"http://127.0.0.1:{server.server_port}"
     print(f"SIFI lokal siap di {url}", flush=True)
     if args.open_browser:

@@ -8,6 +8,7 @@ class SemanticClaimResult:
     is_hedged: bool
     threat_score: int
     detected_entities: tuple[str, ...]
+    causal_links: tuple[str, ...]
 
 def analyze_text(text: str) -> SemanticClaimResult:
     t = text.lower()
@@ -20,13 +21,16 @@ def analyze_text(text: str) -> SemanticClaimResult:
     # Threat score dari 0-10
     score = min(10, (neg_hits * 3) + hedge_hits)
     
-    # Ekstraksi Entitas: Mencari kata berawalan huruf kapital (misal: "Port of Jakarta", "WHO")
-    # Regex: Kata kapital, opsional diikuti spasi dan kata kapital lagi.
+    # Ekstraksi Entitas (Kata berawalan huruf kapital)
     entities = tuple(set(re.findall(r'\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)*\b', text)))
+    
+    # Ekstraksi Kausalitas (Kata setelah "due to", "because of", dll)
+    causal = tuple(set(re.findall(r'(?:due to|because of|caused by|led to)\s+([a-zA-Z\s]+)', t)))
     
     return SemanticClaimResult(
         is_negative=neg_hits > 0,
         is_hedged=hedge_hits > 0,
         threat_score=score,
-        detected_entities=entities
+        detected_entities=entities,
+        causal_links=causal
     )

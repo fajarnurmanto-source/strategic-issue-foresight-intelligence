@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SIFI Lokal</title>
   <link rel="stylesheet" href="/styles.css">
+  <script src="/chart.umd.js"></script>
 </head>
 <body>
   <main class="shell">
@@ -51,8 +52,8 @@
         <div><p class="eyebrow">Mesin Analitis · Foresight</p><h2 id="foresightTitle">Derivasi Risiko & Skenario</h2></div>
       </div>
       <p class="lede" style="font-size: 0.9rem; margin-bottom: 1rem;">Fitur ini membaca Issue dari database dan menghitung profil risiko secara otomatis.</p>
-      <div class="control" style="display: flex; gap: 10px; margin-bottom: 1rem;">
-        <input id="issueIdInput" type="text" value="ISSUE-DEMO-001" placeholder="Masukkan Issue ID" style="padding: 8px; flex-grow: 1;">
+      <div class="control" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; align-items: center;">
+        <input id="issueIdInput" type="text" value="ISSUE-DEMO-001" placeholder="Masukkan Issue ID" style="padding: 8px; flex: 1; min-width: 200px;">
         <button type="button" id="fetchForesight" style="padding: 8px 16px;">Analisis Isu</button>
       </div>
       <div id="foresightResult" style="background: white; padding: 1rem; border-radius: 4px; border: 1px solid #ddd; min-height: 50px; font-family: monospace; font-size: 0.85rem;"></div>
@@ -63,12 +64,12 @@
       <div class="section-heading">
         <div><p class="eyebrow">Mesin Analitis · Input</p><h2 id="createIssueTitle">Buat Isu Baru</h2></div>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 10px;">
-        <input id="newIssueId" type="text" placeholder="Issue ID (misal: ISSUE-002)" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <input id="newIssueTitle" type="text" placeholder="Judul Isu" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <input id="newIssueSupp" type="text" placeholder="Bukti Pendukung (pisahkan dengan koma, misal: EV-1, EV-2)" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <input id="newIssueCont" type="text" placeholder="Bukti Kontradiksi (misal: EV-3)" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <button type="button" id="createIssueBtn" style="padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Simpan Isu</button>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 1rem; width: 100%;">
+        <input id="newIssueId" type="text" placeholder="Issue ID (misal: ISSUE-002)" style="padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        <input id="newIssueTitle" type="text" placeholder="Judul Isu" style="padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        <input id="newIssueSupp" type="text" placeholder="Bukti Pendukung (EV-1, EV-2)" style="padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        <input id="newIssueCont" type="text" placeholder="Bukti Kontradiksi (EV-3)" style="padding: 8px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        <button type="button" id="createIssueBtn" style="grid-column: span 2; padding: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Simpan Isu</button>
       </div>
       <p id="createIssueMsg" style="margin-top: 10px; font-weight: bold;"></p>
     </section>
@@ -88,9 +89,9 @@
       <div class="section-heading">
         <div><p class="eyebrow">Mesin Analitis · Advanced</p><h2 id="exploreTitle">Eksplorasi Data & Output</h2></div>
       </div>
-      <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; align-items: center;">
         <button type="button" id="ingestFeedBtn" style="padding: 8px 16px; background: #9C27B0; color: white; border: none; border-radius: 4px; cursor: pointer;">1. Ingest Synthetic Feed</button>
-        <input id="briefIssueId" type="text" placeholder="Issue ID (misal: FEED-001)" style="padding: 8px;">
+        <input id="briefIssueId" type="text" placeholder="Issue ID" style="padding: 8px; flex: 1; min-width: 150px;">
         <button type="button" id="generateBriefBtn" style="padding: 8px 16px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">2. Generate Brief</button>
       </div>
       <div id="exploreMsg" style="font-weight: bold; margin-top: 10px;"></div>
@@ -101,8 +102,8 @@
       <div class="section-heading">
         <div><p class="eyebrow">Dokumen Output</p><h2 id="briefOutputTitle">Hasil Brief Analitis</h2></div>
       </div>
-      <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-        <input id="viewBriefId" type="text" placeholder="Brief ID (misal: BRIEF-FEED-001)" value="BRIEF-FEED-001" style="padding: 8px; flex-grow: 1;">
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; align-items: center;">
+        <input id="viewBriefId" type="text" placeholder="Brief ID (misal: BRIEF-FEED-001)" value="BRIEF-FEED-001" style="padding: 8px; flex: 1; min-width: 200px;">
         <button type="button" id="viewBriefBtn" style="padding: 8px 16px; background: #607D8B; color: white; border: none; border-radius: 4px; cursor: pointer;">Tampilkan Brief</button>
       </div>
       <pre id="briefContent" style="background: #222; color: #eee; padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: monospace; min-height: 100px;"></pre>
@@ -117,6 +118,30 @@
       <textarea id="semanticText" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">The World Health Organization reported a sudden crisis in Jakarta. Supply chains might collapse due to severe port disruptions.</textarea>
       <button type="button" id="analyzeTextBtn" style="padding: 8px 16px; background: #E91E63; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Analisis Teks</button>
       <div id="semanticResult" style="margin-top: 10px; background: white; padding: 10px; border-radius: 4px; border: 1px solid #ddd;"></div>
+    </section>
+
+    
+    <section class="foresight" aria-labelledby="simTitle" style="margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fafafa;">
+      <div class="section-heading">
+        <div><p class="eyebrow">Mesin Simulasi · What-If</p><h2 id="simTitle">Simulasi Penurunan Risiko</h2></div>
+      </div>
+      <p class="lede" style="font-size: 0.9rem; margin-bottom: 1rem;">"Bagaimana jika bukti kontradiksi berhasil diselesaikan?"</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem; align-items: center;">
+        <input id="simIssueId" type="text" placeholder="Issue ID (misal: FEED-001)" style="padding: 8px; flex: 1; min-width: 200px;">
+        <button type="button" id="simulateBtn" style="padding: 8px 16px; background: #3F51B5; color: white; border: none; border-radius: 4px; cursor: pointer;">Jalankan Simulasi</button>
+      </div>
+      <div id="simResult" style="background: white; padding: 10px; border-radius: 4px; border: 1px solid #ddd; font-family: monospace;"></div>
+    </section>
+
+    
+    <section class="foresight" aria-labelledby="dashboardTitle" style="margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; display: flex; flex-direction: column; align-items: center;">
+      <div class="section-heading" style="width: 100%;">
+        <div><p class="eyebrow">Visualisasi Data</p><h2 id="dashboardTitle">Distribusi Risiko Sistemik <span style="font-size: 0.8rem; background: green; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">LIVE AUTO-INGEST</span></h2></div>
+      </div>
+      <div style="width: 100%; max-width: 400px; height: 300px; margin-top: 1rem; position: relative;">
+        <canvas id="riskChart"></canvas>
+      </div>
+      <button type="button" id="refreshChartBtn" style="margin-top: 1rem; padding: 8px 16px; background: #00BCD4; color: white; border: none; border-radius: 4px; cursor: pointer;">Perbarui Grafik</button>
     </section>
 
     <section class="study" aria-labelledby="studyTitle">

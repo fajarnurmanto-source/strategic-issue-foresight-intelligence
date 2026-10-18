@@ -159,6 +159,8 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._send_static("styles.css", "text/css; charset=utf-8")
         elif parsed.path == "/app.js":
             self._send_static("app.js", "text/javascript; charset=utf-8")
+        elif parsed.path == "/chart.umd.js":
+            self._send_static("chart.umd.js", "text/javascript; charset=utf-8")
         elif parsed.path == "/health":
             status = LocalOperations(self.server.paths.root).status()
             code = HTTPStatus.OK if status.integrity in {"OK", "NOT_INITIALIZED"} else HTTPStatus.SERVICE_UNAVAILABLE
@@ -237,6 +239,26 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 md += f"**Evidence Refs:** {', '.join(payload.get('evidence_refs', []))}"
                 
                 self._send_json(HTTPStatus.OK, {"content": md})
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/stats":
+            try:
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.analysis.foresight import derive_foresight
+                import sqlite3
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                rows = conn.execute("SELECT DISTINCT object_id FROM object_versions WHERE object_type='ISSUE'").fetchall()
+                conn.close()
+                stats = {"HIGH": 0, "ELEVATED": 0, "LOW": 0, "INSUFFICIENT": 0}
+                for (issue_id,) in rows:
+                    persisted = repo.latest(issue_id)
+                    if persisted:
+                        prop = derive_foresight(persisted.issue)
+                        stats[prop.risk.level] += 1
+                self._send_json(HTTPStatus.OK, stats)
             except Exception as exc:
                 self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
         elif parsed.path.startswith("/api/foresight/"):
@@ -447,7 +469,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
             "/api/issue/create",
-            "/api/ingest/feed", "/api/brief/generate", "/api/semantic/test",
+            "/api/ingest/feed", "/api/brief/generate", "/api/semantic/test", "/api/foresight/simulate",
         }:
             self._reject_write()
             return

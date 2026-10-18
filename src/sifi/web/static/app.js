@@ -697,3 +697,132 @@ if (analyzeTextBtn) {
     }
   });
 }
+
+// ==========================================
+// FITUR SIMULASI WHAT-IF
+// ==========================================
+const simulateBtn = document.querySelector('#simulateBtn');
+if (simulateBtn) {
+  simulateBtn.addEventListener('click', async () => {
+    const id = document.querySelector('#simIssueId').value.trim();
+    const resDiv = document.querySelector('#simResult');
+    if (!id) return;
+
+    resDiv.textContent = "Mensimulasikan...";
+    try {
+      const tokenRes = await fetch('/api/local-token');
+      const token = (await tokenRes.json()).token;
+      
+      const res = await fetch('/api/foresight/simulate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
+        body: JSON.stringify({issue_id: id})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      
+      const color = data.risk_reduced ? 'green' : 'orange';
+      let html = `<h3>Hasil Simulasi:</h3>`;
+      html += `<p>Risiko Saat Ini: <strong>${data.current_risk}</strong> (${data.current_direction})</p>`;
+      html += `<p>Risiko Jika Kontradiksi Selesai: <strong style="color:${color}">${data.simulated_risk}</strong> (${data.simulated_direction})</p>`;
+      html += `<p><em>${data.risk_reduced ? 'Penurunan risiko terdeteksi!' : 'Tidak ada perubahan level risiko.'}</em></p>`;
+      
+      resDiv.innerHTML = html;
+    } catch (err) {
+      resDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
+    }
+  });
+}
+
+// ==========================================
+// FITUR VISUALISASI CHART
+// ==========================================
+
+let riskChartInstance = null;
+
+async function loadChartData() {
+  const ctx = document.getElementById('riskChart');
+  if (!ctx) return;
+
+  // Cek apakah Chart.js berhasil dimuat dari internet
+  if (typeof Chart === 'undefined') {
+    console.error("Chart.js gagal dimuat dari CDN.");
+    ctx.parentElement.innerHTML = '<p style="color:red; text-align:center;">Library Chart.js gagal dimuat. Periksa koneksi internet Anda.</p>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    
+    if (riskChartInstance) {
+      riskChartInstance.destroy();
+    }
+
+    riskChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['HIGH', 'ELEVATED', 'LOW', 'INSUFFICIENT'],
+        datasets: [{
+          data: [data.HIGH, data.ELEVATED, data.LOW, data.INSUFFICIENT],
+          backgroundColor: ['#F44336', '#FF9800', '#4CAF50', '#9E9E9E'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#fff' } }
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Gagal memuat chart:", err);
+  }
+}
+
+const refreshChartBtn = document.querySelector('#refreshChartBtn');
+if (refreshChartBtn) {
+  refreshChartBtn.addEventListener('click', loadChartData);
+  setTimeout(loadChartData, 500); 
+}
+
+
+// === FITUR AUTO-LAYOUT FIX ===
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Rombak form "Buat Isu Baru" menjadi Grid 2x2
+    const createBtn = document.getElementById('createIssueBtn');
+    if (createBtn && createBtn.parentElement) {
+        const parent = createBtn.parentElement;
+        parent.style.display = 'grid';
+        parent.style.gridTemplateColumns = '1fr 1fr';
+        parent.style.gap = '15px';
+        parent.style.width = '100%';
+        
+        createBtn.style.gridColumn = 'span 2';
+        createBtn.style.padding = '10px';
+        createBtn.style.fontWeight = 'bold';
+    }
+
+    // 2. Paksa semua container input agar bisa turun ke bawah (Flex Wrap)
+    document.querySelectorAll('.foresight div, .control').forEach(div => {
+        if (div.style.display === 'flex' || window.getComputedStyle(div).display === 'flex') {
+            if (window.getComputedStyle(div).flexDirection !== 'column') {
+                div.style.flexWrap = 'wrap';
+                div.style.alignItems = 'center';
+            }
+        }
+    });
+
+    // 3. Pastikan kotak input tidak mengecil dan berjejer rapi
+    document.querySelectorAll('.foresight input[type="text"]').forEach(input => {
+        if (input.id !== 'newIssueId' && input.id !== 'newIssueTitle' && input.id !== 'newIssueSupp' && input.id !== 'newIssueCont') {
+            input.style.flex = '1';
+            input.style.minWidth = '200px';
+        } else {
+            input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+        }
+    });
+});
