@@ -260,3 +260,19 @@ button:hover { background: #2563eb; }
 .narrative-title { font-size: 2rem; color: var(--accent); margin-bottom: 20px; }
 .narrative-text { font-size: 1.2rem; line-height: 1.6; color: var(--text-main); margin-bottom: 15px; }
 .narrative-subtext { color: var(--text-muted); font-size: 1rem; }
+
+/* === INTERACTIVE METRICS === */
+.metric-box.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+.metric-box.clickable:hover {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.1);
+}
+.metric-box.active-filter {
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}

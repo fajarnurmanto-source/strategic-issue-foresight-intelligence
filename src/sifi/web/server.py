@@ -124,7 +124,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header(
             "Content-Security-Policy",
-            "default-src 'self'; style-src 'self'; script-src 'self'; "
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; "
             "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'",
         )
         self.end_headers()
@@ -231,7 +231,24 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 
                 # Render format Markdown sederhana ke teks
                 payload = snapshot.payload
-                md = f"# SIFI Analytical Brief: {brief_id}\n\n"
+                
+                # Cek apakah Issue sumber masih ada
+                issue_id = payload.get('issue_id')
+                issue_exists = False
+                if issue_id:
+                    from sifi.persistence import SQLiteVersionStore
+                    from sifi.issues.repository import IssueObjectRepository
+                    store_check = SQLiteVersionStore(self.server.paths.database)
+                    repo_check = IssueObjectRepository(store_check)
+                    issue_exists = repo_check.latest(issue_id) is not None
+                    store_check.close()
+
+                md = ""
+                if not issue_exists:
+                    md += "> ⚠️ **PERINGATAN SISTEM:** Data Isu dan Bukti asli untuk laporan ini telah dihapus dari database.\n"
+                    md += "> Laporan ini hanya menyimpan teks historis dan tidak lagi terhubung ke bukti aslinya.\n\n"
+
+                md += f"# SIFI Analytical Brief: {brief_id}\n\n"
                 md += f"**Issue ID:** {payload.get('issue_id')}\n"
                 md += f"**Risk Level:** {payload.get('foresight_risk', 'N/A')}\n"
                 md += f"**AI Summary:** {payload.get('foresight_summary', 'N/A')}\n\n"
@@ -314,7 +331,11 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                             "title": persisted.issue.title,
                             "type": persisted.issue.issue_type,
                             "risk": risk_level,
-                            "recorded_at": persisted.recorded_at.isoformat()
+                            "recorded_at": persisted.recorded_at.isoformat(),
+                            "supporting": list(persisted.issue.evidence.supporting_evidence_ids),
+                            "contradictory": list(persisted.issue.evidence.contradictory_evidence_ids),
+                            "context_only": list(persisted.issue.evidence.context_only_evidence_ids),
+                            "excluded": list(persisted.issue.evidence.excluded_production_evidence_ids)
                         })
                 
                 store.close()
@@ -422,7 +443,24 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 if not snapshot:
                     raise ValueError("Brief not found")
                 payload = snapshot.payload
-                md = f"# SIFI Analytical Brief: {brief_id}\n\n"
+                
+                # Cek apakah Issue sumber masih ada
+                issue_id = payload.get('issue_id')
+                issue_exists = False
+                if issue_id:
+                    from sifi.persistence import SQLiteVersionStore
+                    from sifi.issues.repository import IssueObjectRepository
+                    store_check = SQLiteVersionStore(self.server.paths.database)
+                    repo_check = IssueObjectRepository(store_check)
+                    issue_exists = repo_check.latest(issue_id) is not None
+                    store_check.close()
+
+                md = ""
+                if not issue_exists:
+                    md += "> ⚠️ **PERINGATAN SISTEM:** Data Isu dan Bukti asli untuk laporan ini telah dihapus dari database.\n"
+                    md += "> Laporan ini hanya menyimpan teks historis dan tidak lagi terhubung ke bukti aslinya.\n\n"
+
+                md += f"# SIFI Analytical Brief: {brief_id}\n\n"
                 md += f"**Issue ID:** {payload.get('issue_id')}\n"
                 md += f"**Risk Level:** {payload.get('foresight_risk', 'N/A')}\n"
                 md += f"**AI Summary:** {payload.get('foresight_summary', 'N/A')}\n\n"
@@ -804,7 +842,12 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 brief = EvidenceLinkedBrief(
                     brief_id=f"BRIEF-{issue_id}", issue_id=issue_id,
                     summary="Auto-generated brief based on synthetic ingestion.",
-                    evidence_refs=tuple(persisted.issue.evidence.supporting_evidence_ids),
+                    evidence_refs=(
+                    tuple(persisted.issue.evidence.supporting_evidence_ids) +
+                    tuple(persisted.issue.evidence.contradictory_evidence_ids) +
+                    tuple(persisted.issue.evidence.context_only_evidence_ids) +
+                    tuple(persisted.issue.evidence.excluded_production_evidence_ids)
+                ),
                     created_at=now, analytical_cutoff=now,
                     foresight_risk=proposal.risk.level,
                     foresight_summary=" | ".join(proposal.recommendation_proposals)
@@ -942,7 +985,12 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                     brief_id=f"BRIEF-{issue_id}",
                     issue_id=issue_id,
                     summary="Auto-generated brief based on synthetic ingestion.",
-                    evidence_refs=tuple(persisted.issue.evidence.supporting_evidence_ids),
+                    evidence_refs=(
+                    tuple(persisted.issue.evidence.supporting_evidence_ids) +
+                    tuple(persisted.issue.evidence.contradictory_evidence_ids) +
+                    tuple(persisted.issue.evidence.context_only_evidence_ids) +
+                    tuple(persisted.issue.evidence.excluded_production_evidence_ids)
+                ),
                     created_at=now,
                     analytical_cutoff=now,
                     foresight_risk=proposal.risk.level,

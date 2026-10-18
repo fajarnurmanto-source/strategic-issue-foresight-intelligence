@@ -81,13 +81,27 @@ async function loadIssueWorkspaceData(id) {
         // --- S03: YANG DIKETAHUI ---
         const knownsList = document.getElementById('wsKnowns');
         knownsList.innerHTML = '';
-        if (dataF.risk && dataF.risk.basis_evidence_ids && dataF.risk.basis_evidence_ids.length > 0) {
-            knownsList.innerHTML += `<li>Terdapat ${dataF.risk.basis_evidence_ids.length} bukti yang tercatat.</li>`;
-            if (dataF.risk.level !== 'INSUFFICIENT') {
+        if (issue) {
+            const sup = issue.supporting?.length || 0;
+            const con = issue.contradictory?.length || 0;
+            const ctx = issue.context_only?.length || 0;
+            const exc = issue.excluded?.length || 0;
+            const total = sup + con + ctx + exc;
+            
+            if (total > 0) {
+                knownsList.innerHTML += `<li>Terdapat <strong>${total} bukti</strong> yang tercatat di database.</li>`;
+                knownsList.innerHTML += `<li style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; margin-bottom:10px;">
+                    (Pendukung: ${sup} | Kontradiksi: ${con} | Konteks: ${ctx} | Dikecualikan: ${exc})
+                </li>`;
+            } else {
+                knownsList.innerHTML = '<li>Belum ada fakta yang terverifikasi.</li>';
+            }
+            
+            if (dataF.risk && dataF.risk.level !== 'INSUFFICIENT') {
                 knownsList.innerHTML += `<li>Tingkat risiko terdeteksi: <strong>${dataF.risk.level}</strong>.</li>`;
             }
         } else {
-            knownsList.innerHTML = '<li>Belum ada fakta yang terverifikasi.</li>';
+            knownsList.innerHTML = '<li>Gagal memuat data isu.</li>';
         }
         
         // --- S03: YANG BELUM DIKETAHUI ---
@@ -164,14 +178,27 @@ async function loadIssueWorkspaceData(id) {
         // --- S04: PEMERIKSAAN BUKTI ---
         const supList = document.getElementById('wsEvidenceSupporting');
         const conList = document.getElementById('wsEvidenceContradictory');
-        supList.innerHTML = '<li style="color:#666;">Belum ada data detail bukti.</li>';
-        conList.innerHTML = '<li style="color:#666;">Belum ada data detail bukti.</li>';
+        const ctxList = document.getElementById('wsEvidenceContext');
+        const excList = document.getElementById('wsEvidenceExcluded');
         
-        if (dataF.risk && dataF.risk.basis_evidence_ids) {
-             supList.innerHTML = '';
-             dataF.risk.basis_evidence_ids.forEach(ev => {
-                 supList.innerHTML += `<li>${ev}</li>`;
-             });
+        supList.innerHTML = '<li style="color:#666;">Tidak ada bukti.</li>';
+        conList.innerHTML = '<li style="color:#666;">Tidak ada bukti.</li>';
+        ctxList.innerHTML = '<li style="color:#666;">Tidak ada bukti.</li>';
+        excList.innerHTML = '<li style="color:#666;">Tidak ada bukti.</li>';
+        
+        if (issue) {
+            if (issue.supporting && issue.supporting.length > 0) {
+                supList.innerHTML = issue.supporting.map(ev => `<li>${ev}</li>`).join('');
+            }
+            if (issue.contradictory && issue.contradictory.length > 0) {
+                conList.innerHTML = issue.contradictory.map(ev => `<li>${ev}</li>`).join('');
+            }
+            if (issue.context_only && issue.context_only.length > 0) {
+                ctxList.innerHTML = issue.context_only.map(ev => `<li>${ev}</li>`).join('');
+            }
+            if (issue.excluded && issue.excluded.length > 0) {
+                excList.innerHTML = issue.excluded.map(ev => `<li>${ev}</li>`).join('');
+            }
         }
         
     } catch(e) {
@@ -222,6 +249,7 @@ document.getElementById('refreshChartBtn').addEventListener('click', loadChart);
 let allIssuesData = [];
 let liveStreamInterval = null;
 let lastTopIssueId = null;
+let activeRiskFilter = 'all';
 
 async function loadIssueList() {
   const container = document.getElementById('issueListContainer');
@@ -639,29 +667,7 @@ setInterval(() => {
 }, 5000);
 
 // === RESET SIMULATION (RISK-01) ===
-document.getElementById('btnResetSim').addEventListener('click', async () => {
-    if (!confirm("⚠️ PERINGATAN: Tindakan ini akan menghapus SEMUA data simulasi (AUTO- dan HIST-). Dokumen brief yang terlanjur dibuat mungkin tidak dapat dibuka. Lanjutkan?")) return;
-    
-    const msg = document.getElementById('devIngestMsg');
-    msg.textContent = "Menghapus data simulasi...";
-    msg.style.color = "var(--risk-elevated)";
-    
-    try {
-        const token = await getToken();
-        const res = await fetch('/api/system/reset-simulation', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json', 'X-SIFI-Token': token},
-            body: '{}'
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        msg.textContent = "✅ " + data.message;
-        msg.style.color = "var(--risk-low)";
-    } catch(e) {
-        msg.textContent = "Error: " + e.message;
-        msg.style.color = "var(--risk-high)";
-    }
-});
+
 
 // === NARRATIVE MODE (RISK-03) ===
 document.getElementById('wsGoNarrativeBtn').addEventListener('click', () => {
@@ -771,3 +777,122 @@ buildNarrative = async function(id) {
     // Beri sedikit jeda agar DOM selesai dirender
     setTimeout(setupNarrativeObserver, 100);
 };
+
+document.getElementById('btnResetSim').addEventListener('click', async () => {
+    if (!confirm("Peringatan: Tindakan ini akan menghapus semua data simulasi. Lanjutkan?")) return;
+    
+    const msg = document.getElementById('devIngestMsg');
+    msg.textContent = "Menghapus data simulasi...";
+    msg.style.color = "var(--risk-elevated)";
+    
+    try {
+        const token = await getToken();
+        const res = await fetch('/api/system/reset-simulation', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-SIFI-Token': token},
+            body: '{}'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        msg.textContent = "Berhasil: " + data.message;
+        msg.style.color = "var(--risk-low)";
+    } catch(e) {
+        msg.textContent = "Error: " + e.message;
+        msg.style.color = "var(--risk-high)";
+    }
+});
+
+// === INTERACTIVE METRICS LOGIC ===
+function toggleRiskFilter(level) {
+    if (activeRiskFilter === level) {
+        activeRiskFilter = 'all'; // Toggle off jika diklik lagi
+    } else {
+        activeRiskFilter = level;
+    }
+
+    // Update visual class
+    document.querySelectorAll('.metric-box').forEach(b => b.classList.remove('active-filter'));
+    if (activeRiskFilter === 'HIGH') document.getElementById('boxHigh').classList.add('active-filter');
+    else if (activeRiskFilter === 'ELEVATED') document.getElementById('boxElevated').classList.add('active-filter');
+    else document.getElementById('boxTotal').classList.add('active-filter');
+
+    // Render ulang
+    renderIssueStream();
+}
+
+document.getElementById('boxTotal').addEventListener('click', () => toggleRiskFilter('all'));
+document.getElementById('boxHigh').addEventListener('click', () => toggleRiskFilter('HIGH'));
+document.getElementById('boxElevated').addEventListener('click', () => toggleRiskFilter('ELEVATED'));
+
+
+// ==========================================
+// DEFINITIVE FILTER & RENDER LOGIC (Overrides old)
+// ==========================================
+function renderIssueStream(animateNew = false) {
+  const container = document.getElementById('issueListContainer');
+  const searchEl = document.getElementById('searchIssue');
+  const filterEl = document.getElementById('filterType');
+  
+  if (!container || !searchEl || !filterEl) return;
+
+  const query = searchEl.value.toLowerCase();
+  const filterType = filterEl.value;
+
+  // 1. Terapkan Semua Filter
+  const filtered = allIssuesData.filter(issue => {
+    const id = (issue.id || "").toLowerCase();
+    const title = (issue.title || "").toLowerCase();
+    const type = issue.type || "";
+    const risk = issue.risk || "";
+
+    const matchSearch = id.includes(query) || title.includes(query);
+    const matchType = filterType === 'all' || type === filterType;
+    const matchRisk = activeRiskFilter === 'all' || risk === activeRiskFilter;
+    
+    return matchSearch && matchType && matchRisk;
+  });
+
+  // 2. Update Metrik (Berdasarkan data yang sedang difilter)
+  document.getElementById('metricTotal').textContent = filtered.length;
+  document.getElementById('metricHigh').textContent = filtered.filter(i => i.risk === 'HIGH').length;
+  document.getElementById('metricElevated').textContent = filtered.filter(i => i.risk === 'ELEVATED').length;
+
+  // 3. Render Kartu Isu
+  if (filtered.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 40px;">Tidak ada isu yang cocok dengan filter.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+  filtered.forEach((issue, index) => {
+    const div = document.createElement('div');
+    
+    // Animasi slide-down untuk data teratas
+    if (animateNew && index === 0 && issue.id !== lastTopIssueId) {
+        div.className = 'issue-card new-item';
+        lastTopIssueId = issue.id;
+    } else {
+        div.className = 'issue-card';
+    }
+    
+    let badgeClass = 'badge-low';
+    if (issue.risk === 'HIGH') badgeClass = 'badge-high';
+    if (issue.risk === 'ELEVATED') badgeClass = 'badge-elevated';
+
+    div.innerHTML = `
+      <div class="issue-content">
+        <h3>${issue.title}</h3>
+        <div class="issue-meta">
+          <span style="font-family: monospace;">${issue.id}</span>
+          <span class="badge badge-source">${issue.type}</span>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span class="badge ${badgeClass}">${issue.risk}</span>
+        <div style="margin-top: 8px; color: var(--accent); font-weight: 600; font-size: 0.85rem;">Investigasi &rarr;</div>
+      </div>
+    `;
+    div.onclick = () => setIssueContext(issue.id);
+    container.appendChild(div);
+  });
+}
