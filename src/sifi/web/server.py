@@ -261,6 +261,194 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.OK, stats)
             except Exception as exc:
                 self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/system-health":
+            try:
+                import sqlite3
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                counts = {}
+                for obj_type in ("ISSUE", "EVIDENCE_LINKED_ANALYTICAL_BRIEF", "BOUNDED_ANALYST_WORKFLOW_SESSION"):
+                    row = conn.execute("SELECT COUNT(*) FROM object_versions WHERE object_type=?", (obj_type,)).fetchone()
+                    counts[obj_type] = row[0] if row else 0
+                conn.close()
+
+                worker_running = False
+                if hasattr(self.server, "worker") and self.server.worker is not None:
+                    worker_running = self.server.worker.is_alive()
+
+                self._send_json(HTTPStatus.OK, {
+                    "database_status": "HEALTHY",
+                    "worker_running": worker_running,
+                    "counts": counts
+                })
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/issues":
+            try:
+                import sqlite3
+                from sifi.analysis.foresight import derive_foresight
+                from sifi.issues.model import IssueObject
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.issues.repository import IssueObjectRepository
+                
+                # 1. Ambil daftar ID unik
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                rows = conn.execute("SELECT DISTINCT object_id FROM object_versions WHERE object_type='ISSUE'").fetchall()
+                conn.close()
+                
+                # 2. Ambil detail isu menggunakan store terpusat
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                
+                issues_data = []
+                for (issue_id,) in rows:
+                    persisted = repo.latest(issue_id)
+                    if persisted:
+                        try:
+                            prop = derive_foresight(persisted.issue)
+                            risk_level = prop.risk.level
+                        except Exception:
+                            risk_level = "UNKNOWN"
+                            
+                        issues_data.append({
+                            "id": persisted.issue.issue_id,
+                            "title": persisted.issue.title,
+                            "type": persisted.issue.issue_type,
+                            "risk": risk_level,
+                            "recorded_at": persisted.recorded_at.isoformat()
+                        })
+                
+                store.close()
+                
+                # Urutkan dari yang terbaru
+                issues_data.sort(key=lambda x: x.get('recorded_at', ''), reverse=True)
+                self._send_json(HTTPStatus.OK, issues_data)
+                
+            except Exception as exc:
+                import traceback
+                traceback.print_exc() # Cetak error ke terminal server
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+
+        elif parsed.path == "/api/stats":
+            try:
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.analysis.foresight import derive_foresight
+                import sqlite3
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                rows = conn.execute("SELECT DISTINCT object_id FROM object_versions WHERE object_type='ISSUE'").fetchall()
+                conn.close()
+                stats = {"HIGH": 0, "ELEVATED": 0, "LOW": 0, "INSUFFICIENT": 0}
+                for (issue_id,) in rows:
+                    persisted = repo.latest(issue_id)
+                    if persisted:
+                        prop = derive_foresight(persisted.issue)
+                        stats[prop.risk.level] += 1
+                self._send_json(HTTPStatus.OK, stats)
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/executive-briefing":
+            try:
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.analysis.foresight import derive_foresight
+                import sqlite3
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                rows = conn.execute("SELECT DISTINCT object_id FROM object_versions WHERE object_type='ISSUE'").fetchall()
+                conn.close()
+                top_issue = None
+                highest_risk_level = "LOW"
+                for (issue_id,) in rows:
+                    persisted = repo.latest(issue_id)
+                    if persisted:
+                        prop = derive_foresight(persisted.issue)
+                        if prop.risk.level == "HIGH":
+                            top_issue = (persisted.issue, prop)
+                            break
+                        elif prop.risk.level == "ELEVATED" and highest_risk_level != "HIGH":
+                            top_issue = (persisted.issue, prop)
+                            highest_risk_level = "ELEVATED"
+                        elif top_issue is None:
+                            top_issue = (persisted.issue, prop)
+                            highest_risk_level = prop.risk.level
+                if not top_issue:
+                    self._send_json(HTTPStatus.NOT_FOUND, {"message": "Belum ada data isu."})
+                    return
+                issue, prop = top_issue
+                dims = {"TR-01": "Atensi Media & Publik", "TR-02": "Kekuatan Bukti", "TR-03": "Kondisi Lapangan", "TR-04": "Narasi & Opini", "TR-05": "Cakupan Geografis"}
+                dim_risks = [{"name": dims.get(d.dimension, d.dimension), "level": d.level, "direction": d.direction} for d in prop.dimension_risks]
+                payload = {
+                    "issue_id": issue.issue_id, "title": issue.title,
+                    "risk_level": prop.risk.level, "risk_direction": prop.risk.direction,
+                    "rationale": prop.risk.rationale, "recommendations": prop.recommendation_proposals,
+                    "dimension_risks": dim_risks
+                }
+                self._send_json(HTTPStatus.OK, payload)
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/systemic-report":
+            try:
+                import sqlite3
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.analysis.cross_issue import analyze_systemic_risks
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                rows = conn.execute("SELECT DISTINCT object_id FROM object_versions WHERE object_type='ISSUE'").fetchall()
+                conn.close()
+                issues = []
+                for (issue_id,) in rows:
+                    persisted = repo.latest(issue_id)
+                    if persisted:
+                        issues.append(persisted.issue)
+                report = analyze_systemic_risks(issues)
+                self._send_json(HTTPStatus.OK, asdict(report))
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/brief/view":
+            try:
+                from sifi.persistence import SQLiteVersionStore
+                import json
+                query = parse_qs(parsed.query)
+                brief_id = query.get("id", [""])[0]
+                if not brief_id:
+                    raise ValueError("Brief ID required")
+                store = SQLiteVersionStore(self.server.paths.database)
+                snapshot = store.latest("EVIDENCE_LINKED_ANALYTICAL_BRIEF", brief_id)
+                if not snapshot:
+                    raise ValueError("Brief not found")
+                payload = snapshot.payload
+                md = f"# SIFI Analytical Brief: {brief_id}\n\n"
+                md += f"**Issue ID:** {payload.get('issue_id')}\n"
+                md += f"**Risk Level:** {payload.get('foresight_risk', 'N/A')}\n"
+                md += f"**AI Summary:** {payload.get('foresight_summary', 'N/A')}\n\n"
+                md += f"## Narrative Summary\n{payload.get('summary', '')}\n\n"
+                md += f"**Evidence Refs:** {', '.join(payload.get('evidence_refs', []))}"
+                self._send_json(HTTPStatus.OK, {"content": md})
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/api/brief/download":
+            try:
+                from sifi.brief_export import export_brief_markdown
+                query = parse_qs(parsed.query)
+                brief_id = query.get("id", [""])[0]
+                if not brief_id:
+                    raise ValueError("Brief ID required")
+                filepath = export_brief_markdown(self.server.paths.root, brief_id)
+                content = filepath.read_text(encoding="utf-8")
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                self.send_header("Content-Disposition", f'attachment; filename="{filepath.name}"')
+                self.end_headers()
+                self.wfile.write(content.encode("utf-8"))
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+        elif parsed.path == "/chart.umd.js":
+            self._send_static("chart.umd.js", "text/javascript; charset=utf-8")
         elif parsed.path.startswith("/api/foresight/"):
             issue_id = parsed.path[len("/api/foresight/"):]
             self._serve_foresight(issue_id)
@@ -468,8 +656,9 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/demo/start", "/api/demo/advance", "/api/brief/export",
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
-            "/api/issue/create",
-            "/api/ingest/feed", "/api/brief/generate", "/api/semantic/test", "/api/foresight/simulate",
+            "/api/issue/create", "/api/ingest/feed", "/api/ingest/historical",
+            "/api/brief/generate", "/api/semantic/test", "/api/foresight/simulate",
+            "/api/worker/toggle",
         }:
             self._reject_write()
             return
@@ -478,6 +667,227 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             payload = self._read_json()
+            if parsed.path == "/api/worker/toggle":
+                action = str(payload.get("action", ""))
+                if not hasattr(self.server, "worker"):
+                    raise ValueError("Worker not initialized")
+                if action == "stop":
+                    self.server.worker.stop()
+                    self._send_json(HTTPStatus.OK, {"status": "stopped"})
+                elif action == "start":
+                    from sifi.ingestion.worker import IngestionWorker
+                    self.server.worker = IngestionWorker(self.server.paths.database)
+                    self.server.worker.start()
+                    self._send_json(HTTPStatus.OK, {"status": "started"})
+                else:
+                    raise ValueError("Invalid action")
+                return
+
+            if parsed.path == "/api/ingest/historical":
+                from datetime import datetime, timezone, timedelta
+                from sifi.domain import PersistenceClass, TrajectoryDimension
+                from sifi.issues.model import IssueObject, IssueEvidenceLinks, IssueGeography, IssueTrajectoryState
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                import random
+
+                start_str = payload.get("start_date")
+                end_str = payload.get("end_date")
+                if not start_str or not end_str:
+                    raise ValueError("Tanggal mulai dan selesai wajib diisi")
+                
+                start_dt = datetime.strptime(start_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                end_dt = datetime.strptime(end_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                
+                days_diff = (end_dt - start_dt).days
+                if days_diff < 0:
+                    raise ValueError("Tanggal selesai harus setelah tanggal mulai")
+                if days_diff > 90:
+                    raise ValueError("Rentang waktu maksimal adalah 90 hari untuk mencegah overload sistem")
+
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                
+                # OTOMATIS HAPUS DATA HISTORIS LAMA SEBELUM TARIK BARU
+                import sqlite3
+                conn_clean = sqlite3.connect(self.server.paths.database, timeout=30.0)
+                conn_clean.execute("DELETE FROM object_versions WHERE object_id LIKE 'HIST-%'")
+                conn_clean.commit()
+                conn_clean.close()
+                print("[CRAWLER] Data historis lama dibersihkan. Memulai tarikan baru.")
+                
+                total_issues = 0
+                current_date = start_dt
+                limit_reached = False
+                last_covered_date = start_dt
+
+                while current_date <= end_dt:
+                    if total_issues >= 600:
+                        limit_reached = True
+                        break
+                        
+                    # Simulasi: 2 sampai 6 isu per hari
+                    daily_issues = random.randint(2, 6)
+                    
+                    if total_issues + daily_issues > 600:
+                        daily_issues = 600 - total_issues
+                        limit_reached = True
+                        
+                    for i in range(daily_issues):
+                        issue_id = f"HIST-{int(current_date.timestamp())}-{total_issues}"
+                        title = f"Simulated event on {current_date.strftime('%d %b %Y')}"
+                        
+                        issue = IssueObject(
+                            issue_id=issue_id, title=title, issue_type="historical_crawl",
+                            persistence_class=PersistenceClass.PC_03_STRUCTURAL, lifecycle_state="ACTIVE",
+                            first_seen=current_date, last_updated=current_date, identity_review_state=None,
+                            evidence=IssueEvidenceLinks(supporting_evidence_ids=(f"EV-{issue_id}",), contradictory_evidence_ids=()),
+                            geography=IssueGeography(),
+                            trajectories=tuple(IssueTrajectoryState(dimension=d, trajectory_state="stable", as_of=current_date, evidence_ids=(f"EV-{issue_id}",)) for d in TrajectoryDimension)
+                        )
+                        
+                        if not repo.latest(issue_id):
+                            repo.append(issue, version=1, effective_at=current_date, recorded_at=current_date)
+                            total_issues += 1
+                            
+                    last_covered_date = current_date
+                    if limit_reached:
+                        break
+                    current_date += timedelta(days=1)
+
+                store.close()
+
+                msg = f"Berhasil tarik {total_issues} isu historis."
+                if limit_reached:
+                    next_day = (last_covered_date + timedelta(days=1)).strftime('%Y-%m-%d')
+                    msg += f" (Batas 600 isu tercapai. Silakan lanjutkan dari tanggal {next_day})."
+
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "ingested": total_issues, "message": msg})
+                return
+
+            if parsed.path == "/api/ingest/feed":
+                from sifi.ingestion.feed_parser import parse_feed
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                import json, tempfile
+                from datetime import datetime, timezone
+                feed_data = {"items": [{"id": "FEED-001", "title": "Supply chain disruption", "supporting": ["EV-F1"], "contradictory": []}]}
+                tmp = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
+                json.dump(feed_data, tmp)
+                tmp.close()
+                issues = parse_feed(tmp.name)
+                now = datetime.now(timezone.utc)
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                count = 0
+                for issue in issues:
+                    if not repo.latest(issue.issue_id):
+                        repo.append(issue, version=1, effective_at=now, recorded_at=now)
+                        count += 1
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "ingested": count})
+                return
+
+            if parsed.path == "/api/brief/generate":
+                from sifi.analysis.foresight import derive_foresight
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.workflow.brief import EvidenceLinkedBrief
+                from sifi.domain.versioning import VersionedSnapshot
+                from datetime import datetime, timezone
+                from dataclasses import asdict
+
+                issue_id = str(payload.get("issue_id", ""))
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                persisted = repo.latest(issue_id)
+                
+                if not persisted:
+                    raise ValueError("Issue not found")
+                    
+                proposal = derive_foresight(persisted.issue)
+                now = datetime.now(timezone.utc)
+                
+                brief = EvidenceLinkedBrief(
+                    brief_id=f"BRIEF-{issue_id}", issue_id=issue_id,
+                    summary="Auto-generated brief based on synthetic ingestion.",
+                    evidence_refs=tuple(persisted.issue.evidence.supporting_evidence_ids),
+                    created_at=now, analytical_cutoff=now,
+                    foresight_risk=proposal.risk.level,
+                    foresight_summary=" | ".join(proposal.recommendation_proposals)
+                )
+                
+                payload_dict = {
+                    **asdict(brief), 
+                    "created_at": brief.created_at.isoformat(), 
+                    "analytical_cutoff": brief.analytical_cutoff.isoformat()
+                }
+                
+                existing_brief = store.latest("EVIDENCE_LINKED_ANALYTICAL_BRIEF", brief.brief_id)
+                next_version = 1 if existing_brief is None else existing_brief.version + 1
+                
+                store.append(VersionedSnapshot(
+                    object_type="EVIDENCE_LINKED_ANALYTICAL_BRIEF",
+                    object_id=brief.brief_id, version=next_version, effective_at=now, recorded_at=now,
+                    payload=payload_dict
+                ))
+                
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "brief_id": brief.brief_id})
+                return
+
+            if parsed.path == "/api/foresight/simulate":
+                from sifi.analysis.simulation import simulate_remove_contradiction
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                issue_id = str(payload.get("issue_id", ""))
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                persisted = repo.latest(issue_id)
+                if not persisted:
+                    raise ValueError("Issue not found")
+                sim_result = simulate_remove_contradiction(persisted.issue)
+                self._send_json(HTTPStatus.OK, sim_result)
+                return
+
+            if parsed.path == "/api/semantic/test":
+                from sifi.analysis.semantic import analyze_text
+                from dataclasses import asdict
+                text_to_analyze = str(payload.get("text", ""))
+                result = analyze_text(text_to_analyze)
+                self._send_json(HTTPStatus.OK, asdict(result))
+                return
+
+            if parsed.path == "/api/issue/create":
+                from datetime import datetime, timezone
+                from sifi.domain import PersistenceClass, TrajectoryDimension
+                from sifi.issues.model import IssueObject, IssueEvidenceLinks, IssueGeography, IssueTrajectoryState
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                now = datetime.now(timezone.utc)
+                issue_id = str(payload.get("issue_id", "")).strip()
+                title = str(payload.get("title", "")).strip()
+                if not issue_id or not title:
+                    raise ValueError("issue_id dan title wajib diisi")
+                supp = tuple(e.strip() for e in payload.get("supporting_evidence", []) if e.strip())
+                cont = tuple(e.strip() for e in payload.get("contradictory_evidence", []) if e.strip())
+                if set(supp).intersection(set(cont)):
+                    raise ValueError("Bukti tidak boleh sekaligus menjadi pendukung dan kontradiksi")
+                fallback_ev = tuple(supp + cont) if (supp or cont) else ("EV-DEFAULT",)
+                issue = IssueObject(
+                    issue_id=issue_id, title=title, issue_type="web_created",
+                    persistence_class=PersistenceClass.PC_01_INCIDENT, lifecycle_state="ACTIVE",
+                    first_seen=now, last_updated=now, identity_review_state=None,
+                    evidence=IssueEvidenceLinks(supporting_evidence_ids=supp, contradictory_evidence_ids=cont),
+                    geography=IssueGeography(),
+                    trajectories=tuple(IssueTrajectoryState(dimension=d, trajectory_state="stable", as_of=now, evidence_ids=fallback_ev) for d in TrajectoryDimension)
+                )
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                if repo.latest(issue_id):
+                    raise ValueError("Issue ID sudah ada di database")
+                repo.append(issue, version=1, effective_at=now, recorded_at=now)
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "issue_id": issue_id})
+                return
+
 
             if parsed.path == "/api/semantic/test":
                 from sifi.analysis.semantic import analyze_text

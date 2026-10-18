@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     server = create_local_server(args.root, port=args.port)
     worker = IngestionWorker(server.paths.database)
     worker.start()
+    server.worker = worker
     print('🤖 Background Worker Aktif!')
     url = f"http://127.0.0.1:{server.server_port}"
     print(f"SIFI lokal siap di {url}", flush=True)

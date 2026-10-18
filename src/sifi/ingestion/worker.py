@@ -17,7 +17,7 @@ class IngestionWorker(threading.Thread):
 
     def run(self):
         while not self._stop_event.is_set():
-            time.sleep(self.interval)
+            if self._stop_event.wait(self.interval): break
             self._generate_mock_issue()
 
     def _generate_mock_issue(self):
@@ -56,6 +56,8 @@ class IngestionWorker(threading.Thread):
                 )
             )
             repo.append(issue, version=1, effective_at=now, recorded_at=now)
+            if hasattr(store, 'close'):
+                store.close()
             print(f"[WORKER] Ingested new issue: {issue_id} - {title}")
         except Exception as e:
             print(f"[WORKER] Error: {e}")

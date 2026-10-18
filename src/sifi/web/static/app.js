@@ -1,828 +1,639 @@
-const badge = document.querySelector('#healthBadge');
-const integrity = document.querySelector('#integrity');
-const result = document.querySelector('#result');
-const catalog = document.querySelector('#catalog');
-const recordCount = document.querySelector('#recordCount');
-const exerciseStart = document.querySelector('#exerciseStart');
-const exercisePanel = document.querySelector('#exercisePanel');
-const exerciseProgress = document.querySelector('#exerciseProgress');
-const stepCode = document.querySelector('#stepCode');
-const stepTitle = document.querySelector('#stepTitle');
-const stepGuidance = document.querySelector('#stepGuidance');
-const stepNote = document.querySelector('#stepNote');
-const advanceStep = document.querySelector('#advanceStep');
-const exerciseMessage = document.querySelector('#exerciseMessage');
-let localToken = '';
-let activeExercise = null;
-let activeStudy = null;
-let studyTask = null;
+const AppState = { activeIssue: null, workerActive: true, chartInstance: null };
 
-const steps = {
-  'WF-01':['Inspeksi cakupan','Tinjau profil cakupan dan keterbatasan skenario.'],
-  'WF-02':['Tinjau sinyal yang diterima','Pastikan hanya bukti yang memenuhi keputusan hak digunakan.'],
-  'WF-03':['Inspeksi Issue persisten','Tinjau identitas dan versi Issue tanpa membuat identitas otomatis.'],
-  'WF-04':['Bukti dan kontradiksi','Periksa dukungan, kontradiksi, konteks, dan pengecualian secara terpisah.'],
-  'WF-05':['Relevansi geografis','Periksa seluruh dimensi geografi tanpa menggabungkannya.'],
-  'WF-06':['Ketidakpastian','Catat ketidakpastian, gap bukti, dan keterbatasan.'],
-  'WF-07':['Trajektori','Periksa setiap dimensi trajektori secara terpisah.'],
-  'WF-08':['Koreksi berotoritas','Pastikan koreksi memerlukan kewenangan manusia eksplisit.'],
-  'WF-09':['Prioritisasi kandidat','Gunakan materialitas terbatas, bukan perhatian semata.'],
-  'WF-10':['Brief berbasis bukti','Pastikan setiap pernyataan terhubung ke bukti yang diterima.'],
-  'WF-11':['Penelusuran historis','Periksa keadaan pada cutoff waktu eksplisit.'],
-};
-const stepOrder = Object.keys(steps);
-
-const text = (value) => value === null || value === undefined ? '—' :
-  typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
-
-function showRecord(kind, data) {
-  result.replaceChildren();
-  const title = document.createElement('h3');
-  title.className = 'record-title';
-  title.textContent = kind === 'session' ? 'Sesi analisis' : kind === 'study' ? 'Observasi CB22' : 'Brief berbasis bukti';
-  const grid = document.createElement('div');
-  grid.className = 'record-grid';
-  Object.entries(data).forEach(([key, value]) => {
-    const box = document.createElement('div');
-    box.className = 'field';
-    const label = document.createElement('span');
-    label.textContent = key.replaceAll('_', ' ');
-    const content = document.createElement('code');
-    content.textContent = text(value);
-    box.append(label, content);
-    grid.append(box);
-  });
-  result.append(title, grid);
-  if (kind === 'brief') {
-    const exportButton = document.createElement('button');
-    exportButton.className = 'advance';
-    exportButton.type = 'button';
-    exportButton.textContent = 'Ekspor Markdown ke folder SIFI';
-    exportButton.addEventListener('click', async () => {
-      try {
-        const exported = await postLocal('/api/brief/export', {brief_id:data.brief_id});
-        exerciseMessage.textContent = `Brief tersimpan di ${exported.export}`;
-      } catch (error) {
-        showError(error);
-      }
-    });
-    const readinessPanel = document.createElement('section');
-    readinessPanel.className = 'readiness-panel';
-    readinessPanel.setAttribute('aria-label', 'Kesiapan bukti historis');
-    readinessPanel.setAttribute('aria-live', 'polite');
-    result.append(readinessPanel);
-    void loadBriefReadiness(data.brief_id, readinessPanel);
-    result.append(exportButton);
-  }
+async function getToken() {
+  const res = await fetch('/api/local-token', { cache: 'no-store' });
+  return (await res.json()).token;
 }
 
-async function loadBriefReadiness(briefId, panel) {
-  panel.replaceChildren();
-
-  const heading = document.createElement('h4');
-  heading.textContent = 'Kesiapan bukti historis';
-  const message = document.createElement('p');
-  message.textContent = 'Memeriksa rekam bukti pada analytical cutoff…';
-  panel.append(heading, message);
-
-  try {
-    const response = await fetch(
-      `/api/brief/readiness?id=${encodeURIComponent(briefId)}`,
-      {cache: 'no-store'}
-    );
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || 'Penilaian tidak tersedia');
-    }
-
-    const assessment = payload.assessment;
-    if (!assessment ||
-        !['READY_FOR_HUMAN_REVIEW', 'NEEDS_REMEDIATION'].includes(assessment.status) ||
-        !Array.isArray(assessment.checked_refs) ||
-        !Array.isArray(assessment.missing_refs) ||
-        !Array.isArray(assessment.restricted_refs) ||
-        assessment.human_approval_granted !== false ||
-        assessment.production_action_authorized !== false ||
-        payload.analytical_only !== true ||
-        payload.human_approval_granted !== false ||
-        payload.production_action_authorized !== false) {
-      throw new Error('Kontrak readiness tidak valid');
-    }
-
-    if (!result.contains(panel)) return;
-    message.textContent = assessment.status === 'READY_FOR_HUMAN_REVIEW'
-      ? 'Referensi historis memenuhi preflight terbatas. Menunggu tinjauan manusia.'
-      : 'Perlu remediasi: referensi historis belum memenuhi preflight.';
-
-    const details = [
-      ['Referensi diperiksa', assessment.checked_refs],
-      ['Tidak tersedia pada cutoff', assessment.missing_refs],
-      ['Admission dibatasi', assessment.restricted_refs],
-    ];
-
-    for (const [label, refs] of details) {
-      const row = document.createElement('p');
-      const strong = document.createElement('strong');
-      strong.textContent = `${label}: `;
-      const value = document.createElement('span');
-      value.textContent = refs.length ? refs.join(', ') : 'Tidak ada';
-      row.append(strong, value);
-      panel.append(row);
-    }
-
-    const warning = document.createElement('p');
-    warning.className = 'readiness-note';
-    warning.textContent = 'Tidak membuktikan kebenaran empiris, kelengkapan provenance, '
-      + 'persetujuan manusia, atau otorisasi produksi.';
-    panel.append(warning);
-  } catch (error) {
-    if (!result.contains(panel)) return;
-    message.textContent = `Penilaian belum tersedia: ${error.message}`;
-    const warning = document.createElement('p');
-    warning.className = 'readiness-note';
-    warning.textContent = 'Status tidak dapat ditetapkan. Jangan menganggap brief siap.';
-    panel.append(warning);
-  }
-}
-
-async function loadStatus() {
-  try {
-    const response = await fetch('/api/status');
-    const data = await response.json();
-    integrity.textContent = data.integrity;
-    badge.lastChild.textContent = data.integrity === 'OK' ? ' Sistem lokal siap' : ' Belum diinisialisasi';
-    badge.classList.toggle('ok', data.integrity === 'OK');
-  } catch {
-    integrity.textContent = 'TIDAK TERHUBUNG';
-    badge.lastChild.textContent = ' Server lokal tidak tersedia';
-  }
-}
-
-async function loadStudyStatus() {
-  const target = document.querySelector('#studyStatus');
-  try {
-    const response = await fetch('/api/cb22/status');
-    const data = await response.json();
-    const gate = data.gate.ready_for_counted_sessions ? 'COUNTED SIAP' : `COUNTED TERKUNCI · ${data.gate.reasons.join(', ')}`;
-    const rate = data.assessment.completion_rate === null ? '—' : `${Math.round(data.assessment.completion_rate * 100)}% selesai`;
-    target.textContent = `${gate} · asesmen otomatis ${data.assessment.result} · n=${data.assessment.analyzable_participants} · ${rate} · klaim menunggu receipt dua peran`;
-    const active = document.querySelector('#studyActive');
-    active.replaceChildren();
-    data.active_sessions.forEach((item) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = `Lanjutkan ${item.participant_code} · ${item.mode} · ${item.completed_stage_ids.length}/11`;
-      button.addEventListener('click', () => renderStudy({
-        observation:item,
-        session:{completed_steps:item.completed_stage_ids},
-        next_step:stepOrder[item.completed_stage_ids.length] || null,
-        brief:null,
-      }));
-      active.append(button);
-    });
-    const history = document.querySelector('#studyHistory');
-    history.replaceChildren();
-    data.observations.forEach((item) => {
-      const button = document.createElement('button'); button.type = 'button';
-      button.textContent = `${item.observation_id} · ${item.mode} · ${item.task_completed ? 'selesai' : item.ended ? 'berakhir' : 'aktif'}`;
-      button.addEventListener('click', async () => {
-        try {
-          const response = await fetch(`/api/cb22/observation?id=${encodeURIComponent(item.observation_id)}`);
-          const observation = await response.json();
-          if (!response.ok) throw new Error(observation.error || 'Observasi tidak tersedia');
-          showRecord('study', observation);
-          result.scrollIntoView({behavior:'smooth', block:'start'});
-        } catch (error) { showError(error); }
-      });
-      history.append(button);
-    });
-  } catch { target.textContent = 'Status studi tidak tersedia'; }
-}
-
-async function loadStudyTask() {
-  const response = await fetch('/api/cb22/task');
-  studyTask = await response.json();
-  const board = document.querySelector('#studyEvidence');
-  board.replaceChildren();
-  studyTask.evidence.forEach((item) => {
-    const card = document.createElement('div');
-    const heading = document.createElement('strong');
-    heading.textContent = `${item.id} · ${item.class}`;
-    const body = document.createElement('span'); body.textContent = item.text;
-    card.append(heading, body); board.append(card);
-  });
-}
-
-async function openRecord(kind, id) {
-  result.innerHTML = '<p class="empty">Membaca rekam lokal…</p>';
-  const response = await fetch(`/api/${kind}?id=${encodeURIComponent(id)}`);
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Rekam tidak dapat dibuka');
-  showRecord(kind, data);
-  result.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-async function resumeExercise(item) {
-  const response = await fetch(`/api/session?id=${encodeURIComponent(item.id)}`);
-  const session = await response.json();
-  if (!response.ok) throw new Error(session.error || 'Sesi tidak dapat dilanjutkan');
-  document.querySelector('#analystId').value = session.analyst_id;
-  renderExercise({session, next_step:item.next_step, brief:null, synthetic:true});
-  document.querySelector('#exerciseTitle').scrollIntoView({behavior:'smooth', block:'start'});
-  exerciseMessage.textContent = 'Sesi lokal dipulihkan · lanjutkan dari tahap tersimpan.';
-}
-
-async function loadCatalog() {
-  try {
-    const response = await fetch('/api/catalog');
-    const data = await response.json();
-    const records = [
-      ...data.sessions.map((item) => ({ ...item, kind: 'session' })),
-      ...data.briefs.map((item) => ({ ...item, kind: 'brief' })),
-    ];
-    catalog.replaceChildren();
-    recordCount.textContent = `${records.length} rekam`;
-    if (!records.length) {
-      const empty = document.createElement('p');
-      empty.className = 'empty';
-      empty.textContent = 'Belum ada rekam. Jalankan scripts\\demo-local.ps1 untuk data demonstrasi sintetis.';
-      catalog.append(empty);
-      return;
-    }
-    records.forEach((item) => {
-      const button = document.createElement('button');
-      button.className = 'record-link';
-      button.type = 'button';
-      button.textContent = item.id;
-      const meta = document.createElement('small');
-      const resumable = item.kind === 'session' && !item.complete;
-      meta.textContent = `${resumable ? 'Lanjutkan sesi' : item.kind === 'session' ? 'Sesi selesai' : 'Brief'} · ${item.issue_id}`;
-      button.append(meta);
-      button.addEventListener('click', () => (
-        resumable ? resumeExercise(item) : openRecord(item.kind, item.id)
-      ).catch(showError));
-      catalog.append(button);
-    });
-  } catch {
-    recordCount.textContent = 'Tidak tersedia';
-  }
-}
-
-function showError(error) {
-  result.replaceChildren();
-  const message = document.createElement('p');
-  message.className = 'error';
-  message.textContent = error.message;
-  result.append(message);
-}
-
-async function postLocal(path, body) {
-  if (!localToken) {
-    const tokenResponse = await fetch('/api/local-token');
-    localToken = (await tokenResponse.json()).token;
-  }
-  const response = await fetch(path, {
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-SIFI-Token':localToken},
-    body:JSON.stringify(body),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Latihan tidak dapat diproses');
-  return data;
-}
-
-function renderExercise(data) {
-  activeExercise = data;
-  const completed = data.session.completed_steps.length;
-  exerciseProgress.style.width = `${Math.round(completed / 11 * 100)}%`;
-  if (!data.next_step) {
-    exercisePanel.hidden = true;
-    exerciseStart.hidden = false;
-    exerciseMessage.textContent = `Latihan selesai. Brief ${data.brief.brief_id} tersimpan secara lokal.`;
-    loadCatalog();
-    return;
-  }
-  const [title, guidance] = steps[data.next_step];
-  stepCode.textContent = `${data.next_step} · tahap ${completed + 1} dari 11`;
-  stepTitle.textContent = title;
-  stepGuidance.textContent = guidance;
-  stepNote.value = '';
-  exercisePanel.hidden = false;
-  exerciseStart.hidden = true;
-  exerciseMessage.textContent = 'Skenario sintetis · tidak ada data yang dikirim keluar.';
-}
-
-exerciseStart.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  try {
-    const analystId = document.querySelector('#analystId').value.trim();
-    renderExercise(await postLocal('/api/demo/start', {analyst_id:analystId}));
-  } catch (error) {
-    exerciseMessage.textContent = error.message;
-  }
-});
-
-advanceStep.addEventListener('click', async () => {
-  advanceStep.disabled = true;
-  try {
-    renderExercise(await postLocal('/api/demo/advance', {
-      session_id:activeExercise.session.session_id,
-      analyst_id:activeExercise.session.analyst_id,
-      note:stepNote.value,
-    }));
-  } catch (error) {
-    exerciseMessage.textContent = error.message;
-  } finally {
-    advanceStep.disabled = false;
-  }
-});
-
-function renderStudy(data) {
-  activeStudy = data;
-  const completed = data.session.completed_steps.length;
-  document.querySelector('#studyProgress').style.width = `${Math.round(completed / 11 * 100)}%`;
-  if (!data.next_step) {
-    document.querySelector('#studyPanel').hidden = true;
-    document.querySelector('#studyStart').hidden = false;
-    document.querySelector('#studyMessage').textContent = `Sesi selesai · observasi ${data.observation.observation_id} tersimpan.`;
-    loadStudyStatus(); loadCatalog(); return;
-  }
-  const [title, guidance] = steps[data.next_step];
-  const spec = studyTask.steps[data.next_step];
-  document.querySelector('#studyStepCode').textContent = `${data.next_step} · tahap ${completed + 1} dari 11`;
-  document.querySelector('#studyStepTitle').textContent = title;
-  document.querySelector('#studyStepGuidance').textContent = `${guidance} ${spec.prompt}`;
-  const answer = document.querySelector('#studyAnswer');
-  answer.replaceChildren();
-  spec.options.forEach((item) => {
-    const option = document.createElement('option');
-    option.value = item.code; option.textContent = item.label; answer.append(option);
-  });
-  document.querySelector('#studyPanel').hidden = false;
-  document.querySelector('#studyStart').hidden = true;
-  document.querySelector('#studyMessage').textContent = data.observation.mode === 'COUNTED' ? 'Sesi dihitung · ikuti protokol beku.' : 'Rehearsal · tidak masuk hasil CB22.';
-}
-
-document.querySelector('#studyStart').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const local = document.querySelector('#consentAt').value;
-  try {
-    renderStudy(await postLocal('/api/cb22/start', {
-      participant_code:document.querySelector('#participantCode').value.trim().toUpperCase(),
-      screening_record_id:document.querySelector('#screeningCode').value.trim().toUpperCase(),
-      consent_record_id:document.querySelector('#consentCode').value.trim().toUpperCase(),
-      consent_confirmed_at:new Date(local).toISOString(),
-      governance_authorization_id:document.querySelector('#governanceCode').value.trim().toUpperCase(),
-      representative_profile_met:document.querySelector('#profileMet').checked,
-      participant_is_sifi_developer:!document.querySelector('#notDeveloper').checked,
-      mode:document.querySelector('#studyMode').value,
-    }));
-  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
-});
-
-document.querySelector('#studyAdvance').addEventListener('click', async () => {
-  const button = document.querySelector('#studyAdvance'); button.disabled = true;
-  try {
-    renderStudy(await postLocal('/api/cb22/advance', {
-      observation_id:activeStudy.observation.observation_id,
-      participant_code:activeStudy.observation.participant_code,
-      answer_code:document.querySelector('#studyAnswer').value,
-    }));
-  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
-  finally { button.disabled = false; }
-});
-
-document.querySelector('#exportStudy').addEventListener('click', async () => {
-  try {
-    const data = await postLocal('/api/cb22/export', {});
-    document.querySelector('#studyMessage').textContent = `Bundle tersimpan di ${data.export}`;
-  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
-});
-
-document.querySelector('#recordIntervention').addEventListener('click', async () => {
-  try {
-    const data = await postLocal('/api/cb22/intervention', {
-      observation_id:activeStudy.observation.observation_id,
-      category:document.querySelector('#interventionCategory').value,
-      reason_code:document.querySelector('#interventionReason').value.trim().toUpperCase(),
-      duration_seconds:Number(document.querySelector('#interventionDuration').value),
-      routine_developer_help:document.querySelector('#routineHelp').checked,
-    });
-    activeStudy.observation = data.observation;
-    document.querySelector('#studyMessage').textContent = 'Intervensi tercatat secara lokal.';
-  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
-});
-
-document.querySelector('#recordIncident').addEventListener('click', async () => {
-  try {
-    const data = await postLocal('/api/cb22/incident', {
-      observation_id:activeStudy.observation.observation_id,
-      kind:document.querySelector('#incidentKind').value,
-      code:document.querySelector('#incidentCode').value.trim().toUpperCase() || 'OBSERVED',
-    });
-    activeStudy.observation = data.observation;
-    document.querySelector('#studyMessage').textContent = 'Insiden tercatat secara lokal.';
-  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
-});
-
-document.querySelector('#stopStudy').addEventListener('click', async () => {
-  try {
-    const data = await postLocal('/api/cb22/stop', {
-      observation_id:activeStudy.observation.observation_id,
-      participant_code:activeStudy.observation.participant_code,
-      reason_code:document.querySelector('#stopReason').value.trim().toUpperCase(),
-    });
-    document.querySelector('#studyPanel').hidden = true;
-    document.querySelector('#studyStart').hidden = false;
-    document.querySelector('#studyMessage').textContent = `Sesi diakhiri · ${data.observation.noncompletion_reason_code}`;
-    loadStudyStatus();
-  } catch (error) { document.querySelector('#studyMessage').textContent = error.message; }
-});
-
-document.querySelectorAll('form[data-kind]').forEach((form) => {
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const kind = form.dataset.kind;
-    const id = new FormData(form).get('id').trim();
-    try {
-      await openRecord(kind, id);
-    } catch (error) {
-      showError(error);
-    }
-  });
-});
-
-loadStatus();
-loadStudyTask().then(loadStudyStatus);
-loadCatalog();
-
-// ==========================================
-// FITUR FORESIGHT ANALYTICS
-// ==========================================
-const fetchForesightBtn = document.querySelector('#fetchForesight');
-const issueIdInput = document.querySelector('#issueIdInput');
-const foresightResult = document.querySelector('#foresightResult');
-
-if (fetchForesightBtn && issueIdInput && foresightResult) {
-  fetchForesightBtn.addEventListener('click', async () => {
-    const issueId = issueIdInput.value.trim();
-    if (!issueId) return;
+// === NAVIGATION ===
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
-    foresightResult.innerHTML = '<p>Menganalisis isu...</p>';
+    // Sembunyikan SEMUA view secara paksa (termasuk Issue Workspace)
+    document.querySelectorAll('.view').forEach(v => {
+        v.classList.remove('active');
+        v.style.display = 'none';
+    });
+    
+    item.classList.add('active');
+    const targetId = item.getAttribute('data-target');
+    const targetView = document.getElementById(targetId);
+    
+    if (targetView) {
+        targetView.classList.add('active');
+        targetView.style.display = 'block';
+    }
+    
+    // Auto-refresh data
+    if (targetId === 'view-overview') loadChart();
+    if (targetId === 'view-sys-health') loadSystemHealth();
+    if (targetId === 'view-issue-desk') {
+        loadIssueList();
+        startLiveStream();
+    } else {
+        stopLiveStream();
+    }
+  });
+});
+
+// === UNIFIED CONTEXT ===
+function setIssueContext(id) {
+  AppState.activeIssue = id;
+  document.getElementById('activeIssueDisplay').textContent = id;
+  document.querySelectorAll('.issue-input').forEach(input => { input.value = id; });
+  
+  // Pindah ke Issue Workspace (S03/S04)
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => {
+      v.classList.remove('active');
+      if(v.id !== 'view-issue-workspace') v.style.display = 'none';
+  });
+  
+  const workspaceView = document.getElementById('view-issue-workspace');
+  workspaceView.classList.add('active');
+  workspaceView.style.display = 'block';
+  
+  loadIssueWorkspaceData(id);
+}
+
+async function loadIssueWorkspaceData(id) {
+    document.getElementById('wsTitle').textContent = "Memuat...";
+    document.getElementById('wsId').textContent = id;
     
     try {
-      const res = await fetch(`/api/foresight/${issueId}`);
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || 'Gagal mengambil data');
-      
-      // Format hasil
-      let html = `<h3>Risk Level: <span style="color:${data.risk.level === 'HIGH' ? 'red' : 'orange'}">${data.risk.level}</span> (${data.risk.direction})</h3>`;
-      html += `<p><strong>Rationale:</strong> ${data.risk.rationale}</p>`;
-      
-      if (data.abstained) {
-        html += `<p style="color:red;"><strong>ABSTAINED:</strong> ${data.abstention_reasons.join(', ')}</p>`;
-      } else {
-        html += `<h4>Rekomendasi Strategis:</h4><ul>` + data.recommendation_proposals.map(p => `<li>${p}</li>`).join('') + `</ul>`;
-        html += `<h4>Watch Conditions:</h4><ul>` + data.watch_conditions.map(w => `<li><strong>${w.condition}</strong> — ${w.trigger}</li>`).join('') + `</ul>`;
-      }
-      
-      foresightResult.innerHTML = html;
-    } catch (err) {
-      foresightResult.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+        // Fetch Foresight data (untuk rationale & risk)
+        const resF = await fetch(`/api/foresight/${id}`);
+        const dataF = await resF.json();
+        
+        // Fetch Issue data (untuk evidence & unknowns)
+        // Karena endpoint issue detail belum ada, kita gunakan data dari allIssuesData
+        const issue = allIssuesData.find(i => i.id === id);
+        
+        if (issue) {
+            document.getElementById('wsTitle').textContent = issue.title;
+        }
+        
+        // --- S03: APA PERSOALANNYA? ---
+        // Gunakan title sebagai summary sementara karena belum ada field "description"
+        document.getElementById('wsSummary').textContent = issue ? issue.title : "Deskripsi belum tersedia.";
+        
+        // --- S03: YANG DIKETAHUI ---
+        const knownsList = document.getElementById('wsKnowns');
+        knownsList.innerHTML = '';
+        if (dataF.risk && dataF.risk.basis_evidence_ids && dataF.risk.basis_evidence_ids.length > 0) {
+            knownsList.innerHTML += `<li>Terdapat ${dataF.risk.basis_evidence_ids.length} bukti yang tercatat.</li>`;
+            if (dataF.risk.level !== 'INSUFFICIENT') {
+                knownsList.innerHTML += `<li>Tingkat risiko terdeteksi: <strong>${dataF.risk.level}</strong>.</li>`;
+            }
+        } else {
+            knownsList.innerHTML = '<li>Belum ada fakta yang terverifikasi.</li>';
+        }
+        
+        // --- S03: YANG BELUM DIKETAHUI ---
+        const unknownsList = document.getElementById('wsUnknowns');
+        unknownsList.innerHTML = '';
+        if (dataF.risk && dataF.risk.abstention_reasons && dataF.risk.abstention_reasons.length > 0) {
+            dataF.risk.abstention_reasons.forEach(reason => {
+                unknownsList.innerHTML += `<li>${reason}</li>`;
+            });
+        } else if (dataF.risk.level === 'INSUFFICIENT') {
+             unknownsList.innerHTML = '<li>Belum cukup bukti untuk menyimpulkan.</li>';
+        } else {
+             unknownsList.innerHTML = '<li>Belum ada catatan ketidakpastian dari sistem.</li>';
+        }
+        
+        // --- S03: MENGAPA RELEVAN ---
+        if (dataF.risk && dataF.risk.rationale) {
+            document.getElementById('wsRationale').innerHTML = `<p>${dataF.risk.rationale}</p>`;
+        } else {
+            document.getElementById('wsRationale').innerHTML = `<p>Analisis belum tersedia.</p>`;
+        }
+        
+        // --- S05: TIMELINE & PERKEMBANGAN ---
+        const tl = document.getElementById('wsTimeline');
+        if (tl) {
+            tl.innerHTML = '';
+            
+            // Asumsi: Kita menggunakan data yang ada untuk membentuk alur
+            let timeString = "Waktu tidak diketahui";
+            if (issue && issue.recorded_at) {
+                timeString = new Date(issue.recorded_at).toLocaleString('id-ID');
+            }
+            
+            let evCount = dataF.risk.basis_evidence_ids ? dataF.risk.basis_evidence_ids.length : 0;
+            let riskLevel = dataF.risk.level;
+            
+            // Titik 1: Isu Ditemukan
+            tl.innerHTML += `
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-time">${timeString}</div>
+                        <div class="timeline-title">Sinyal Awal Diterima</div>
+                        <div class="timeline-desc">Sistem mendeteksi isu baru masuk ke dalam database dari sumber intelijen.</div>
+                    </div>
+                </div>
+            `;
+            
+            // Titik 2: Bukti Terkumpul
+            tl.innerHTML += `
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-time">Fase Pengumpulan Bukti</div>
+                        <div class="timeline-title">${evCount} Bukti Ditautkan</div>
+                        <div class="timeline-desc">Sistem berhasil mengumpulkan bukti pendukung dan kontradiksi yang relevan dengan isu ini.</div>
+                    </div>
+                </div>
+            `;
+
+            // Titik 3: Penilaian AI (Hipotesis)
+            tl.innerHTML += `
+                <div class="timeline-item">
+                    <div class="timeline-dot risk"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-time">Penilaian Saat Ini</div>
+                        <div class="timeline-title">Analisis Risiko: ${riskLevel}</div>
+                        <div class="timeline-desc">AI menyimpulkan tingkat risiko saat ini berdasarkan bukti yang ada. <em>(Ini adalah hipotesis, bukan fakta final).</em></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- S04: PEMERIKSAAN BUKTI ---
+        const supList = document.getElementById('wsEvidenceSupporting');
+        const conList = document.getElementById('wsEvidenceContradictory');
+        supList.innerHTML = '<li style="color:#666;">Belum ada data detail bukti.</li>';
+        conList.innerHTML = '<li style="color:#666;">Belum ada data detail bukti.</li>';
+        
+        if (dataF.risk && dataF.risk.basis_evidence_ids) {
+             supList.innerHTML = '';
+             dataF.risk.basis_evidence_ids.forEach(ev => {
+                 supList.innerHTML += `<li>${ev}</li>`;
+             });
+        }
+        
+    } catch(e) {
+        document.getElementById('wsTitle').textContent = "Gagal memuat data";
+        document.getElementById('wsSummary').textContent = e.message;
     }
-  });
 }
 
+// Event Listener Tombol di Workspace
+document.getElementById('wsCloseBtn').addEventListener('click', () => {
+    document.querySelector('[data-target="view-issue-desk"]').click();
+});
 
-// ==========================================
-// FITUR CREATE ISSUE
-// ==========================================
-const createIssueBtn = document.querySelector('#createIssueBtn');
-if (createIssueBtn) {
-  createIssueBtn.addEventListener('click', async () => {
-    const id = document.querySelector('#newIssueId').value.trim();
-    const title = document.querySelector('#newIssueTitle').value.trim();
-    const supp = document.querySelector('#newIssueSupp').value.split(',').map(s => s.trim()).filter(Boolean);
-    const cont = document.querySelector('#newIssueCont').value.split(',').map(s => s.trim()).filter(Boolean);
-    const msg = document.querySelector('#createIssueMsg');
-    
-    if (!id || !title) {
-      msg.textContent = "ID dan Judul wajib diisi.";
-      msg.style.color = "red";
-      return;
-    }
+document.getElementById('wsGoForesightBtn').addEventListener('click', () => {
+    document.querySelector('[data-target="view-foresight"]').click();
+    document.getElementById('inputForesight').value = AppState.activeIssue;
+    document.getElementById('btnForesight').click();
+});
 
-    msg.textContent = "Menyimpan...";
-    msg.style.color = "black";
+document.getElementById('wsGoBriefBtn').addEventListener('click', () => {
+    document.querySelector('[data-target="view-briefs"]').click();
+    document.getElementById('inputBrief').value = AppState.activeIssue;
+});
 
-    try {
-      // 1. Ambil token CSRF terbaru dari server
-      const tokenRes = await fetch('/api/local-token');
-      const tokenData = await tokenRes.json();
-      const token = tokenData.token;
-
-      // 2. Kirim data beserta token
-      const res = await fetch('/api/issue/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-SIFI-Token': token
-        },
-        body: JSON.stringify({
-          issue_id: id,
-          title: title,
-          supporting_evidence: supp,
-          contradictory_evidence: cont
-        })
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal menyimpan');
-      
-      msg.textContent = "✅ Isu berhasil disimpan! Silakan cek di panel Foresight.";
-      msg.style.color = "green";
-      document.querySelector('#issueIdInput').value = id; 
-    } catch (err) {
-      msg.textContent = "Error: " + err.message;
-      msg.style.color = "red";
-    }
-  });
-}
-
-// ==========================================
-// FITUR SYSTEMIC ANALYSIS
-// ==========================================
-const fetchSystemicBtn = document.querySelector('#fetchSystemicBtn');
-if (fetchSystemicBtn) {
-  fetchSystemicBtn.addEventListener('click', async () => {
-    const resultDiv = document.querySelector('#systemicResult');
-    resultDiv.innerHTML = '<p>Memindai seluruh isu di database...</p>';
-    
-    try {
-      const res = await fetch('/api/systemic-report');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal mengambil laporan');
-      
-      let html = `<h3>Sistem memindai ${data.issues_analyzed} Isu</h3>`;
-      html += `<p><strong>Isu Berisiko Tinggi:</strong> ${data.high_risk_count}</p>`;
-      
-      if (data.systemic_alerts.length === 0) {
-        html += `<p style="color:green;">Tidak ada pola sistemik atau tumpang tindih bukti yang terdeteksi.</p>`;
-      } else {
-        html += `<h4>Peringatan Sistemik:</h4><ul>`;
-        data.systemic_alerts.forEach(alert => {
-          html += `<li><strong style="color:red;">${alert.alert_type}</strong>: ${alert.description}<br/><em>Isu Terkait: ${alert.involved_issue_ids.join(', ')}</em></li>`;
-        });
-        html += `</ul>`;
-      }
-      resultDiv.innerHTML = html;
-    } catch (err) {
-      resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
-    }
-  });
-}
-
-// ==========================================
-// FITUR EKSPLORASI (Ingest & Generate Brief)
-// ==========================================
-const ingestFeedBtn = document.querySelector('#ingestFeedBtn');
-if (ingestFeedBtn) {
-  ingestFeedBtn.addEventListener('click', async () => {
-    const msg = document.querySelector('#exploreMsg');
-    msg.textContent = "Menyerap data...";
-    try {
-      const tokenRes = await fetch('/api/local-token');
-      const token = (await tokenRes.json()).token;
-      
-      const res = await fetch('/api/ingest/feed', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
-        body: JSON.stringify({})
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal ingest');
-      msg.textContent = `✅ Berhasil menyerap ${data.ingested} isu baru dari Feed!`;
-      msg.style.color = "green";
-    } catch (err) {
-      msg.textContent = "Error: " + err.message;
-      msg.style.color = "red";
-    }
-  });
-}
-
-const generateBriefBtn = document.querySelector('#generateBriefBtn');
-if (generateBriefBtn) {
-  generateBriefBtn.addEventListener('click', async () => {
-    const id = document.querySelector('#briefIssueId').value.trim();
-    const msg = document.querySelector('#exploreMsg');
-    if (!id) return;
-    
-    msg.textContent = "Membuat Brief...";
-    try {
-      const tokenRes = await fetch('/api/local-token');
-      const token = (await tokenRes.json()).token;
-      
-      const res = await fetch('/api/brief/generate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
-        body: JSON.stringify({issue_id: id})
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal generate');
-      msg.textContent = `✅ Brief ${data.brief_id} berhasil dibuat dan disimpan!`;
-      msg.style.color = "green";
-    } catch (err) {
-      msg.textContent = "Error: " + err.message;
-      msg.style.color = "red";
-    }
-  });
-}
-
-// ==========================================
-// FITUR VIEW BRIEF
-// ==========================================
-const viewBriefBtn = document.querySelector('#viewBriefBtn');
-if (viewBriefBtn) {
-  viewBriefBtn.addEventListener('click', async () => {
-    const id = document.querySelector('#viewBriefId').value.trim();
-    const contentArea = document.querySelector('#briefContent');
-    if (!id) return;
-    
-    contentArea.textContent = "Memuat...";
-    try {
-      const res = await fetch(`/api/brief/view?id=${encodeURIComponent(id)}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal memuat brief');
-      
-      contentArea.textContent = data.content;
-    } catch (err) {
-      contentArea.textContent = "Error: " + err.message;
-    }
-  });
-}
-
-// ==========================================
-// FITUR SEMANTIC TESTING
-// ==========================================
-const analyzeTextBtn = document.querySelector('#analyzeTextBtn');
-if (analyzeTextBtn) {
-  analyzeTextBtn.addEventListener('click', async () => {
-    const text = document.querySelector('#semanticText').value.trim();
-    const resDiv = document.querySelector('#semanticResult');
-    if (!text) return;
-
-    resDiv.innerHTML = "Menganalisis...";
-    try {
-      const tokenRes = await fetch('/api/local-token');
-      const token = (await tokenRes.json()).token;
-      
-      const res = await fetch('/api/semantic/test', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
-        body: JSON.stringify({text: text})
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      
-      const color = data.threat_score > 5 ? 'red' : (data.threat_score > 0 ? 'orange' : 'green');
-      
-      let html = `<h3>Threat Score: <span style="color:${color}">${data.threat_score} / 10</span></h3>`;
-      html += `<p><strong>Negatif:</strong> ${data.is_negative} | <strong>Hedging (Ketidakpastian):</strong> ${data.is_hedged}</p>`;
-      html += `<p><strong>Entitas Terdeteksi:</strong> ${data.detected_entities.length > 0 ? data.detected_entities.join(', ') : '<em>Tidak ada</em>'}</p>`;
-      
-      resDiv.innerHTML = html;
-    } catch (err) {
-      resDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
-    }
-  });
-}
-
-// ==========================================
-// FITUR SIMULASI WHAT-IF
-// ==========================================
-const simulateBtn = document.querySelector('#simulateBtn');
-if (simulateBtn) {
-  simulateBtn.addEventListener('click', async () => {
-    const id = document.querySelector('#simIssueId').value.trim();
-    const resDiv = document.querySelector('#simResult');
-    if (!id) return;
-
-    resDiv.textContent = "Mensimulasikan...";
-    try {
-      const tokenRes = await fetch('/api/local-token');
-      const token = (await tokenRes.json()).token;
-      
-      const res = await fetch('/api/foresight/simulate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
-        body: JSON.stringify({issue_id: id})
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      
-      const color = data.risk_reduced ? 'green' : 'orange';
-      let html = `<h3>Hasil Simulasi:</h3>`;
-      html += `<p>Risiko Saat Ini: <strong>${data.current_risk}</strong> (${data.current_direction})</p>`;
-      html += `<p>Risiko Jika Kontradiksi Selesai: <strong style="color:${color}">${data.simulated_risk}</strong> (${data.simulated_direction})</p>`;
-      html += `<p><em>${data.risk_reduced ? 'Penurunan risiko terdeteksi!' : 'Tidak ada perubahan level risiko.'}</em></p>`;
-      
-      resDiv.innerHTML = html;
-    } catch (err) {
-      resDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
-    }
-  });
-}
-
-// ==========================================
-// FITUR VISUALISASI CHART
-// ==========================================
-
-let riskChartInstance = null;
-
-async function loadChartData() {
+// === 1. EXECUTIVE BRIEFING (Chart) ===
+async function loadChart() {
   const ctx = document.getElementById('riskChart');
   if (!ctx) return;
-
-  // Cek apakah Chart.js berhasil dimuat dari internet
-  if (typeof Chart === 'undefined') {
-    console.error("Chart.js gagal dimuat dari CDN.");
-    ctx.parentElement.innerHTML = '<p style="color:red; text-align:center;">Library Chart.js gagal dimuat. Periksa koneksi internet Anda.</p>';
-    return;
-  }
-
   try {
     const res = await fetch('/api/stats');
     const data = await res.json();
+    if (AppState.chartInstance) AppState.chartInstance.destroy();
     
-    if (riskChartInstance) {
-      riskChartInstance.destroy();
-    }
-
-    riskChartInstance = new Chart(ctx, {
+    AppState.chartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: ['HIGH', 'ELEVATED', 'LOW', 'INSUFFICIENT'],
-        datasets: [{
-          data: [data.HIGH, data.ELEVATED, data.LOW, data.INSUFFICIENT],
-          backgroundColor: ['#F44336', '#FF9800', '#4CAF50', '#9E9E9E'],
-          borderWidth: 1
-        }]
+        datasets: [{ data: [data.HIGH, data.ELEVATED, data.LOW, data.INSUFFICIENT],
+          backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#64748b'], borderWidth: 0 }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#fff' } }
-        }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } } }
     });
-  } catch (err) {
-    console.error("Gagal memuat chart:", err);
+  } catch (e) { console.error(e); }
+}
+document.getElementById('refreshChartBtn').addEventListener('click', loadChart);
+
+// === 2. ISSUE DESK (Brand24 Stream) ===
+let allIssuesData = [];
+let liveStreamInterval = null;
+let lastTopIssueId = null;
+
+async function loadIssueList() {
+  const container = document.getElementById('issueListContainer');
+  if (!container) return;
+  container.innerHTML = '<p>Memuat isu...</p>';
+  
+  try {
+    const res = await fetch('/api/issues');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "API Error");
+    allIssuesData = data;
+    renderIssueStream();
+  } catch (e) { 
+    container.innerHTML = `<p style="color:red;">Gagal memuat: ${e.message}</p>`; 
   }
 }
 
-const refreshChartBtn = document.querySelector('#refreshChartBtn');
-if (refreshChartBtn) {
-  refreshChartBtn.addEventListener('click', loadChartData);
-  setTimeout(loadChartData, 500); 
+function renderIssueStream(animateNew = false) {
+  const container = document.getElementById('issueListContainer');
+  const query = document.getElementById('searchIssue').value.toLowerCase();
+  const filterType = document.getElementById('filterType').value;
+
+  const filtered = allIssuesData.filter(issue => {
+    const matchSearch = issue.id.toLowerCase().includes(query) || issue.title.toLowerCase().includes(query);
+    const matchType = filterType === 'all' || issue.type === filterType;
+    return matchSearch && matchType;
+  });
+
+  // Update Metrics
+  let highCount = 0, elevCount = 0;
+  filtered.forEach(i => {
+      if(i.risk === 'HIGH') highCount++;
+      if(i.risk === 'ELEVATED') elevCount++;
+  });
+  document.getElementById('metricTotal').textContent = filtered.length;
+  document.getElementById('metricHigh').textContent = highCount;
+  document.getElementById('metricElevated').textContent = elevCount;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 40px;">Tidak ada isu yang cocok dengan filter.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+  filtered.forEach((issue, index) => {
+    const div = document.createElement('div');
+    
+    // Jika animasi aktif dan ini adalah kartu teratas, dan ID-nya beda dari sebelumnya
+    if (animateNew && index === 0 && issue.id !== lastTopIssueId) {
+        div.className = 'issue-card new-item';
+        lastTopIssueId = issue.id; // Update pelacak
+    } else {
+        div.className = 'issue-card';
+    }
+    
+    let badgeClass = 'badge-low';
+    if (issue.risk === 'HIGH') badgeClass = 'badge-high';
+    if (issue.risk === 'ELEVATED') badgeClass = 'badge-elevated';
+
+    div.innerHTML = `
+      <div class="issue-content">
+        <h3>${issue.title}</h3>
+        <div class="issue-meta">
+          <span style="font-family: monospace;">${issue.id}</span>
+          <span class="badge badge-source">${issue.type}</span>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span class="badge ${badgeClass}">${issue.risk}</span>
+        <div style="margin-top: 8px; color: var(--accent); font-weight: 600; font-size: 0.85rem;">Investigasi &rarr;</div>
+      </div>
+    `;
+    div.onclick = () => setIssueContext(issue.id);
+    container.appendChild(div);
+  });
 }
+document.getElementById('searchIssue').addEventListener('input', renderIssueStream);
+document.getElementById('filterType').addEventListener('change', renderIssueStream);
 
-
-// === FITUR AUTO-LAYOUT FIX ===
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Rombak form "Buat Isu Baru" menjadi Grid 2x2
-    const createBtn = document.getElementById('createIssueBtn');
-    if (createBtn && createBtn.parentElement) {
-        const parent = createBtn.parentElement;
-        parent.style.display = 'grid';
-        parent.style.gridTemplateColumns = '1fr 1fr';
-        parent.style.gap = '15px';
-        parent.style.width = '100%';
-        
-        createBtn.style.gridColumn = 'span 2';
-        createBtn.style.padding = '10px';
-        createBtn.style.fontWeight = 'bold';
+// === 3. FORESIGHT ===
+document.getElementById('btnForesight').addEventListener('click', async () => {
+  const id = document.getElementById('inputForesight').value.trim();
+  const out = document.getElementById('resultForesight');
+  if (!id) return;
+  out.innerHTML = "<p style='color:var(--text-muted);'>Menganalisis...</p>";
+  
+  try {
+    const res = await fetch(`/api/foresight/${id}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Gagal");
+    
+    if (data.abstained) {
+        out.innerHTML = `
+            <div class="panel" style="border-left: 4px solid var(--risk-elevated);">
+                <h2 style="color: var(--risk-elevated); margin-bottom: 10px;">Analisis Ditunda (Insufficient Data)</h2>
+                <p>Sistem memilih untuk tidak memberikan penilaian risiko karena alasan berikut:</p>
+                <ul style="margin-top: 10px; padding-left: 20px;">
+                    ${data.abstention_reasons.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        return;
     }
 
-    // 2. Paksa semua container input agar bisa turun ke bawah (Flex Wrap)
-    document.querySelectorAll('.foresight div, .control').forEach(div => {
-        if (div.style.display === 'flex' || window.getComputedStyle(div).display === 'flex') {
-            if (window.getComputedStyle(div).flexDirection !== 'column') {
-                div.style.flexWrap = 'wrap';
-                div.style.alignItems = 'center';
-            }
-        }
-    });
+    let badgeClass = 'badge-low';
+    if (data.risk.level === 'HIGH') badgeClass = 'badge-high';
+    if (data.risk.level === 'ELEVATED') badgeClass = 'badge-elevated';
 
-    // 3. Pastikan kotak input tidak mengecil dan berjejer rapi
-    document.querySelectorAll('.foresight input[type="text"]').forEach(input => {
-        if (input.id !== 'newIssueId' && input.id !== 'newIssueTitle' && input.id !== 'newIssueSupp' && input.id !== 'newIssueCont') {
-            input.style.flex = '1';
-            input.style.minWidth = '200px';
-        } else {
-            input.style.width = '100%';
-            input.style.boxSizing = 'border-box';
-        }
-    });
+    let html = `
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+        
+        <div>
+            <div class="panel" style="text-align: center;">
+                <p style="color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Tingkat Risiko</p>
+                <h1 class="badge ${badgeClass}" style="font-size: 2rem; display: inline-block; margin: 15px 0; padding: 10px 20px;">${data.risk.level}</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Arah: <strong style="color: var(--text-main);">${data.risk.direction}</strong></p>
+            </div>
+
+            <div class="panel">
+                <h3 style="margin-bottom: 15px; color: var(--accent);">Rekomendasi Strategis</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    ${data.recommendation_proposals.map(rec => `
+                        <div style="background: var(--bg-body); padding: 12px; border-radius: 6px; border-left: 3px solid var(--accent); font-size: 0.9rem;">
+                            ${rec}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <h3 style="margin-bottom: 10px;">Mengapa AI Mengambil Kesimpulan Ini? (Rationale)</h3>
+                <p style="line-height: 1.6; color: var(--text-muted);">${data.risk.rationale}</p>
+            </div>
+
+            <div class="panel" style="border-left: 4px solid var(--risk-elevated);">
+                <h3 style="margin-bottom: 10px; color: var(--risk-elevated);">Watch Conditions (Kondisi Pemantauan)</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">
+                    <em>Hipotesis ini dapat berubah jika kondisi berikut terpenuhi:</em>
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    ${data.watch_conditions.map(w => `
+                        <div style="background: var(--bg-body); padding: 12px; border-radius: 6px; font-size: 0.9rem;">
+                            <strong style="color: var(--text-main);">${w.condition}</strong><br>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">Trigger: ${w.trigger}</span><br>
+                            <span style="color: var(--risk-high); font-size: 0.8rem;">Falsifikasi: ${w.falsification_condition}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+
+      </div>
+    `;
+    out.innerHTML = html;
+  } catch (e) { 
+      out.innerHTML = `<div class="panel" style="border-left: 4px solid var(--risk-high);"><p style="color:var(--risk-high);">Error: ${e.message}</p></div>`; 
+  }
 });
+
+// === 4. SYSTEMIC ===
+document.getElementById('btnSystemic').addEventListener('click', async () => {
+  const out = document.getElementById('resultSystemic');
+  out.innerHTML = "<p>Memindai...</p>";
+  try {
+    const res = await fetch('/api/systemic-report');
+    const data = await res.json();
+    let html = `<h3>Sistem memindai ${data.issues_analyzed} Isu</h3>`;
+    if(data.systemic_alerts.length === 0) html += `<p>Tidak ada peringatan.</p>`;
+    else html += `<ul>${data.systemic_alerts.map(a => `<li><strong>${a.alert_type}</strong>: ${a.description}</li>`).join('')}</ul>`;
+    out.innerHTML = html;
+  } catch (e) { out.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`; }
+});
+
+// === 5. BRIEFS ===
+document.getElementById('btnViewBrief').addEventListener('click', async () => {
+  let id = document.getElementById('inputBrief').value.trim();
+  const out = document.getElementById('resultBrief');
+  if (!id) return;
+  if (!id.startsWith("BRIEF-")) id = `BRIEF-${id}`;
+  
+  out.innerHTML = "<p style='color:#475569;'>Memuat dokumen...</p>";
+  try {
+    const res = await fetch(`/api/brief/view?id=${id}`);
+    const data = await res.json();
+    if (res.ok) {
+        // Render markdown menjadi HTML cantik
+        let htmlContent = renderMarkdown(data.content);
+        
+        // Tambahkan stempel waktu dan status rahasia/simulasi (Sesuai Handoff S07)
+        htmlContent += `
+            <div class="footer-note">
+                <hr>
+                <p>Dokumen ini dihasilkan secara otomatis oleh SIFI Intelligence Engine.</p>
+                <p><strong>Status:</strong> DRAFT / SIMULASI (Data Sintetis)</p>
+                <p>Analytical Cutoff: ${new Date().toLocaleString('id-ID')}</p>
+            </div>
+        `;
+        out.innerHTML = htmlContent;
+    } else {
+        out.innerHTML = `<p style="color:var(--risk-high);">Brief tidak ditemukan untuk ID ini.</p>`;
+    }
+  } catch (e) { 
+      out.innerHTML = `<p style="color:var(--risk-high);">Error: ${e.message}</p>`; 
+  }
+});
+document.getElementById('btnDownloadBrief').addEventListener('click', () => {
+  let id = document.getElementById('inputBrief').value.trim();
+  if (!id) return;
+  if (!id.startsWith("BRIEF-")) id = `BRIEF-${id}`;
+  window.location.href = `/api/brief/download?id=${id}`;
+});
+document.getElementById('btnGenerateBrief').addEventListener('click', async () => {
+  const id = document.getElementById('inputBrief').value.trim();
+  if (!id) return;
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/brief/generate', { method: 'POST', headers: {'Content-Type':'application/json', 'X-SIFI-Token': token}, body: JSON.stringify({issue_id: id}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    alert("✅ Brief berhasil disusun oleh AI!"); 
+    document.getElementById('btnViewBrief').click();
+  } catch(e) { alert("Error: " + e.message); }
+});
+
+// === 6. DEV INGEST ===
+document.getElementById('btnIngestFeed').addEventListener('click', async () => {
+  const msg = document.getElementById('devIngestMsg');
+  msg.textContent = "Mengimpor..."; msg.style.color="#fff";
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/ingest/feed', { method: 'POST', headers: {'Content-Type':'application/json', 'X-SIFI-Token': token}, body: '{}' });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error);
+    msg.textContent = `✅ Berhasil impor ${data.ingested} isu.`; msg.style.color="var(--risk-low)";
+  } catch(e) { msg.textContent = "Error: "+e.message; msg.style.color="var(--risk-high)"; }
+});
+document.getElementById('btnHistorical').addEventListener('click', async () => {
+  const msg = document.getElementById('devIngestMsg');
+  const start = document.getElementById('devStartDate').value;
+  const end = document.getElementById('devEndDate').value;
+  if(!start || !end) { msg.textContent="Pilih tanggal"; msg.style.color="var(--risk-high)"; return; }
+  msg.textContent = "Menarik data (mohon tunggu)..."; msg.style.color="#fff";
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/ingest/historical', { method: 'POST', headers: {'Content-Type':'application/json', 'X-SIFI-Token': token}, body: JSON.stringify({start_date: start, end_date: end}) });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error);
+    msg.textContent = `✅ ${data.message}`; msg.style.color="var(--risk-low)";
+    
+    // Auto-filter logic
+    setTimeout(() => {
+        document.getElementById('filterType').value = 'historical_crawl';
+        document.getElementById('searchIssue').value = '';
+        document.querySelector('[data-target="view-issue-desk"]').click();
+    }, 1000);
+  } catch(e) { msg.textContent = "Error: "+e.message; msg.style.color="var(--risk-high)"; }
+});
+document.getElementById('btnToggleWorker').addEventListener('click', async (e) => {
+  const action = AppState.workerActive ? "stop" : "start";
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/worker/toggle', { method: 'POST', headers: {'Content-Type':'application/json', 'X-SIFI-Token': token}, body: JSON.stringify({action}) });
+    const data = await res.json();
+    if(res.ok) {
+      AppState.workerActive = !AppState.workerActive;
+      e.target.textContent = AppState.workerActive ? "Hentikan Auto-Ingest" : "Mulai Auto-Ingest";
+      e.target.style.background = AppState.workerActive ? "#ef4444" : "var(--risk-low)";
+    } else { alert("Server menolak perintah: " + (data.error || "Unknown error")); }
+  } catch(err) { alert("Kesalahan jaringan: " + err.message); }
+});
+
+// === 7. DEV NLP & SIM ===
+document.getElementById('btnNlp').addEventListener('click', async () => {
+  const text = document.getElementById('nlpText').value;
+  const out = document.getElementById('nlpResult');
+  out.textContent = "Menganalisis...";
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/semantic/test', { method: 'POST', headers: {'Content-Type':'application/json', 'X-SIFI-Token': token}, body: JSON.stringify({text}) });
+    const data = await res.json();
+    out.innerHTML = `<strong>Threat Score:</strong> ${data.threat_score}/10<br><strong>Entities:</strong> ${data.detected_entities.join(', ') || '-'}`;
+  } catch(e) { out.textContent = "Error: "+e.message; }
+});
+document.getElementById('btnSimulate').addEventListener('click', async () => {
+  const id = document.getElementById('inputSim').value;
+  const out = document.getElementById('simResult');
+  if(!id) return;
+  out.textContent = "Mensimulasikan...";
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/foresight/simulate', { method: 'POST', headers: {'Content-Type':'application/json', 'X-SIFI-Token': token}, body: JSON.stringify({issue_id: id}) });
+    const data = await res.json();
+    out.innerHTML = `Risiko Awal: <span class="badge badge-${data.current_risk.toLowerCase()}">${data.current_risk}</span> &rarr; Risiko Simulasi: <span class="badge badge-${data.simulated_risk.toLowerCase()}">${data.simulated_risk}</span>`;
+  } catch(e) { out.textContent = "Error: "+e.message; }
+});
+
+setTimeout(loadChart, 500);
+
+// === MARKDOWN PARSER ===
+function renderMarkdown(md) {
+    let html = md
+        // Headings
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        // Bold
+        .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+        // Lists
+        .replace(/^\- (.*$)/gim, '<li>$1</li>')
+        // Code blocks
+        .replace(/`([^`]+)`/gim, '<code>$1</code>')
+        // Line breaks
+        .replace(/\n$/gim, '<br />');
+
+    // Bungkus list items dengan <ul>
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    
+    // Ganti baris baru murni dengan paragraf
+    html = html.split('\n\n').map(p => {
+        if (p.trim().startsWith('<h') || p.trim().startsWith('<ul')) return p;
+        return `<p>${p}</p>`;
+    }).join('');
+
+    // Ganti HR (---)
+    html = html.replace(/^---$/gim, '<hr>');
+
+    return html;
+}
+
+// === LIVE STREAM POLLING ===
+function startLiveStream() {
+    if (liveStreamInterval) clearInterval(liveStreamInterval);
+    
+    // Set lastTopIssueId awal agar tidak berkedip saat pertama load
+    if (allIssuesData.length > 0) lastTopIssueId = allIssuesData[0].id;
+
+    liveStreamInterval = setInterval(async () => {
+        try {
+            const res = await fetch('/api/issues');
+            const data = await res.json();
+            
+            // Jika ada data baru (panjang array beda, atau ID teratas beda)
+            if (Array.isArray(data) && data.length > 0) {
+                if (!allIssuesData.length || data[0].id !== allIssuesData[0].id) {
+                    allIssuesData = data;
+                    renderIssueStream(true); // Trigger animasi
+                }
+            }
+        } catch(e) {
+            console.error("[LIVE STREAM] Gagal polling:", e);
+        }
+    }, 5000); // Cek setiap 5 detik
+}
+
+function stopLiveStream() {
+    if (liveStreamInterval) {
+        clearInterval(liveStreamInterval);
+        liveStreamInterval = null;
+    }
+}
+
+// === 8. SYSTEM HEALTH (S08) ===
+async function loadSystemHealth() {
+    try {
+        const res = await fetch('/api/system-health');
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || "Gagal mengambil data");
+
+        // 1. Worker Status
+        const isWorkerRunning = data.worker_running;
+        const workerIcon = document.getElementById('healthWorkerIcon');
+        const workerText = document.getElementById('healthWorkerStatus');
+        
+        if (isWorkerRunning) {
+            workerIcon.textContent = "🟢";
+            workerText.textContent = "Aktif (Menyuntik Data)";
+            workerText.style.color = "var(--risk-low)";
+        } else {
+            workerIcon.textContent = "🔴";
+            workerText.textContent = "Berhenti";
+            workerText.style.color = "var(--risk-high)";
+        }
+
+        // 2. Database Status
+        const dbText = document.getElementById('healthDbStatus');
+        if (data.database_status === "HEALTHY") {
+            dbText.textContent = "Terhubung (Healthy)";
+            dbText.style.color = "var(--risk-low)";
+        } else {
+            dbText.textContent = "Bermasalah";
+            dbText.style.color = "var(--risk-high)";
+        }
+
+        // 3. Counts
+        document.getElementById('healthCountIssues').textContent = data.counts.ISSUE || 0;
+        document.getElementById('healthCountBriefs').textContent = data.counts.EVIDENCE_LINKED_ANALYTICAL_BRIEF || 0;
+        document.getElementById('healthCountSessions').textContent = data.counts.BOUNDED_ANALYST_WORKFLOW_SESSION || 0;
+
+    } catch(e) {
+        console.error("[HEALTH] Error:", e);
+        document.getElementById('healthWorkerStatus').textContent = "Gagal memuat";
+        document.getElementById('healthDbStatus').textContent = "Gagal memuat";
+    }
+}
+
+document.getElementById('btnRefreshHealth').addEventListener('click', loadSystemHealth);
+setInterval(() => {
+    // Auto refresh jika tab sedang terbuka
+    if (document.getElementById('view-sys-health').classList.contains('active')) {
+        loadSystemHealth();
+    }
+}, 5000);

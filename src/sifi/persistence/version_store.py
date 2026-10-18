@@ -50,12 +50,14 @@ class SQLiteVersionStore:
 
     def __init__(self, database: str | Path = ":memory:") -> None:
         self._database = str(database)
-        self._connection = sqlite3.connect(self._database)
+        self._connection = sqlite3.connect(self._database, timeout=30.0, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
         self._transaction_depth = 0
         self._initialize()
 
     def _initialize(self) -> None:
+        self._connection.execute("PRAGMA journal_mode=WAL;")
+        self._connection.execute("PRAGMA synchronous=NORMAL;")
         stored_version = int(
             self._connection.execute("PRAGMA user_version").fetchone()[0]
         )
