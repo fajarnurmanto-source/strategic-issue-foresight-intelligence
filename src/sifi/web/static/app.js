@@ -637,3 +637,137 @@ setInterval(() => {
         loadSystemHealth();
     }
 }, 5000);
+
+// === RESET SIMULATION (RISK-01) ===
+document.getElementById('btnResetSim').addEventListener('click', async () => {
+    if (!confirm("⚠️ PERINGATAN: Tindakan ini akan menghapus SEMUA data simulasi (AUTO- dan HIST-). Dokumen brief yang terlanjur dibuat mungkin tidak dapat dibuka. Lanjutkan?")) return;
+    
+    const msg = document.getElementById('devIngestMsg');
+    msg.textContent = "Menghapus data simulasi...";
+    msg.style.color = "var(--risk-elevated)";
+    
+    try {
+        const token = await getToken();
+        const res = await fetch('/api/system/reset-simulation', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-SIFI-Token': token},
+            body: '{}'
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        msg.textContent = "✅ " + data.message;
+        msg.style.color = "var(--risk-low)";
+    } catch(e) {
+        msg.textContent = "Error: " + e.message;
+        msg.style.color = "var(--risk-high)";
+    }
+});
+
+// === NARRATIVE MODE (RISK-03) ===
+document.getElementById('wsGoNarrativeBtn').addEventListener('click', () => {
+    document.querySelectorAll('.view').forEach(v => { v.classList.remove('active'); v.style.display = 'none'; });
+    document.getElementById('view-narrative').classList.add('active');
+    document.getElementById('view-narrative').style.display = 'block';
+    buildNarrative(AppState.activeIssue);
+});
+
+document.getElementById('btnExitNarrative').addEventListener('click', () => {
+    document.querySelectorAll('.view').forEach(v => { v.classList.remove('active'); v.style.display = 'none'; });
+    document.getElementById('view-issue-workspace').classList.add('active');
+    document.getElementById('view-issue-workspace').style.display = 'block';
+});
+
+async function buildNarrative(issueId) {
+    const container = document.getElementById('narrativeContent');
+    container.innerHTML = "<p style='color:#fff; text-align:center;'>Membangun narasi...</p>";
+    
+    try {
+        const res = await fetch(`/api/foresight/${issueId}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        
+        const riskLevel = data.risk.level;
+        
+        let html = `
+            <div class="narrative-stage">
+                <h2 class="narrative-title">Tahap 1: Sinyal Awal</h2>
+                <p class="narrative-text">Sistem mendeteksi anomali pada isu <strong>${issueId}</strong>.</p>
+                <p class="narrative-subtext">Analisis awal menunjukkan tingkat risiko <strong>${riskLevel}</strong> dengan arah tren <strong>${data.risk.direction}</strong>.</p>
+            </div>
+            
+            <div class="narrative-stage">
+                <h2 class="narrative-title">Tahap 2: Perakitan Bukti</h2>
+                <p class="narrative-text">Bukti yang mendukung kesimpulan ini:</p>
+                <ul style="color:#94a3b8; font-family:monospace; font-size:1.1rem;">
+                    ${data.risk.basis_evidence_ids.map(ev => `<li>${ev}</li>`).join('')}
+                </ul>
+                <p class="narrative-subtext">Catatan: Saat ini terdapat ${data.risk.basis_evidence_ids.length} bukti valid yang terkumpul.</p>
+            </div>
+
+            <div class="narrative-stage">
+                <h2 class="narrative-title">Tahap 3: Konvergensi Risiko</h2>
+                <p class="narrative-text">Mengapa AI menilai level ini?</p>
+                <p class="narrative-subtext">${data.risk.rationale}</p>
+            </div>
+
+            <div class="narrative-stage">
+                <h2 class="narrative-title">Tahap 4: Koneksi Sistemik</h2>
+                <p class="narrative-text">Isu ini tidak berdiri sendiri.</p>
+                <p class="narrative-subtext">Gunakan menu Analisis Sistemik untuk melihat apakah ada entitas atau bukti yang tumpang tindih dengan isu lain di database.</p>
+            </div>
+
+            <div class="narrative-stage">
+                <h2 class="narrative-title">Tahap 5: Transisi Skenario</h2>
+                <p class="narrative-text">Apa yang bisa membatalkan hipotesis ini?</p>
+                <ul style="color:#ef4444; font-size:1.1rem;">
+                    ${data.watch_conditions.map(w => `<li><strong>${w.condition}</strong> — Trigger: ${w.trigger}</li>`).join('')}
+                </ul>
+            </div>
+
+            <div class="narrative-stage">
+                <h2 class="narrative-title">Tahap 6: Resolusi Keputusan</h2>
+                <p class="narrative-text">Langkah selanjutnya yang direkomendasikan:</p>
+                <ul style="color:#10b981; font-size:1.1rem; font-weight:bold;">
+                    ${data.recommendation_proposals.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+                <button onclick="document.getElementById('btnExitNarrative').click();" style="margin-top: 20px;">Kembali ke Operational Workspace</button>
+            </div>
+        `;
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = `<p style="color:red;">Gagal memuat narasi: ${e.message}</p>`;
+    }
+}
+
+// === SCROLL NARRATIVE OBSERVER ===
+function setupNarrativeObserver() {
+    const stages = document.querySelectorAll('.narrative-stage');
+    
+    // Reset state jika ada animasi sebelumnya
+    stages.forEach(stage => stage.classList.remove('is-visible'));
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                // Opsional: observer.unobserve(entry.target); // Jika ingin animasi sekali saja
+            } else {
+                // Hapus class jika ingin animasi bisa diputar ulang saat scroll naik-turun
+                entry.target.classList.remove('is-visible'); 
+            }
+        });
+    }, {
+        root: document.getElementById('view-narrative'), // Wadah scroll
+        threshold: 0.2 // Picu saat 20% elemen terlihat
+    });
+
+    stages.forEach(stage => observer.observe(stage));
+}
+
+// Panggil observer setelah narasi selesai dibuat
+const originalBuildNarrative = buildNarrative;
+buildNarrative = async function(id) {
+    await originalBuildNarrative(id);
+    // Beri sedikit jeda agar DOM selesai dirender
+    setTimeout(setupNarrativeObserver, 100);
+};

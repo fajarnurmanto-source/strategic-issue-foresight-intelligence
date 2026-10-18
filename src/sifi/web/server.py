@@ -658,7 +658,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
             "/api/issue/create", "/api/ingest/feed", "/api/ingest/historical",
             "/api/brief/generate", "/api/semantic/test", "/api/foresight/simulate",
-            "/api/worker/toggle",
+            "/api/worker/toggle", "/api/system/reset-simulation",
         }:
             self._reject_write()
             return
@@ -708,13 +708,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 store = SQLiteVersionStore(self.server.paths.database)
                 repo = IssueObjectRepository(store)
                 
-                # OTOMATIS HAPUS DATA HISTORIS LAMA SEBELUM TARIK BARU
-                import sqlite3
-                conn_clean = sqlite3.connect(self.server.paths.database, timeout=30.0)
-                conn_clean.execute("DELETE FROM object_versions WHERE object_id LIKE 'HIST-%'")
-                conn_clean.commit()
-                conn_clean.close()
-                print("[CRAWLER] Data historis lama dibersihkan. Memulai tarikan baru.")
+                # Ingestion bersifat non-destruktif (Append-Only)
                 
                 total_issues = 0
                 current_date = start_dt
@@ -1030,6 +1024,16 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             if parsed.path.startswith("/api/cb22/"):
                 self._handle_cb22_write(parsed.path, payload)
                 return
+            if parsed.path == "/api/system/reset-simulation":
+                import sqlite3
+                conn = sqlite3.connect(self.server.paths.database, timeout=30.0)
+                conn.execute("DELETE FROM object_versions WHERE object_id LIKE 'HIST-%'")
+                conn.execute("DELETE FROM object_versions WHERE object_id LIKE 'AUTO-%'")
+                conn.commit()
+                conn.close()
+                self._send_json(HTTPStatus.OK, {"status": "success", "message": "Data simulasi berhasil dibersihkan."})
+                return
+
             workflow = LocalDemoWorkflow(self.server.paths.root)
             if parsed.path.endswith("start"):
                 state = workflow.start(analyst_id=str(payload.get("analyst_id", "")))

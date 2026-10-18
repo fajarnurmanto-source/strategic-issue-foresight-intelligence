@@ -27,6 +27,11 @@
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
+
+    <div id="globalModeBanner" style="background: #b45309; color: white; text-align: center; padding: 5px; font-size: 0.8rem; font-weight: bold; position: sticky; top: 0; z-index: 100;">
+        ⚠️ SIMULATION MODE — Menampilkan Data Sintetis (Bukan Berita Dunia Nyata)
+    </div>
+    
     <div class="top-bar">
       <div class="context-info">Konteks Isu Aktif: <strong id="activeIssueDisplay">-</strong></div>
     </div>
@@ -145,6 +150,7 @@
           
           <div class="panel" style="text-align: center;">
             <h3 style="margin-bottom: 15px;">Tindakan Selanjutnya</h3>
+            <button id="wsGoNarrativeBtn" style="background: var(--accent); margin-bottom: 10px;">Jelajahi Narasi (Scroll Storytelling)</button>
             <button id="wsGoForesightBtn" style="width: 100%; margin-bottom: 10px;">Buka Foresight & Skenario &rarr;</button>
             <button id="wsGoBriefBtn" style="width: 100%; background: #64748b;">Susun Brief Intelijen &rarr;</button>
           </div>
@@ -197,13 +203,20 @@
         <h3 style="margin-bottom: 15px;">1. Automated Feed</h3>
         <div class="input-group">
           <button id="btnIngestFeed">Impor Feed Sintetis</button>
-          <button id="btnToggleWorker" style="background:#ef4444;">Hentikan Auto-Ingest</button>
+          <button id="btnToggleWorker" style="background:#ef4444;">Hentikan Simulasi</button>
         </div>
         <h3 style="margin: 25px 0 15px;">2. Historical Crawling</h3>
         <div class="input-group">
           <input type="date" id="devStartDate"> <span style="color:var(--text-muted);">s/d</span> <input type="date" id="devEndDate">
           <button id="btnHistorical" style="background:#f59e0b;">Tarik Historis</button>
         </div>
+        
+        <h3 style="margin: 25px 0 15px; color: var(--risk-high);">3. Danger Zone (Developer Only)</h3>
+        <div class="input-group">
+            <button id="btnResetSim" style="background:var(--risk-high);">Reset Semua Data Simulasi</button>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">*Tindakan ini akan menghapus data AUTO- dan HIST- secara permanen.</span>
+        </div>
+    
         <div id="devIngestMsg" style="margin-top: 15px; font-weight: bold;"></div>
       </div>
     </section>
@@ -271,6 +284,19 @@
       <button id="btnRefreshHealth" style="margin-top: 10px;">Perbarui Status</button>
     </section>
 
+
+    <!-- VIEW: NARRATIVE MODE (RISK-03) -->
+    <section id="view-narrative" class="view" style="background: #0f172a;">
+      <div style="position: sticky; top: 0; padding: 15px 0; background: #0f172a; z-index: 10; border-bottom: 1px solid var(--border);">
+        <button id="btnExitNarrative" style="background: #334155;">&larr; Kembali ke Workspace</button>
+        <span style="margin-left: 20px; font-weight: bold; color: var(--text-muted);">INTELLIGENCE NARRATIVE MODE</span>
+      </div>
+      
+      <div class="narrative-container" id="narrativeContent">
+        <!-- Stages injected by JS -->
+      </div>
+    </section>
+    
   </main>
 
   <script src="/app.js"></script>
