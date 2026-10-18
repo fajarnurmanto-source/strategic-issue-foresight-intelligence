@@ -36,6 +36,15 @@ class WatchCondition:
 
 
 @dataclass(frozen=True, slots=True)
+class DimensionRisk:
+    dimension: str
+    level: str
+    direction: str
+    rationale: str
+    basis_evidence_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class RiskProfile:
     level: str
     direction: str
@@ -48,6 +57,7 @@ class RiskProfile:
 class ForesightProposal:
     issue_id: str
     risk: RiskProfile
+    dimension_risks: tuple[DimensionRisk, ...]
     watch_conditions: tuple[WatchCondition, ...]
     recommendation_proposals: tuple[str, ...]
     abstained: bool
@@ -79,38 +89,73 @@ def derive_foresight(issue: IssueObject) -> ForesightProposal:
             risk=RiskProfile(
                 level=RISK_INSUFFICIENT,
                 direction=DIRECTION_UNKNOWN,
-                rationale=(
-                    "Abstained: derivation preconditions not met. "
-                    "SIFI preserves insufficiency rather than fabricating a risk level."
-                ),
+                rationale="Abstained: derivation preconditions not met.",
                 basis_evidence_ids=basis_evidence,
                 abstention_reasons=tuple(abstention_reasons),
             ),
+            dimension_risks=(),
             watch_conditions=(),
             recommendation_proposals=(),
             abstained=True,
             abstention_reasons=tuple(abstention_reasons),
         )
 
+    # --- 1. PER-DIMENSION RISK (Evidence Chain Depth) ---
+    dim_risks: list[DimensionRisk] = []
+    highest_dim_risk = RISK_LOW
+    
+    for t in trajectories:
+        # Cari bukti mana yang benar-benar menempel di dimensi ini
+        t_supporting = tuple(e for e in t.evidence_ids if e in supporting)
+        t_contradictory = tuple(e for e in t.evidence_ids if e in contradictory)
+        
+        t_ratio = len(t_contradictory) / max(1, len(t_supporting))
+        
+        if t_ratio >= 0.5:
+            t_level = RISK_HIGH
+        elif t_ratio > 0:
+            t_level = RISK_ELEVATED
+        else:
+            t_level = RISK_LOW
+            
+        if t_level == RISK_HIGH:
+            highest_dim_risk = RISK_HIGH
+        elif t_level == RISK_ELEVATED and highest_dim_risk != RISK_HIGH:
+            highest_dim_risk = RISK_ELEVATED
+
+        t_esc = any(m in t.trajectory_state.lower() for m in _ESCALATION_MARKERS)
+        t_dec = any(m in t.trajectory_state.lower() for m in _DECLINE_MARKERS)
+        
+        if t_esc:
+            t_dir = DIRECTION_ESCALATING
+        elif t_dec:
+            t_dir = DIRECTION_DECLINING
+        else:
+            t_dir = DIRECTION_STABLE
+
+        dim_risks.append(DimensionRisk(
+            dimension=t.dimension.value,
+            level=t_level,
+            direction=t_dir,
+            rationale=f"Derived from {len(t_supporting)} supporting and {len(t_contradictory)} contradictory items attached to this dimension.",
+            basis_evidence_ids=tuple(t.evidence_ids)
+        ))
+
+    # --- 2. GLOBAL RISK AGGREGATION ---
     contradiction_ratio = len(contradictory) / max(1, len(supporting))
     gap_count = len(issue.evidence_gaps)
     uncertainty_count = len(issue.uncertainty_notes)
 
-    if contradiction_ratio >= 0.5 or gap_count >= 3:
+    if contradiction_ratio >= 0.5 or gap_count >= 3 or highest_dim_risk == RISK_HIGH:
         level = RISK_HIGH
-    elif contradiction_ratio > 0 or uncertainty_count >= 2 or gap_count >= 1:
+    elif contradiction_ratio > 0 or uncertainty_count >= 2 or gap_count >= 1 or highest_dim_risk == RISK_ELEVATED:
         level = RISK_ELEVATED
     else:
         level = RISK_LOW
 
-    escalating = sum(
-        1 for t in trajectories
-        if any(m in t.trajectory_state.lower() for m in _ESCALATION_MARKERS)
-    )
-    declining = sum(
-        1 for t in trajectories
-        if any(m in t.trajectory_state.lower() for m in _DECLINE_MARKERS)
-    )
+    escalating = sum(1 for d in dim_risks if d.direction == DIRECTION_ESCALATING)
+    declining = sum(1 for d in dim_risks if d.direction == DIRECTION_DECLINING)
+    
     if escalating > declining:
         direction = DIRECTION_ESCALATING
     elif declining > escalating:
@@ -118,21 +163,13 @@ def derive_foresight(issue: IssueObject) -> ForesightProposal:
     else:
         direction = DIRECTION_STABLE
 
+    # --- 3. WATCH CONDITIONS & RECOMMENDATIONS ---
     watch_conditions = tuple(
         WatchCondition(
-            condition=(
-                f"{t.dimension.value} trajectory: current state '{t.trajectory_state}'"
-            ),
-            trigger=(
-                f"any transition away from '{t.trajectory_state}' "
-                f"observed for dimension {t.dimension.value}"
-            ),
+            condition=f"{t.dimension.value} trajectory: current state '{t.trajectory_state}'",
+            trigger=f"any transition away from '{t.trajectory_state}' for dimension {t.dimension.value}",
             observation_window="next scheduled review cycle",
-            falsification_condition=(
-                t.limitations[0]
-                if t.limitations
-                else "no falsification condition declared by analyst"
-            ),
+            falsification_condition=(t.limitations[0] if t.limitations else "no falsification condition declared"),
             basis_evidence_ids=tuple(t.evidence_ids),
         )
         for t in trajectories
@@ -140,32 +177,26 @@ def derive_foresight(issue: IssueObject) -> ForesightProposal:
 
     proposals: list[str] = []
     if level == RISK_HIGH:
-        proposals.append(
-            "ESCALATE_FOR_HUMAN_REVIEW: contradiction or gap threshold crossed"
-        )
+        proposals.append("ESCALATE_FOR_HUMAN_REVIEW: contradiction or gap threshold crossed")
     if direction == DIRECTION_ESCALATING:
-        proposals.append(
-            "INCREASE_MONITORING_FREQUENCY: escalating trajectory observed"
-        )
+        proposals.append("INCREASE_MONITORING_FREQUENCY: escalating trajectory observed")
+    
+    high_dimensions = [d.dimension for d in dim_risks if d.level == RISK_HIGH]
+    if high_dimensions:
+        proposals.append(f"FOCUS_EVIDENCE_GATHERING: high risk detected in dimensions {', '.join(high_dimensions)}")
+        
     if any(t.limitations for t in trajectories):
-        proposals.append(
-            "CLOSE_LIMITATION_GAP: at least one trajectory carries explicit limitations"
-        )
+        proposals.append("CLOSE_LIMITATION_GAP: at least one trajectory carries explicit limitations")
     if context_only:
-        proposals.append(
-            "TREAT_CONTEXT_ONLY_EVIDENCE_AS_NON_SUPPORTING: "
-            f"{len(context_only)} context-only items cannot back conclusions"
-        )
+        proposals.append(f"TREAT_CONTEXT_ONLY_EVIDENCE_AS_NON_SUPPORTING: {len(context_only)} context-only items")
+    
     if not proposals:
-        proposals.append(
-            "MAINTAIN_CURRENT_WATCH: no escalation or gap indicator above threshold"
-        )
+        proposals.append("MAINTAIN_CURRENT_WATCH: no escalation or gap indicator above threshold")
 
     rationale = (
-        f"Derived from {len(supporting)} supporting, "
-        f"{len(contradictory)} contradictory, {len(context_only)} context-only "
-        f"evidence items; {uncertainty_count} uncertainty notes; "
-        f"{gap_count} evidence gaps; {len(trajectories)} trajectory dimensions."
+        f"Derived from {len(supporting)} supporting, {len(contradictory)} contradictory, "
+        f"{len(context_only)} context-only items; {gap_count} evidence gaps; "
+        f"Highest dimension risk: {highest_dim_risk}."
     )
 
     return ForesightProposal(
@@ -176,6 +207,7 @@ def derive_foresight(issue: IssueObject) -> ForesightProposal:
             rationale=rationale,
             basis_evidence_ids=basis_evidence,
         ),
+        dimension_risks=tuple(dim_risks),
         watch_conditions=watch_conditions,
         recommendation_proposals=tuple(proposals),
         abstained=False,
