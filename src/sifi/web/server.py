@@ -186,6 +186,32 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             self._serve_cb22_observation(parse_qs(parsed.query))
         elif parsed.path == "/api/brief/readiness":
             self._serve_brief_readiness(parse_qs(parsed.query))
+
+        elif parsed.path == "/api/systemic-report":
+            try:
+                import sqlite3
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.analysis.cross_issue import analyze_systemic_risks
+
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                
+                # Ambil semua ID isu unik dari database
+                conn = sqlite3.connect(f"file:{self.server.paths.database}?mode=ro", uri=True)
+                rows = conn.execute("SELECT DISTINCT object_id FROM object_versions WHERE object_type='ISSUE'").fetchall()
+                conn.close()
+                
+                issues = []
+                for (issue_id,) in rows:
+                    persisted = repo.latest(issue_id)
+                    if persisted:
+                        issues.append(persisted.issue)
+                        
+                report = analyze_systemic_risks(issues)
+                self._send_json(HTTPStatus.OK, asdict(report))
+            except Exception as exc:
+                self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
         elif parsed.path.startswith("/api/foresight/"):
             issue_id = parsed.path[len("/api/foresight/"):]
             self._serve_foresight(issue_id)

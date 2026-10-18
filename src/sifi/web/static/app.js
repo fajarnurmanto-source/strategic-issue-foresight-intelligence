@@ -549,3 +549,36 @@ if (createIssueBtn) {
     }
   });
 }
+
+// ==========================================
+// FITUR SYSTEMIC ANALYSIS
+// ==========================================
+const fetchSystemicBtn = document.querySelector('#fetchSystemicBtn');
+if (fetchSystemicBtn) {
+  fetchSystemicBtn.addEventListener('click', async () => {
+    const resultDiv = document.querySelector('#systemicResult');
+    resultDiv.innerHTML = '<p>Memindai seluruh isu di database...</p>';
+    
+    try {
+      const res = await fetch('/api/systemic-report');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal mengambil laporan');
+      
+      let html = `<h3>Sistem memindai ${data.issues_analyzed} Isu</h3>`;
+      html += `<p><strong>Isu Berisiko Tinggi:</strong> ${data.high_risk_count}</p>`;
+      
+      if (data.systemic_alerts.length === 0) {
+        html += `<p style="color:green;">Tidak ada pola sistemik atau tumpang tindih bukti yang terdeteksi.</p>`;
+      } else {
+        html += `<h4>Peringatan Sistemik:</h4><ul>`;
+        data.systemic_alerts.forEach(alert => {
+          html += `<li><strong style="color:red;">${alert.alert_type}</strong>: ${alert.description}<br/><em>Isu Terkait: ${alert.involved_issue_ids.join(', ')}</em></li>`;
+        });
+        html += `</ul>`;
+      }
+      resultDiv.innerHTML = html;
+    } catch (err) {
+      resultDiv.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+    }
+  });
+}
