@@ -1134,25 +1134,57 @@ const WATCH_SYNONYMS = {
 function expandWatchTerms(query) {
     const q = String(query || '').toLowerCase().trim();
     if (!q) return [];
-    const terms = new Set([q]);
 
-    // Tambahkan varian per kata kunci yang cocok (substring dua arah)
-    Object.entries(WATCH_SYNONYMS).forEach(([key, syns]) => {
-        if (q.includes(key) || key.includes(q)) {
-            terms.add(key);
-            syns.forEach(s => terms.add(s));
+    // --- 1. Tokenize with phrase detection (longest-match first) ---
+    const phraseKeys = Object.keys(WATCH_SYNONYMS).sort((a, b) => b.length - a.length);
+    const units = [];
+    let remaining = q;
+    while (remaining.length > 0) {
+        remaining = remaining.replace(/^\s+/, '');
+        if (!remaining) break;
+
+        let matchedPhrase = null;
+        for (const key of phraseKeys) {
+            if (key.includes(' ') && remaining.startsWith(key)) {
+                matchedPhrase = key;
+                break;
+            }
         }
-    });
 
-    return Array.from(terms).filter(Boolean);
-}
-
-function matchesWatch(texts, terms) {
-    if (!terms || terms.length === 0) return true;
-    for (const t of terms) {
-        for (const text of texts) {
-            if (text && text.includes(t)) return true;
+        if (matchedPhrase) {
+            units.push(matchedPhrase);
+            remaining = remaining.slice(matchedPhrase.length);
+        } else {
+            const m = remaining.match(/^\S+/);
+            if (!m) break;
+            units.push(m[0]);
+            remaining = remaining.slice(m[0].length);
         }
     }
-    return false;
+
+    // --- 2. Expand each unit to a synonym group ---
+    return units.map(unit => {
+        const group = new Set([unit]);
+        for (const [key, syns] of Object.entries(WATCH_SYNONYMS)) {
+            if (key === unit || syns.includes(unit)) {
+                group.add(key);
+                syns.forEach(s => group.add(s));
+            } else if (!unit.includes(' ') && !key.includes(' ')
+                       && (key.includes(unit) || unit.includes(key))) {
+                group.add(key);
+                syns.forEach(s => group.add(s));
+            }
+        }
+        return Array.from(group).filter(Boolean);
+    });
+}
+
+function matchesWatch(texts, tokensExpanded) {
+    if (!tokensExpanded || tokensExpanded.length === 0) return true;
+    // AND across token groups: every group must have at least one match
+    return tokensExpanded.every(group => {
+        return group.some(term => {
+            return texts.some(text => text && text.includes(term));
+        });
+    });
 }
