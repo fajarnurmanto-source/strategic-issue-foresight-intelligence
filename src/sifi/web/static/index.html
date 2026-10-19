@@ -32,8 +32,15 @@
         ⚠️ SIMULATION MODE — Menampilkan Data Sintetis (Bukan Berita Dunia Nyata)
     </div>
     
-    <div class="top-bar">
+    <div class="top-bar" style="justify-content: space-between;">
       <div class="context-info">Konteks Isu Aktif: <strong id="activeIssueDisplay">-</strong></div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label for="globalWatchInput" style="color:var(--text-muted); font-size:0.85rem; font-weight:500;">Objek Pantauan:</label>
+        <input id="globalWatchInput" type="text" placeholder="misal: logistik, Jakarta, AUTO" 
+               style="padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--bg-body); color:var(--text-main); width:240px; outline:none;">
+        <button id="btnApplyWatch" style="padding:8px 14px; font-size:0.85rem;">Terapkan</button>
+        <button id="btnResetWatch" style="padding:8px 14px; background:#475569; font-size:0.85rem;">Reset</button>
+      </div>
     </div>
 
     <!-- VIEW: OVERVIEW -->

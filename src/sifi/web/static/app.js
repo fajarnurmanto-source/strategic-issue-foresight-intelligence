@@ -250,6 +250,7 @@ let allIssuesData = [];
 let liveStreamInterval = null;
 let lastTopIssueId = null;
 let activeRiskFilter = 'all';
+let globalWatchFilter = '';
 
 async function loadIssueList() {
   const container = document.getElementById('issueListContainer');
@@ -854,7 +855,12 @@ function renderIssueStream(animateNew = false) {
     const matchType = filterType === 'all' || type === filterType;
     const matchRisk = activeRiskFilter === 'all' || risk === activeRiskFilter;
     
-    return matchSearch && matchType && matchRisk;
+    const matchWatch = !globalWatchFilter.trim() ||
+      (title && String(title).toLowerCase().includes(globalWatchFilter.toLowerCase())) ||
+      (id && String(id).toLowerCase().includes(globalWatchFilter.toLowerCase())) ||
+      (type && String(type).toLowerCase().includes(globalWatchFilter.toLowerCase()));
+
+    return matchSearch && matchType && matchRisk && matchWatch;
   });
 
   // 2. Update Metrik (Berdasarkan data yang sedang difilter)
@@ -1005,5 +1011,92 @@ document.addEventListener('DOMContentLoaded', () => {
             if (f) f.value = 'all';
             if (typeof renderIssueStream === 'function') renderIssueStream();
         }, 200);
+    });
+});
+
+
+// === GLOBAL WATCH FILTER ===
+async function ensureIssuesLoaded() {
+    if (allIssuesData && allIssuesData.length > 0) return;
+    try {
+        const res = await fetch('/api/issues');
+        const data = await res.json();
+        if (Array.isArray(data)) allIssuesData = data;
+    } catch(e) { console.error('[WATCH] Gagal memuat isu:', e); }
+}
+
+function applyWatchToArray(issues) {
+    if (!globalWatchFilter.trim()) return issues;
+    const q = globalWatchFilter.toLowerCase();
+    return issues.filter(issue => {
+        const title = String(issue.title || '').toLowerCase();
+        const id = String(issue.id || '').toLowerCase();
+        const type = String(issue.type || '').toLowerCase();
+        return title.includes(q) || id.includes(q) || type.includes(q);
+    });
+}
+
+async function loadChart() {
+    await ensureIssuesLoaded();
+    const ctx = document.getElementById('riskChart');
+    if (!ctx) return;
+
+    const filtered = applyWatchToArray(allIssuesData);
+    const stats = { HIGH: 0, ELEVATED: 0, LOW: 0, INSUFFICIENT: 0 };
+    filtered.forEach(i => {
+        const r = i.risk || 'INSUFFICIENT';
+        if (stats[r] !== undefined) stats[r]++;
+    });
+
+    const label = document.getElementById('chartTitleLabel');
+    if (label) {
+        label.textContent = globalWatchFilter.trim()
+            ? `Distribusi Risiko — Objek Pantauan: "${globalWatchFilter}" (${filtered.length} isu)`
+            : `Distribusi Risiko (Seluruh Database, ${filtered.length} isu)`;
+    }
+
+    if (AppState.chartInstance) AppState.chartInstance.destroy();
+    AppState.chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['HIGH', 'ELEVATED', 'LOW', 'INSUFFICIENT'],
+            datasets: [{
+                data: [stats.HIGH, stats.ELEVATED, stats.LOW, stats.INSUFFICIENT],
+                backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#64748b'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } } }
+    });
+}
+
+function applyGlobalFilter() {
+    const input = document.getElementById('globalWatchInput');
+    if (!input) return;
+    globalWatchFilter = input.value.trim();
+
+    const activeView = document.querySelector('.view.active');
+    if (!activeView) return;
+
+    if (activeView.id === 'view-overview') {
+        loadChart();
+    } else if (activeView.id === 'view-issue-desk') {
+        if (typeof renderIssueStream === 'function') renderIssueStream();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnApply = document.getElementById('btnApplyWatch');
+    const btnReset = document.getElementById('btnResetWatch');
+    const input = document.getElementById('globalWatchInput');
+
+    if (btnApply) btnApply.addEventListener('click', applyGlobalFilter);
+    if (btnReset) btnReset.addEventListener('click', () => {
+        if (input) input.value = '';
+        globalWatchFilter = '';
+        applyGlobalFilter();
+    });
+    if (input) input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') applyGlobalFilter();
     });
 });
