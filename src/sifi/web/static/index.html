@@ -219,13 +219,14 @@
     <section id="view-dev-ingest" class="view">
       <h1>Developer: Ingestion & Worker</h1>
       <div class="panel">
-        <h3 style="margin-bottom: 15px;">1. Automated Feed</h3>
+        <h3 style="margin-bottom: 15px;">1. Automated Feed (Stress Test)</h3>
         <div class="input-group">
-          <button id="btnIngestFeed">Impor Feed Sintetis</button>
+          <button id="btnIngestFeed">Impor Feed Sintetis (Dummy)</button>
           <button id="btnToggleWorker" style="background:#ef4444;">Hentikan Simulasi</button>
         </div>
-        <h3 style="margin: 25px 0 15px;">2. Historical Crawling</h3>
+        <h3 style="margin: 25px 0 15px;">2. Historical Crawling (Simulasi Sintetis)</h3>
         <div class="input-group">
+          <p style="font-size: 0.75rem; color: var(--risk-elevated); margin-bottom: 5px;">*Fitur ini membuat data karangan pada rentang tanggal (bukan berita masa lalu asli).</p>
           <input type="date" id="devStartDate"> <span style="color:var(--text-muted);">s/d</span> <input type="date" id="devEndDate">
           <button id="btnHistorical" style="background:#f59e0b;">Tarik Historis</button>
         </div>
@@ -236,6 +237,14 @@
             <span style="font-size: 0.8rem; color: var(--text-muted);">*Tindakan ini akan menghapus data AUTO- dan HIST- secara permanen.</span>
         </div>
     
+        
+        <h3 style="margin: 25px 0 15px;">3. Live RSS Ingestion (Real Data)</h3>
+        <div class="input-group">
+          <input type="url" id="rssUrl" placeholder="https://example.com/rss" style="flex:1; min-width:300px;" value="https://news.google.com/rss/search?q=indonesia&hl=en-US&gl=US&ceid=US:en">
+          <button id="btnIngestRss" style="background:#9C27B0;">Tarik dari RSS (Live)</button>
+        </div>
+        <div id="rssMsg" style="margin-top: 15px; font-weight: bold;"></div>
+
         <div id="devIngestMsg" style="margin-top: 15px; font-weight: bold;"></div>
       </div>
     </section>

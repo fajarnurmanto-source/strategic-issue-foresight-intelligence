@@ -1481,3 +1481,170 @@ document.addEventListener('DOMContentLoaded', () => {
         initForesightFix();
     }
 })();
+
+// === RSS INGESTION ===
+const btnIngestRss = document.getElementById('btnIngestRss');
+if (btnIngestRss) {
+    btnIngestRss.addEventListener('click', async () => {
+        const url = document.getElementById('rssUrl').value.trim();
+        const msg = document.getElementById('rssMsg');
+        if (!url) return;
+        
+        msg.textContent = "Menarik dan menganalisis data live...";
+        msg.style.color = "#fff";
+        btnIngestRss.disabled = true;
+        
+        try {
+            const token = await getToken();
+            const res = await fetch('/api/ingest/rss', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json', 'X-SIFI-Token': token},
+                body: JSON.stringify({url: url})
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            
+            msg.textContent = `✅ Berhasil menarik & menganalisis ${data.ingested} berita live!`;
+            msg.style.color = "var(--risk-low)";
+            
+            // Arahkan ke Issue Desk dan filter ke RSS
+            setTimeout(() => {
+                document.getElementById('filterType').value = 'all'; 
+                document.getElementById('searchIssue').value = 'RSS-';
+                document.querySelector('[data-target="view-issue-desk"]').click();
+            }, 1000);
+            
+        } catch (e) {
+            msg.textContent = "Error: " + e.message;
+            msg.style.color = "var(--risk-high)";
+        } finally {
+            btnIngestRss.disabled = false;
+        }
+    });
+}
+
+
+
+// === PAGINATION OVERRIDE ===
+let currentPage = 1;
+const PAGE_SIZE = 50;
+
+function _paginationFilterSnapshot() {
+    var s = (document.getElementById('searchIssue') || {}).value || '';
+    var f = (document.getElementById('filterType') || {}).value || '';
+    var w = (typeof globalWatchFilter !== 'undefined') ? globalWatchFilter : '';
+    var r = (typeof activeRiskFilter !== 'undefined') ? activeRiskFilter : '';
+    return JSON.stringify({s: s, f: f, w: w, r: r});
+}
+var _lastFilterSnap = _paginationFilterSnapshot();
+
+function _getPager() {
+    var pager = document.getElementById('paginationControls');
+    if (!pager) {
+        pager = document.createElement('div');
+        pager.id = 'paginationControls';
+        pager.style.cssText = 'display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px; padding:15px; background: var(--bg-panel); border-radius: 8px; border: 1px solid var(--border);';
+        var cont = document.getElementById('issueListContainer');
+        if (cont && cont.parentElement) cont.parentElement.appendChild(pager);
+    }
+    return pager;
+}
+
+function _scrollFeedTop() {
+    var el = document.querySelector('.feed-area');
+    if (el) el.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function _updatePager(current, total, totalItems) {
+    var pager = _getPager();
+    if (!pager) return;
+    if (totalItems === 0) { pager.style.display = 'none'; return; }
+    pager.style.display = 'flex';
+    pager.innerHTML = '<button id="btnPrevPage" ' + (current <= 1 ? 'disabled' : '') + ' style="padding: 8px 16px; background: var(--accent); color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">&larr; Sebelumnya</button>'
+        + '<span style="color: var(--text-muted); font-size: 0.9rem;">Halaman <strong style="color: var(--text-main);">' + current + '</strong> dari <strong style="color: var(--text-main);">' + total + '</strong> &middot; ' + totalItems + ' isu</span>'
+        + '<button id="btnNextPage" ' + (current >= total ? 'disabled' : '') + ' style="padding: 8px 16px; background: var(--accent); color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Berikutnya &rarr;</button>';
+    var bp = document.getElementById('btnPrevPage');
+    var bn = document.getElementById('btnNextPage');
+    if (bp) bp.onclick = function() { if (currentPage > 1) { currentPage--; renderIssueStream(); _scrollFeedTop(); } };
+    if (bn) bn.onclick = function() { if (currentPage < total) { currentPage++; renderIssueStream(); _scrollFeedTop(); } };
+}
+
+function renderIssueStream(animateNew) {
+    animateNew = !!animateNew;
+    var container = document.getElementById('issueListContainer');
+    var searchEl = document.getElementById('searchIssue');
+    var filterEl = document.getElementById('filterType');
+    if (!container || !searchEl || !filterEl) return;
+
+    var snap = _paginationFilterSnapshot();
+    if (!animateNew && snap !== _lastFilterSnap) { currentPage = 1; _lastFilterSnap = snap; }
+
+    var query = searchEl.value.toLowerCase();
+    var filterType = filterEl.value;
+    var watchTerms = (typeof expandWatchTerms === 'function' && globalWatchFilter) ? expandWatchTerms(globalWatchFilter) : [];
+
+    var filtered = allIssuesData.filter(function(issue) {
+        var id = String(issue.id || '').toLowerCase();
+        var title = String(issue.title || '').toLowerCase();
+        var type = String(issue.type || '').toLowerCase();
+        var risk = issue.risk || '';
+        var domainStr = (issue.domain ? String(issue.domain) : '').toLowerCase();
+        var matchSearch = id.indexOf(query) !== -1 || title.indexOf(query) !== -1;
+        var matchType = filterType === 'all' || issue.type === filterType;
+        var matchRisk = (typeof activeRiskFilter === 'undefined' || activeRiskFilter === 'all') || risk === activeRiskFilter;
+        var matchWatch = true;
+        if (typeof matchesWatch === 'function' && watchTerms.length > 0) {
+            matchWatch = matchesWatch([title, id, type, domainStr], watchTerms);
+        }
+        return matchSearch && matchType && matchRisk && matchWatch;
+    });
+
+    var mTotal = document.getElementById('metricTotal');
+    var mHigh = document.getElementById('metricHigh');
+    var mElev = document.getElementById('metricElevated');
+    if (mTotal) mTotal.textContent = filtered.length;
+    if (mHigh) mHigh.textContent = filtered.filter(function(i){return i.risk === 'HIGH';}).length;
+    if (mElev) mElev.textContent = filtered.filter(function(i){return i.risk === 'ELEVATED';}).length;
+
+    var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding: 40px;">Tidak ada isu yang cocok dengan filter.</p>';
+        _updatePager(currentPage, totalPages, 0);
+        return;
+    }
+
+    container.innerHTML = '';
+    pageItems.forEach(function(issue, index) {
+        var div = document.createElement('div');
+        div.className = 'issue-card';
+        if (animateNew && (start + index) === 0 && issue.id !== lastTopIssueId) {
+            div.className = 'issue-card new-item';
+            lastTopIssueId = issue.id;
+        }
+        var badgeClass = 'badge-low';
+        if (issue.risk === 'HIGH') badgeClass = 'badge-high';
+        else if (issue.risk === 'ELEVATED') badgeClass = 'badge-elevated';
+        var domainBadge = issue.domain
+            ? '<span class="badge" style="background: rgba(139,195,74,0.15); color: var(--accent);">' + issue.domain + '</span>'
+            : '';
+        div.innerHTML = '<div class="issue-content"><h3>' + issue.title + '</h3>'
+            + '<div class="issue-meta">'
+            + '<span style="font-family: monospace;">' + issue.id + '</span>'
+            + '<span class="badge badge-source">' + issue.type + '</span>'
+            + domainBadge
+            + '</div></div>'
+            + '<div style="text-align: right;">'
+            + '<span class="badge ' + badgeClass + '">' + issue.risk + '</span>'
+            + '<div style="margin-top: 8px; color: var(--accent); font-weight: 600; font-size: 0.85rem;">Investigasi &rarr;</div>'
+            + '</div>';
+        div.onclick = (function(id){ return function(){ setIssueContext(id); }; })(issue.id);
+        container.appendChild(div);
+    });
+
+    _updatePager(currentPage, totalPages, filtered.length);
+}

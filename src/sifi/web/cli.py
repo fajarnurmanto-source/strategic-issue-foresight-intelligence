@@ -24,6 +24,8 @@ def main(argv: list[str] | None = None) -> int:
     LocalOperations(args.root).initialize()
     server = create_local_server(args.root, port=args.port)
     worker = IngestionWorker(server.paths.database)
+    server.worker = worker
+    worker = IngestionWorker(server.paths.database)
     worker.start()
     server.worker = worker
     print('🤖 Background Worker Aktif!')

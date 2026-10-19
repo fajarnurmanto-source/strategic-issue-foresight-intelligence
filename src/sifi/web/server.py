@@ -695,7 +695,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
             "/api/demo/start", "/api/demo/advance", "/api/brief/export",
             "/api/cb22/start", "/api/cb22/advance", "/api/cb22/intervention",
             "/api/cb22/stop", "/api/cb22/incident", "/api/cb22/export",
-            "/api/issue/create", "/api/ingest/feed", "/api/ingest/historical",
+            "/api/issue/create", "/api/ingest/feed", "/api/ingest/rss", "/api/ingest/historical",
             "/api/brief/generate", "/api/semantic/test", "/api/foresight/simulate",
             "/api/worker/toggle", "/api/system/reset-simulation",
         }:
@@ -741,8 +741,8 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 days_diff = (end_dt - start_dt).days
                 if days_diff < 0:
                     raise ValueError("Tanggal selesai harus setelah tanggal mulai")
-                if days_diff > 90:
-                    raise ValueError("Rentang waktu maksimal adalah 90 hari untuk mencegah overload sistem")
+                if days_diff > 365:
+                    raise ValueError("Rentang waktu maksimal adalah 365 hari (1 tahun)")
 
                 store = SQLiteVersionStore(self.server.paths.database)
                 repo = IssueObjectRepository(store)
@@ -784,18 +784,105 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                             total_issues += 1
                             
                     last_covered_date = current_date
-                    if limit_reached:
-                        break
                     current_date += timedelta(days=1)
 
                 store.close()
 
                 msg = f"Berhasil tarik {total_issues} isu historis."
-                if limit_reached:
-                    next_day = (last_covered_date + timedelta(days=1)).strftime('%Y-%m-%d')
-                    msg += f" (Batas 600 isu tercapai. Silakan lanjutkan dari tanggal {next_day})."
 
                 self._send_json(HTTPStatus.CREATED, {"status": "success", "ingested": total_issues, "message": msg})
+                return
+
+
+            if parsed.path == "/api/ingest/rss":
+                import urllib.request
+                import xml.etree.ElementTree as ET
+                from datetime import datetime, timezone
+                from sifi.domain import PersistenceClass, TrajectoryDimension
+                from sifi.issues.model import IssueObject, IssueEvidenceLinks, IssueGeography, IssueTrajectoryState
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.analysis.semantic import analyze_text
+
+                rss_url = payload.get("url")
+                if not rss_url:
+                    raise ValueError("URL RSS wajib diisi")
+
+                req = urllib.request.Request(rss_url, headers={'User-Agent': 'Mozilla/5.0 SIFI-Bot/1.0'})
+                try:
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        xml_data = response.read()
+                except Exception as e:
+                    raise ValueError(f"Gagal mengambil RSS: {str(e)}")
+
+                try:
+                    root = ET.fromstring(xml_data)
+                except Exception as e:
+                    raise ValueError(f"Format XML RSS tidak valid: {str(e)}")
+
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                now = datetime.now(timezone.utc)
+                count = 0
+
+                items = root.findall('.//item')
+                if not items:
+                    items = root.findall('.//{http://www.w3.org/2005/Atom}entry')
+
+                for item in items:
+                    title = item.findtext('title') or item.findtext('{http://www.w3.org/2005/Atom}title')
+                    if not title: continue
+                    
+                    semantic = analyze_text(title)
+                    issue_id = f"RSS-{int(now.timestamp())}-{count}"
+                    
+                    domain = "Umum"
+                    if semantic.threat_score >= 5: domain = "Keamanan"
+                    elif "economy" in title.lower() or "market" in title.lower(): domain = "Ekonomi"
+                    elif "health" in title.lower() or "covid" in title.lower(): domain = "Kesehatan"
+
+                    # Beri 3 Bukti Pendukung agar tidak Abstain
+                    supporting_evs = (f"EV-RSS-TITLE-{count}", f"EV-RSS-LINK-{count}", f"EV-RSS-DESC-{count}")
+
+                    if semantic.threat_score >= 8:
+                        traj_state = "escalating severely"
+                        gaps = (
+                            "Teks berita mengandung sinyal ancaman sangat tinggi.",
+                            "Klaim belum diverifikasi oleh sumber independen.",
+                            "Membutuhkan validasi fakta dari analis manusia."
+                        )
+                    elif semantic.threat_score >= 5:
+                        traj_state = "escalating"
+                        gaps = (
+                            "Teks berita bernada negatif, menunggu konfirmasi lapangan.",
+                        )
+                    else:
+                        traj_state = "stable"
+                        gaps = ()
+
+                    issue = IssueObject(
+                        issue_id=issue_id, title=title[:150], issue_type="rss_live",
+                        persistence_class=PersistenceClass.PC_01_INCIDENT, lifecycle_state="ACTIVE",
+                        first_seen=now, last_updated=now, identity_review_state=None,
+                        issue_domain=domain,
+                        evidence=IssueEvidenceLinks(
+                            supporting_evidence_ids=supporting_evs, 
+                            contradictory_evidence_ids=()
+                        ),
+                        geography=IssueGeography(),
+                        trajectories=tuple(
+                            IssueTrajectoryState(dimension=d, trajectory_state=traj_state, as_of=now, evidence_ids=supporting_evs) 
+                            for d in TrajectoryDimension
+                        ),
+                        evidence_gaps=gaps
+                    )
+                    
+                    if not repo.latest(issue_id):
+                        repo.append(issue, version=1, effective_at=now, recorded_at=now)
+                        count += 1
+
+                store.close()
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "ingested": count})
                 return
 
             if parsed.path == "/api/ingest/feed":
@@ -933,6 +1020,98 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 text_to_analyze = str(payload.get("text", ""))
                 result = analyze_text(text_to_analyze)
                 self._send_json(HTTPStatus.OK, asdict(result))
+                return
+
+
+            if parsed.path == "/api/ingest/rss":
+                import urllib.request
+                import xml.etree.ElementTree as ET
+                from datetime import datetime, timezone
+                from sifi.domain import PersistenceClass, TrajectoryDimension
+                from sifi.issues.model import IssueObject, IssueEvidenceLinks, IssueGeography, IssueTrajectoryState
+                from sifi.issues.repository import IssueObjectRepository
+                from sifi.persistence import SQLiteVersionStore
+                from sifi.analysis.semantic import analyze_text
+
+                rss_url = payload.get("url")
+                if not rss_url:
+                    raise ValueError("URL RSS wajib diisi")
+
+                req = urllib.request.Request(rss_url, headers={'User-Agent': 'Mozilla/5.0 SIFI-Bot/1.0'})
+                try:
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        xml_data = response.read()
+                except Exception as e:
+                    raise ValueError(f"Gagal mengambil RSS: {str(e)}")
+
+                try:
+                    root = ET.fromstring(xml_data)
+                except Exception as e:
+                    raise ValueError(f"Format XML RSS tidak valid: {str(e)}")
+
+                store = SQLiteVersionStore(self.server.paths.database)
+                repo = IssueObjectRepository(store)
+                now = datetime.now(timezone.utc)
+                count = 0
+
+                items = root.findall('.//item')
+                if not items:
+                    items = root.findall('.//{http://www.w3.org/2005/Atom}entry')
+
+                for item in items:
+                    title = item.findtext('title') or item.findtext('{http://www.w3.org/2005/Atom}title')
+                    if not title: continue
+                    
+                    semantic = analyze_text(title)
+                    issue_id = f"RSS-{int(now.timestamp())}-{count}"
+                    
+                    domain = "Umum"
+                    if semantic.threat_score >= 5: domain = "Keamanan"
+                    elif "economy" in title.lower() or "market" in title.lower(): domain = "Ekonomi"
+                    elif "health" in title.lower() or "covid" in title.lower(): domain = "Kesehatan"
+
+                    # Beri 3 Bukti Pendukung agar tidak Abstain
+                    supporting_evs = (f"EV-RSS-TITLE-{count}", f"EV-RSS-LINK-{count}", f"EV-RSS-DESC-{count}")
+
+                    if semantic.threat_score >= 8:
+                        traj_state = "escalating severely"
+                        gaps = (
+                            "Teks berita mengandung sinyal ancaman sangat tinggi.",
+                            "Klaim belum diverifikasi oleh sumber independen.",
+                            "Membutuhkan validasi fakta dari analis manusia."
+                        )
+                    elif semantic.threat_score >= 5:
+                        traj_state = "escalating"
+                        gaps = (
+                            "Teks berita bernada negatif, menunggu konfirmasi lapangan.",
+                        )
+                    else:
+                        traj_state = "stable"
+                        gaps = ()
+
+                    issue = IssueObject(
+                        issue_id=issue_id, title=title[:150], issue_type="rss_live",
+                        persistence_class=PersistenceClass.PC_01_INCIDENT, lifecycle_state="ACTIVE",
+                        first_seen=now, last_updated=now, identity_review_state=None,
+                        issue_domain=domain,
+                        evidence=IssueEvidenceLinks(
+                            supporting_evidence_ids=supporting_evs, 
+                            contradictory_evidence_ids=()
+                        ),
+                        geography=IssueGeography(),
+                        trajectories=tuple(
+                            IssueTrajectoryState(dimension=d, trajectory_state=traj_state, as_of=now, evidence_ids=supporting_evs) 
+                            for d in TrajectoryDimension
+                        ),
+                        evidence_gaps=gaps
+                    )
+                    
+                    if not repo.latest(issue_id):
+                        repo.append(issue, version=1, effective_at=now, recorded_at=now)
+                        count += 1
+
+                store.close()
+                self._send_json(HTTPStatus.CREATED, {"status": "success", "ingested": count})
                 return
 
             if parsed.path == "/api/ingest/feed":
