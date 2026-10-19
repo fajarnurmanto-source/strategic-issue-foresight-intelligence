@@ -41,19 +41,19 @@ def _decision() -> AdmissionDecision:
 
 def demo_context(analyst_id: str = "DEMO-ANALYST") -> AnalystCaseContext:
     issue = IssueObject(
-        issue_id="DEMO-ISSUE-001",
-        title="Contoh isu sintetis untuk eksplorasi lokal",
-        issue_type="SYNTHETIC_DEMONSTRATION",
+        issue_id="CB22-ISSUE-001",
+        title="Synthetic regional logistics continuity signal",
+        issue_type="SYNTHETIC_CB22",
         persistence_class=PersistenceClass("PC-01"),
         lifecycle_state="ACTIVE",
         first_seen=DEMO_BASE - timedelta(days=2),
         last_updated=DEMO_BASE,
         identity_review_state="REVIEWED_SYNTHETIC",
         evidence=IssueEvidenceLinks(
-            supporting_evidence_ids=("DEMO-EV-001", "DEMO-EV-002"),
-            contradictory_evidence_ids=("DEMO-EV-C01",),
-            context_only_evidence_ids=("DEMO-EV-X01",),
-            excluded_production_evidence_ids=("DEMO-EV-Z101",),
+            supporting_evidence_ids=("CB22-EV-001", "CB22-EV-002"),
+            contradictory_evidence_ids=("CB22-EV-C01",),
+            context_only_evidence_ids=("CB22-EV-X01",),
+            excluded_production_evidence_ids=("CB22-EV-Z101",),
         ),
         geography=IssueGeography(
             source_geography=("ID-SYNTHETIC",),
@@ -61,14 +61,14 @@ def demo_context(analyst_id: str = "DEMO-ANALYST") -> AnalystCaseContext:
             affected_geography=("ID-SYNTHETIC",),
             policy_jurisdiction=("ID-SYNTHETIC",),
             relevance_geography=("ID-SYNTHETIC",),
-            coverage_profile_id="DEMO-COVERAGE-001",
+            coverage_profile_id="CB22-COVERAGE-001",
         ),
         trajectories=tuple(
             IssueTrajectoryState(
                 dimension=dimension,
                 trajectory_state="SYNTHETIC_BOUNDED",
                 as_of=DEMO_BASE,
-                evidence_ids=("DEMO-EV-001",),
+                evidence_ids=("CB22-EV-001",),
             )
             for dimension in TrajectoryDimension
         ),
@@ -80,13 +80,13 @@ def demo_context(analyst_id: str = "DEMO-ANALYST") -> AnalystCaseContext:
     )
     decision = _decision()
     return AnalystCaseContext(
-        task_id="DEMO-TASK-001",
+        task_id="CB22-TASK-v1.0",
         analyst_id=analyst_id,
         issue=issue,
         issue_version=1,
-        coverage_profile_id="DEMO-COVERAGE-001",
+        coverage_profile_id="CB22-COVERAGE-001",
         coverage_limitations=("Cakupan sintetis; bukan monitoring produksi.",),
-        evidence_decisions=(("DEMO-EV-001", decision), ("DEMO-EV-002", decision)),
+        evidence_decisions=(("CB22-EV-001", decision), ("CB22-EV-002", decision)),
         analytical_cutoff=DEMO_BASE,
     )
 
@@ -121,7 +121,7 @@ def seed_local_demo(root: str | Path) -> LocalDemoResult:
                 "Ringkasan demonstrasi analitis berbasis bukti sintetis. "
                 "Tidak boleh digunakan sebagai klaim faktual atau tindakan produksi."
             ),
-            brief_evidence_refs=("DEMO-EV-001", "DEMO-EV-002"),
+            brief_evidence_refs=("CB22-EV-001", "CB22-EV-002"),
             historical_cutoff=DEMO_BASE - timedelta(hours=1),
         )
     return LocalDemoResult(DEMO_SESSION_ID, DEMO_BRIEF_ID, created=True)

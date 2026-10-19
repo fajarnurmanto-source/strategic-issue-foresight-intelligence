@@ -1188,3 +1188,179 @@ function matchesWatch(texts, tokensExpanded) {
         });
     });
 }
+
+
+// === CB22 STUDY MODE ===
+const CB22_WORKFLOW_STEPS = {
+  'WF-01': { name: 'Inspeksi cakupan', desc: 'Tinjau profil cakupan dan keterbatasan skenario.', views: ['Issue Desk'] },
+  'WF-02': { name: 'Tinjau sinyal yang diterima', desc: 'Pastikan hanya bukti yang memenuhi keputusan hak digunakan.', views: ['Issue Desk', 'Foresight'] },
+  'WF-03': { name: 'Inspeksi Issue persisten', desc: 'Tinjau identitas dan versi Issue tanpa membuat identitas otomatis.', views: ['Issue Desk'] },
+  'WF-04': { name: 'Bukti dan kontradiksi', desc: 'Periksa dukungan, kontradiksi, konteks, dan pengecualian secara terpisah.', views: ['Issue Workspace (Pemeriksaan Bukti)'] },
+  'WF-05': { name: 'Relevansi geografis', desc: 'Periksa seluruh dimensi geografi tanpa menggabungkannya.', views: ['Issue Workspace'] },
+  'WF-06': { name: 'Ketidakpastian', desc: 'Catat ketidakpastian, gap bukti, dan keterbatasan.', views: ['Issue Workspace'] },
+  'WF-07': { name: 'Trajektori', desc: 'Periksa setiap dimensi trajektori secara terpisah.', views: ['Foresight & Risiko'] },
+  'WF-08': { name: 'Koreksi berotoritas', desc: 'Pastikan koreksi memerlukan kewenangan manusia eksplisit.', views: ['Developer / Sistem'] },
+  'WF-09': { name: 'Prioritisasi kandidat', desc: 'Gunakan materialitas terbatas, bukan perhatian semata.', views: ['Foresight & Risiko'] },
+  'WF-10': { name: 'Brief berbasis bukti', desc: 'Pastikan setiap pernyataan terhubung ke bukti yang diterima.', views: ['Dokumen Brief'] },
+  'WF-11': { name: 'Penelusuran historis', desc: 'Periksa keadaan pada cutoff waktu eksplisit.', views: ['Issue Workspace'] }
+};
+const CB22_STEP_ORDER = Object.keys(CB22_WORKFLOW_STEPS);
+
+const cb22State = {
+  sessionId: null,
+  analystId: null,
+  currentStepIdx: 0,
+  lastResponse: null
+};
+
+function _cb22UpdateDebug(data) {
+  const el = document.getElementById('cb22Debug');
+  if (el) el.textContent = JSON.stringify(data, null, 2);
+  cb22State.lastResponse = data;
+}
+
+function _cb22ShowView(which) {
+  const setup = document.getElementById('cb22Setup');
+  const progress = document.getElementById('cb22Progress');
+  const complete = document.getElementById('cb22Complete');
+  if (!setup || !progress || !complete) return;
+  setup.hidden = which !== 'setup';
+  progress.hidden = which !== 'progress';
+  complete.hidden = which !== 'complete';
+}
+
+function _cb22RenderStep(idx) {
+  if (idx >= CB22_STEP_ORDER.length) return;
+  const code = CB22_STEP_ORDER[idx];
+  const step = CB22_WORKFLOW_STEPS[code];
+
+  document.getElementById('cb22StepCounter').textContent = `${idx + 1} / 11`;
+  document.getElementById('cb22StepName').textContent = `${code} — ${step.name}`;
+  document.getElementById('cb22StepDesc').textContent = step.desc;
+  document.getElementById('cb22ProgressBar').style.width = `${((idx) / 11) * 100}%`;
+  document.getElementById('cb22StepViews').textContent = step.views.join(', ');
+}
+
+async function cb22StartSession() {
+  const analystId = document.getElementById('cb22AnalystId').value.trim();
+  if (!/^P-0\d{2}$/.test(analystId)) {
+    alert('Participant code harus format P-001 s/d P-099 (pseudonym).');
+    return;
+  }
+
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/demo/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
+      body: JSON.stringify({analyst_id: analystId})
+    });
+    const data = await res.json();
+    _cb22UpdateDebug(data);
+
+    if (!res.ok) throw new Error(data.error || data.message || 'Gagal memulai sesi');
+
+    const sessionId = data.session_id || data.session?.session_id || data.session?.sessionId || data.sessionId;
+    if (!sessionId) throw new Error('Response tidak mengandung session_id. Lihat Debug.');
+
+    cb22State.sessionId = sessionId;
+    cb22State.analystId = analystId;
+    cb22State.currentStepIdx = 0;
+
+    document.getElementById('cb22SessionId').textContent = sessionId;
+    _cb22ShowView('progress');
+    _cb22RenderStep(0);
+  } catch (e) {
+    alert('Gagal: ' + e.message);
+  }
+}
+
+async function cb22AdvanceSession() {
+  if (!cb22State.sessionId) return;
+  const note = document.getElementById('cb22Note').value;
+
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/demo/advance', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-SIFI-Token': token},
+      body: JSON.stringify({
+        session_id: cb22State.sessionId,
+        analyst_id: cb22State.analystId,
+        note: note || ''
+      })
+    });
+    const data = await res.json();
+    _cb22UpdateDebug(data);
+
+    if (!res.ok) throw new Error(data.error || data.message || 'Gagal advance');
+
+    const session = data.session || data;
+    // next_step ada di TOP-LEVEL response, bukan di dalam session
+    const nextStep = data.next_step ?? session.next_step;
+    // Completion eksplisit dari session.completed_at
+    const isComplete = Boolean(session.completed_at || data.completed_at);
+    // brief ada di top-level `data.brief` (objek lengkap) saat complete
+    const briefId =
+      (data.brief && data.brief.brief_id) ||
+      data.brief_id ||
+      session.brief_id ||
+      null;
+
+    document.getElementById('cb22Note').value = '';
+
+    if (isComplete) {
+      // Brief ID: jika server tidak mengirim, prediksi berdasarkan konvensi
+      let resolvedBriefId = briefId;
+      if (!resolvedBriefId && cb22State.sessionId) {
+        resolvedBriefId = 'BRIEF-' + cb22State.sessionId;
+      }
+      document.getElementById('cb22FinalSession').textContent = cb22State.sessionId;
+      document.getElementById('cb22FinalBrief').textContent = resolvedBriefId || '(tidak ditemukan — cek /api/session)';
+      document.getElementById('cb22InspectCmd').textContent =
+        `curl -s "http://127.0.0.1:8765/api/session?id=${cb22State.sessionId}" | python3 -m json.tool`;
+      _cb22ShowView('complete');
+      return;
+    }
+
+    if (!nextStep) {
+      alert('Server tidak mengirim next_step tetapi sesi belum complete. Cek Debug.');
+      return;
+    }
+
+    const idx = CB22_STEP_ORDER.indexOf(nextStep);
+    cb22State.currentStepIdx = idx >= 0 ? idx : cb22State.currentStepIdx + 1;
+    _cb22RenderStep(cb22State.currentStepIdx);
+  } catch (e) {
+    alert('Gagal advance: ' + e.message);
+  }
+}
+
+function cb22Reset() {
+  cb22State.sessionId = null;
+  cb22State.analystId = null;
+  cb22State.currentStepIdx = 0;
+  cb22State.lastResponse = null;
+  const note = document.getElementById('cb22Note');
+  const debug = document.getElementById('cb22Debug');
+  if (note) note.value = '';
+  if (debug) debug.textContent = '';
+  _cb22ShowView('setup');
+}
+
+function cb22Abort() {
+  if (!confirm('Batalkan sesi ini? Sesi yang dibatalkan tidak dapat dilanjutkan.')) return;
+  cb22Reset();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const startBtn = document.getElementById('cb22StartBtn');
+  const advanceBtn = document.getElementById('cb22AdvanceBtn');
+  const resetBtn = document.getElementById('cb22ResetBtn');
+  const abortBtn = document.getElementById('cb22AbortBtn');
+
+  if (startBtn) startBtn.addEventListener('click', cb22StartSession);
+  if (advanceBtn) advanceBtn.addEventListener('click', cb22AdvanceSession);
+  if (resetBtn) resetBtn.addEventListener('click', cb22Reset);
+  if (abortBtn) abortBtn.addEventListener('click', cb22Abort);
+});
