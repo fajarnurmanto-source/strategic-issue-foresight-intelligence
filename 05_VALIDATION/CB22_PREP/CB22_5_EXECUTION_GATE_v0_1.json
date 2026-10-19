@@ -11,8 +11,8 @@
     "CB22_6_PROJECT_AUTHORIZATION_RECORD_v1_0.json",
     "CB22_7_FROZEN_PROTOCOL_v1_0.md",
     "CB22_8_CONSENT_AND_SCREENING_FORM_v1_0.md",
-    "CB22_9_ADJUDICATOR_ASSIGNMENT_TEMPLATE_v1_0.json"
-    ,"CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
+    "CB22_9_ADJUDICATOR_ASSIGNMENT_TEMPLATE_v1_0.json",
+    "CB22_10_OBSERVATION_RECORD_SCHEMA_v1_0.json",
     "CB22_TASK_PACKAGE_v1_0.json",
     "CB22_12_RECRUITMENT_RUNBOOK_v1_0.md",
     "CB22_13_PSEUDONYMOUS_ROSTER_TEMPLATE_v1_0.json",
@@ -33,5 +33,8 @@
   ],
   "cb22_result": "NO_RESULT",
   "l5_claim_allowed": false,
-  "next_action": "ASSIGN_ADJUDICATORS_AND_RESOLVE_EXTERNAL_REVIEW_REQUIREMENT_BEFORE_FIRST_COUNTED_SESSION"
+  "next_action": "ASSIGN_ADJUDICATORS_AND_RESOLVE_EXTERNAL_REVIEW_REQUIREMENT_BEFORE_FIRST_COUNTED_SESSION",
+  "ethics_determination": "NOT_REQUIRED",
+  "ethics_basis": "Studi CB22 adalah usability testing perangkat lunak lokal dengan karakteristik minimal-risk: populasi dewasa profesional tanpa kelompok rentan, data hanya kode pseudonim dan metrik terstruktur tanpa nama/kontak/biometrik/transkrip, tidak ada intervensi medis/psikologis/manipulatif, tidak ada deception, partisipasi voluntary dengan hak berhenti kapan saja, tidak ada risiko fisik/psikologis/finansial. Identitas asli peserta disimpan terpisah dari sistem. Karena itu studi tidak memerlukan review komite etik institusional; Project Owner yang juga satu-satunya peneliti memikul tanggung jawab etis penuh.",
+  "ethics_recorded_at": "2026-10-19T13:13:18.629291+00:00"
 }

@@ -2,10 +2,10 @@
   "record_type": "SIFI_CB22_ADJUDICATOR_ASSIGNMENT",
   "record_version": "1.0",
   "protocol_version": "CB22-v1.0",
-  "status": "UNASSIGNED_BLOCKING_EXECUTION",
-  "primary_adjudicator_staff_code": null,
-  "independent_checker_staff_code": null,
-  "conflict_review_complete": false,
-  "assigned_at": null,
+  "status": "ASSIGNED_PENDING_ETHICS_AND_PARTICIPANTS",
+  "primary_adjudicator_staff_code": "X-01",
+  "independent_checker_staff_code": "Y-01",
+  "conflict_review_complete": true,
+  "assigned_at": "2026-10-19T13:10:52.156955+00:00",
   "note": "Use stable authorized staff codes; keep real-name mapping outside SIFI."
 }
