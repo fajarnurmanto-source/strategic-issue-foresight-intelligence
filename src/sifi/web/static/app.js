@@ -1364,3 +1364,120 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resetBtn) resetBtn.addEventListener('click', cb22Reset);
   if (abortBtn) abortBtn.addEventListener('click', cb22Abort);
 });
+
+
+// === FORESIGHT DEFINITIVE FIX ===
+// Ganti semua listener lama dengan satu handler yang pasti bekerja.
+(function () {
+    const initForesightFix = () => {
+        const oldBtn = document.getElementById('btnForesight');
+        if (!oldBtn || oldBtn.dataset.definitiveFix === 'true') return;
+
+        // Clone untuk membuang semua listener lama
+        const newBtn = oldBtn.cloneNode(true);
+        newBtn.dataset.definitiveFix = 'true';
+        oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+        newBtn.addEventListener('click', async () => {
+            const input = document.getElementById('inputForesight');
+            const out = document.getElementById('resultForesight');
+            if (!input || !out) return;
+
+            let id = input.value.trim();
+
+            // Auto-fill jika kosong — CB22 default
+            if (!id) {
+                id = 'CB22-ISSUE-001';
+                input.value = id;
+            }
+
+            out.innerHTML = "<p style='color:var(--text-muted);'>Menganalisis " + id + "...</p>";
+            newBtn.disabled = true;
+            newBtn.textContent = 'Memproses...';
+
+            try {
+                const res = await fetch(`/api/foresight/${encodeURIComponent(id)}`);
+                let data = {};
+                try { data = await res.json(); } catch (_) {}
+
+                if (!res.ok) {
+                    out.innerHTML = `<div class="panel" style="border-left:4px solid var(--risk-high);">
+                        <p style="color:var(--risk-high); font-weight:bold;">Analisis gagal (HTTP ${res.status})</p>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">ID yang dicari: <code>${id}</code></p>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">Detail: ${data.error || 'tidak ada'}</p>
+                    </div>`;
+                    return;
+                }
+
+                if (data.abstained) {
+                    out.innerHTML = `<div class="panel" style="border-left:4px solid var(--risk-elevated);">
+                        <h3 style="color:var(--risk-elevated);">Analisis Ditunda (Insufficient Data)</h3>
+                        <ul>${(data.abstention_reasons || []).map(r => `<li>${r}</li>`).join('')}</ul>
+                    </div>`;
+                    return;
+                }
+
+                const level = (data.risk && data.risk.level) || 'UNKNOWN';
+                const direction = (data.risk && data.risk.direction) || 'UNKNOWN';
+                const rationale = (data.risk && data.risk.rationale) || '';
+                const recs = data.recommendation_proposals || [];
+                const watches = data.watch_conditions || [];
+
+                let badgeClass = 'badge-low';
+                if (level === 'HIGH') badgeClass = 'badge-high';
+                else if (level === 'ELEVATED') badgeClass = 'badge-elevated';
+
+                let html = `
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                        <div>
+                            <div class="panel" style="text-align: center;">
+                                <p style="color:var(--text-muted); text-transform:uppercase; font-size:0.75rem; letter-spacing:1px;">Tingkat Risiko</p>
+                                <h1 class="badge ${badgeClass}" style="font-size: 2rem; display: inline-block; margin: 15px 0; padding: 10px 20px;">${level}</h1>
+                                <p style="color:var(--text-muted); font-size:0.85rem;">Arah: <strong style="color:var(--text-main);">${direction}</strong></p>
+                            </div>
+                            <div class="panel">
+                                <h3 style="margin-bottom:10px; color:var(--accent);">Rekomendasi</h3>
+                                ${recs.length ? recs.map(r => `<div style="background:var(--bg-body); padding:10px; border-radius:4px; margin-bottom:8px; font-size:0.85rem; border-left:3px solid var(--accent);">${r}</div>`).join('') : '<p style="color:var(--text-muted);">Tidak ada rekomendasi.</p>'}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="panel">
+                                <h3 style="margin-bottom:10px;">Rationale</h3>
+                                <p style="color:var(--text-muted); line-height:1.6;">${rationale || '(tidak ada)'}</p>
+                            </div>
+                            <div class="panel" style="border-left:4px solid var(--risk-elevated);">
+                                <h3 style="margin-bottom:10px; color:var(--risk-elevated);">Watch Conditions</h3>
+                                ${watches.length ? watches.map(w => `<div style="background:var(--bg-body); padding:10px; border-radius:4px; margin-bottom:8px; font-size:0.85rem;"><strong>${w.condition}</strong><br><span style="color:var(--text-muted);">Trigger: ${w.trigger}</span></div>`).join('') : '<p style="color:var(--text-muted);">Tidak ada watch conditions.</p>'}
+                            </div>
+                        </div>
+                    </div>`;
+                out.innerHTML = html;
+            } catch (e) {
+                out.innerHTML = `<div class="panel" style="border-left:4px solid var(--risk-high);"><p style="color:var(--risk-high);">Error jaringan: ${e.message}</p></div>`;
+            } finally {
+                newBtn.disabled = false;
+                newBtn.textContent = 'Analisis Isu';
+            }
+        });
+
+        // Auto-fill saat Foresight view aktif dan input kosong
+        const view = document.getElementById('view-foresight');
+        if (view) {
+            const observer = new MutationObserver(() => {
+                if (view.classList.contains('active')) {
+                    const input = document.getElementById('inputForesight');
+                    if (input && !input.value.trim()) {
+                        input.value = 'CB22-ISSUE-001';
+                    }
+                }
+            });
+            observer.observe(view, { attributes: true, attributeFilter: ['class'] });
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initForesightFix);
+    } else {
+        initForesightFix();
+    }
+})();
