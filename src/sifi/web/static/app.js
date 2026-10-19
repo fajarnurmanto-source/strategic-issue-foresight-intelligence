@@ -333,6 +333,9 @@ document.getElementById('filterType').addEventListener('change', renderIssueStre
 document.getElementById('btnForesight').addEventListener('click', async () => {
   const id = document.getElementById('inputForesight').value.trim();
   const out = document.getElementById('resultForesight');
+  const self = document.getElementById('btnForesight');
+  const originalLabel = self ? self.textContent : 'Analisis Isu';
+  if (self) { self.textContent = 'Memproses...'; self.disabled = true; }
   if (!id) return;
   out.innerHTML = "<p style='color:var(--text-muted);'>Menganalisis...</p>";
   
@@ -408,6 +411,8 @@ document.getElementById('btnForesight').addEventListener('click', async () => {
     out.innerHTML = html;
   } catch (e) { 
       out.innerHTML = `<div class="panel" style="border-left: 4px solid var(--risk-high);"><p style="color:var(--risk-high);">Error: ${e.message}</p></div>`; 
+  } finally {
+      if (self) { self.textContent = originalLabel; self.disabled = false; }
   }
 });
 
@@ -736,7 +741,7 @@ async function buildNarrative(issueId) {
                 <ul style="color:#10b981; font-size:1.1rem; font-weight:bold;">
                     ${data.recommendation_proposals.map(rec => `<li>${rec}</li>`).join('')}
                 </ul>
-                <button onclick="document.getElementById('btnExitNarrative').click();" style="margin-top: 20px;">Kembali ke Operational Workspace</button>
+                <button id="btnExitNarrativeInline" type="button" style="margin-top: 20px;">Kembali ke Operational Workspace</button>
             </div>
         `;
         container.innerHTML = html;
@@ -896,3 +901,109 @@ function renderIssueStream(animateNew = false) {
     container.appendChild(div);
   });
 }
+
+
+// === SAFE UX FIX B/C/D ===
+// Pendekatan: event delegation, tidak mengubah kode lama.
+document.addEventListener('DOMContentLoaded', () => {
+
+    // FIX B: tombol di card narasi (yang di dalam #narrativeContent)
+    const narrativeContainer = document.getElementById('narrativeContent');
+    if (narrativeContainer) {
+        narrativeContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' &&
+                e.target.textContent.includes('Operational Workspace')) {
+                const exitBtn = document.getElementById('btnExitNarrative');
+                if (exitBtn) exitBtn.click();
+            }
+        });
+    }
+
+    // FIX C: label tombol Analisis Isu saat loading
+    const btnForesight = document.getElementById('btnForesight');
+    if (btnForesight) {
+        btnForesight.addEventListener('click', () => {
+            btnForesight.textContent = 'Memproses...';
+            setTimeout(() => { btnForesight.textContent = 'Analisis Isu'; }, 1000);
+        });
+    }
+
+    // FIX D: entity link dari Analisis Sistemik
+    const resultSystemic = document.getElementById('resultSystemic');
+    if (resultSystemic) {
+        resultSystemic.addEventListener('click', (e) => {
+            const li = e.target.closest('li');
+            if (!li) return;
+            const text = li.textContent || '';
+            if (!text.includes('SHARED_ENTITY')) return;
+
+            const match = text.match(/same entity: '([^']+)'/);
+            if (!match) return;
+
+            const entity = match[1];
+
+            // Buat visual feedback: cetak underline pada li yang diklik
+            li.style.cursor = 'pointer';
+
+            // Pindah tab + isi pencarian
+            document.querySelector('[data-target="view-issue-desk"]').click();
+            setTimeout(() => {
+                document.getElementById('searchIssue').value = entity;
+                document.getElementById('filterType').value = 'all';
+                if (typeof renderIssueStream === 'function') renderIssueStream();
+            }, 150);
+        });
+
+        // Cursor pointer untuk semua li SHARED_ENTITY (visual hint)
+        const observer = new MutationObserver(() => {
+            document.querySelectorAll('#resultSystemic li').forEach(li => {
+                if (li.textContent.includes('SHARED_ENTITY')) {
+                    li.style.cursor = 'pointer';
+                    li.style.textDecoration = 'underline';
+                    li.title = 'Klik untuk memfilter isu dengan entitas ini';
+                }
+            });
+        });
+        observer.observe(resultSystemic, { childList: true, subtree: true });
+    }
+});
+
+
+// === FIX D v3: Shared Entity clickable ===
+document.addEventListener('DOMContentLoaded', () => {
+    const out = document.getElementById('resultSystemic');
+    if (!out) return;
+
+    const markLinks = () => {
+        out.querySelectorAll('li').forEach(li => {
+            const txt = li.textContent || '';
+            if (txt.includes('SHARED_ENTITY') && !li.dataset.linkified) {
+                li.dataset.linkified = 'true';
+                li.style.cursor = 'pointer';
+                li.style.textDecoration = 'underline';
+                li.title = 'Klik untuk memfilter isu dengan entitas ini';
+            }
+        });
+    };
+
+    new MutationObserver(markLinks).observe(out, { childList: true, subtree: true });
+
+    out.addEventListener('click', (e) => {
+        const li = e.target.closest('li');
+        if (!li) return;
+        const txt = li.textContent || '';
+        if (!txt.includes('SHARED_ENTITY')) return;
+        const m = txt.match(/same entity: '([^']+)'/);
+        if (!m) return;
+        const entity = m[1];
+
+        document.querySelector('[data-target="view-issue-desk"]').click();
+        setTimeout(() => {
+            const s = document.getElementById('searchIssue');
+            const f = document.getElementById('filterType');
+            if (s) s.value = entity;
+            if (f) f.value = 'all';
+            if (typeof renderIssueStream === 'function') renderIssueStream();
+        }, 200);
+    });
+});
