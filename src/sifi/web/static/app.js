@@ -902,6 +902,7 @@ function renderIssueStream(animateNew = false) {
         <div class="issue-meta">
           <span style="font-family: monospace;">${issue.id}</span>
           <span class="badge badge-source">${issue.type}</span>
+          ${issue.domain ? `<span class="badge" style="background: rgba(139,195,74,0.15); color: var(--accent);">${issue.domain}</span>` : ''}
         </div>
       </div>
       <div style="text-align: right;">
