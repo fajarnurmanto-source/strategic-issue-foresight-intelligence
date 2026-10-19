@@ -5,19 +5,34 @@
   "direct_identifiers_allowed": false,
   "entries": [
     {
-      "participant_code": "P-EXAMPLE",
-      "screening_record_id": "SCR-EXAMPLE",
-      "consent_record_id": null,
-      "status": "PROSPECTIVE_NOT_SCREENED",
-      "allowed_statuses": [
-        "PROSPECTIVE_NOT_SCREENED",
-        "INELIGIBLE_NOT_COUNTED",
-        "ELIGIBLE_NOT_CONSENTED",
-        "CONSENTED_NOT_STARTED",
-        "COUNTED_STARTED",
-        "COUNTED_FINALIZED",
-        "WITHDREW"
-      ]
+      "participant_code": "P-001",
+      "screening_record_id": "SCR-001",
+      "consent_record_id": "CON-001",
+      "status": "CONSENTED_NOT_STARTED"
+    },
+    {
+      "participant_code": "P-002",
+      "screening_record_id": "SCR-002",
+      "consent_record_id": "CON-002",
+      "status": "CONSENTED_NOT_STARTED"
+    },
+    {
+      "participant_code": "P-003",
+      "screening_record_id": "SCR-003",
+      "consent_record_id": "CON-003",
+      "status": "CONSENTED_NOT_STARTED"
+    },
+    {
+      "participant_code": "P-004",
+      "screening_record_id": "SCR-004",
+      "consent_record_id": "CON-004",
+      "status": "CONSENTED_NOT_STARTED"
+    },
+    {
+      "participant_code": "P-005",
+      "screening_record_id": "SCR-005",
+      "consent_record_id": "CON-005",
+      "status": "CONSENTED_NOT_STARTED"
     }
   ],
   "instruction": "Delete the example before use. Keep real identity/contact mapping outside SIFI."
