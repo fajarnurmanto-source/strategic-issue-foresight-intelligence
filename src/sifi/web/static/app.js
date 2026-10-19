@@ -72,6 +72,12 @@ async function loadIssueWorkspaceData(id) {
         
         if (issue) {
             document.getElementById('wsTitle').textContent = issue.title;
+            const dEl = document.getElementById('wsDomain');
+            if (dEl) {
+                dEl.innerHTML = issue.domain
+                    ? `<span class="badge" style="background: rgba(139,195,74,0.15); color: var(--accent);">Domain: ${issue.domain}</span>`
+                    : '';
+            }
         }
         
         // --- S03: APA PERSOALANNYA? ---
@@ -316,6 +322,7 @@ function renderIssueStream(animateNew = false) {
         <div class="issue-meta">
           <span style="font-family: monospace;">${issue.id}</span>
           <span class="badge badge-source">${issue.type}</span>
+          ${issue.domain ? `<span class="badge" style="background: rgba(139,195,74,0.15); color: var(--accent);">${issue.domain}</span>` : ''}
         </div>
       </div>
       <div style="text-align: right;">
@@ -855,10 +862,9 @@ function renderIssueStream(animateNew = false) {
     const matchType = filterType === 'all' || type === filterType;
     const matchRisk = activeRiskFilter === 'all' || risk === activeRiskFilter;
     
-    const matchWatch = !globalWatchFilter.trim() ||
-      (title && String(title).toLowerCase().includes(globalWatchFilter.toLowerCase())) ||
-      (id && String(id).toLowerCase().includes(globalWatchFilter.toLowerCase())) ||
-      (type && String(type).toLowerCase().includes(globalWatchFilter.toLowerCase()));
+    const domainStr = (typeof issue === 'object' && issue.domain) ? String(issue.domain).toLowerCase() : '';
+    const watchTerms = expandWatchTerms(globalWatchFilter);
+    const matchWatch = matchesWatch([title, id, String(type).toLowerCase(), domainStr], watchTerms);
 
     return matchSearch && matchType && matchRisk && matchWatch;
   });
@@ -1027,12 +1033,15 @@ async function ensureIssuesLoaded() {
 
 function applyWatchToArray(issues) {
     if (!globalWatchFilter.trim()) return issues;
-    const q = globalWatchFilter.toLowerCase();
+    const terms = expandWatchTerms(globalWatchFilter);
     return issues.filter(issue => {
-        const title = String(issue.title || '').toLowerCase();
-        const id = String(issue.id || '').toLowerCase();
-        const type = String(issue.type || '').toLowerCase();
-        return title.includes(q) || id.includes(q) || type.includes(q);
+        const texts = [
+            String(issue.title || '').toLowerCase(),
+            String(issue.id || '').toLowerCase(),
+            String(issue.type || '').toLowerCase(),
+            String(issue.domain || '').toLowerCase()
+        ];
+        return matchesWatch(texts, terms);
     });
 }
 
@@ -1100,3 +1109,49 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') applyGlobalFilter();
     });
 });
+
+
+// === WATCH SYNONYMS ===
+// Bilingual bridge: user mengetik bahasa Indonesia, judul isu bahasa Inggris.
+const WATCH_SYNONYMS = {
+    'logistik': ['logistic', 'supply chain', 'port', 'transport', 'cargo'],
+    'logistics': ['logistik', 'supply chain', 'port', 'transport'],
+    'supply chain': ['logistik', 'logistics', 'port', 'transport'],
+    'keamanan': ['cyber', 'attack', 'hack', 'security'],
+    'security': ['keamanan', 'cyber', 'attack'],
+    'cyber': ['keamanan', 'security', 'attack'],
+    'ekonomi': ['market', 'economic', 'financial', 'finance'],
+    'economy': ['ekonomi', 'market', 'economic'],
+    'market': ['ekonomi', 'economic'],
+    'politik': ['political', 'unrest', 'protest', 'politic'],
+    'political': ['politik', 'unrest', 'protest'],
+    'lingkungan': ['natural disaster', 'flood', 'earthquake', 'disaster', 'natural'],
+    'environment': ['lingkungan', 'disaster', 'natural'],
+    'disaster': ['lingkungan', 'natural disaster', 'flood']
+};
+
+function expandWatchTerms(query) {
+    const q = String(query || '').toLowerCase().trim();
+    if (!q) return [];
+    const terms = new Set([q]);
+
+    // Tambahkan varian per kata kunci yang cocok (substring dua arah)
+    Object.entries(WATCH_SYNONYMS).forEach(([key, syns]) => {
+        if (q.includes(key) || key.includes(q)) {
+            terms.add(key);
+            syns.forEach(s => terms.add(s));
+        }
+    });
+
+    return Array.from(terms).filter(Boolean);
+}
+
+function matchesWatch(texts, terms) {
+    if (!terms || terms.length === 0) return true;
+    for (const t of terms) {
+        for (const text of texts) {
+            if (text && text.includes(t)) return true;
+        }
+    }
+    return false;
+}

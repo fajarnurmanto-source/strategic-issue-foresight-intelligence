@@ -181,6 +181,7 @@ class IssueObject:
     lineage: IssueLineage = IssueLineage()
 
     review_required: bool = True
+    issue_domain: str = ""
 
     def __post_init__(self) -> None:
         for name, value in [
@@ -236,6 +237,7 @@ class IssueObject:
             "issue_id": self.issue_id,
             "title": self.title,
             "issue_type": self.issue_type,
+            "issue_domain": self.issue_domain,
             "persistence_class": self.persistence_class.value,
             "lifecycle_state": self.lifecycle_state,
             "first_seen": self.first_seen.isoformat(),
@@ -358,6 +360,7 @@ class IssueObject:
             issue_id=payload["issue_id"],
             title=payload["title"],
             issue_type=payload["issue_type"],
+            issue_domain=payload.get("issue_domain", ""),
             persistence_class=PersistenceClass(
                 payload["persistence_class"]
             ),

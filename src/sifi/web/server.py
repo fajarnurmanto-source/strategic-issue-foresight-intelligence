@@ -330,6 +330,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                             "id": persisted.issue.issue_id,
                             "title": persisted.issue.title,
                             "type": persisted.issue.issue_type,
+                            "domain": persisted.issue.issue_domain,
                             "risk": risk_level,
                             "recorded_at": persisted.recorded_at.isoformat(),
                             "supporting": list(persisted.issue.evidence.supporting_evidence_ids),
@@ -911,6 +912,7 @@ class LocalSIFIRequestHandler(BaseHTTPRequestHandler):
                 fallback_ev = tuple(supp + cont) if (supp or cont) else ("EV-DEFAULT",)
                 issue = IssueObject(
                     issue_id=issue_id, title=title, issue_type="web_created",
+                    issue_domain=str(payload.get("domain", "")),
                     persistence_class=PersistenceClass.PC_01_INCIDENT, lifecycle_state="ACTIVE",
                     first_seen=now, last_updated=now, identity_review_state=None,
                     evidence=IssueEvidenceLinks(supporting_evidence_ids=supp, contradictory_evidence_ids=cont),

@@ -8,6 +8,23 @@ from sifi.domain import PersistenceClass, TrajectoryDimension
 from sifi.issues.repository import IssueObjectRepository
 from sifi.persistence import SQLiteVersionStore
 
+
+
+def _infer_domain(title: str) -> str:
+    t = (title or "").lower()
+    if "cyber" in t or "attack" in t or "hack" in t:
+        return "Keamanan"
+    if "supply chain" in t or "logistic" in t or "port" in t or "transport" in t:
+        return "Logistik"
+    if "market" in t or "economic" in t or "financ" in t:
+        return "Ekonomi"
+    if "political" in t or "unrest" in t or "protest" in t:
+        return "Politik"
+    if "natural disaster" in t or "disaster" in t or "flood" in t or "earthquake" in t:
+        return "Lingkungan"
+    return ""
+
+
 class IngestionWorker(threading.Thread):
     def __init__(self, db_path, interval=15):
         super().__init__(daemon=True)
@@ -40,6 +57,7 @@ class IngestionWorker(threading.Thread):
                 issue_id=issue_id,
                 title=title,
                 issue_type="auto_ingest",
+                issue_domain=_infer_domain(title),
                 persistence_class=PersistenceClass.PC_01_INCIDENT,
                 lifecycle_state="ACTIVE",
                 first_seen=now,
