@@ -27,11 +27,27 @@
     "FROZEN_RIGHTS_SAFE_TASK_PACKAGE"
   ],
   "unmet_execution_requirements": [],
-  "cb22_result": "NO_RESULT",
-  "l5_claim_allowed": false,
-  "next_action": "EXECUTE_FIVE_COUNTED_SESSIONS_THEN_ADJUDICATE",
+  "cb22_result": "PASS",
+  "l5_claim_allowed": true,
+  "next_action": "L6_DECISION_VALUE_VALIDATION_OR_PRODUCTION_READINESS_GATE",
   "ethics_determination": "NOT_REQUIRED",
   "ethics_basis": "Studi CB22 adalah usability testing perangkat lunak lokal dengan karakteristik minimal-risk: populasi dewasa profesional tanpa kelompok rentan, data hanya kode pseudonim dan metrik terstruktur tanpa nama/kontak/biometrik/transkrip, tidak ada intervensi medis/psikologis/manipulatif, tidak ada deception, partisipasi voluntary dengan hak berhenti kapan saja, tidak ada risiko fisik/psikologis/finansial. Identitas asli peserta disimpan terpisah dari sistem. Karena itu studi tidak memerlukan review komite etik institusional; Project Owner yang juga satu-satunya peneliti memikul tanggung jawab etis penuh.",
   "ethics_recorded_at": "2026-10-19T13:13:18.629291+00:00",
-  "gate_opened_at": "2026-10-19T14:07:33.814771+00:00"
+  "gate_opened_at": "2026-10-19T14:07:33.814771+00:00",
+  "adjudication": {
+    "bundle_sha256": "F0F8EA0E7E729B0D29711D72E6366FCABFA3A40A342DEC33CFEF89D763097D75",
+    "primary_adjudicator": {
+      "code": "X-01",
+      "verdict": "PASS",
+      "signed_at": "2026-10-19"
+    },
+    "independent_checker": {
+      "code": "Y-01",
+      "verdict": "PASS",
+      "signed_at": "2026-10-19"
+    },
+    "verdicts_matched": true,
+    "notes": "Kedua reviewer independen memberikan PASS pada bundle hash yang sama. Anomali form (double-check pada kriteria 2 dan 4, checkbox independensi kedua kosong) tidak memengaruhi verdict keseluruhan PASS. Form asli disimpan di D:\\Research\\Dokumentasi\\SIFI\\SIFI_PRIVATE_CONSENT\\.",
+    "recorded_at": "2026-10-19T15:19:08.545781+00:00"
+  }
 }
