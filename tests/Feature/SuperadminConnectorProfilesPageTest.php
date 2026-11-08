@@ -76,6 +76,10 @@ final class SuperadminConnectorProfilesPageTest extends TestCase
         $this->get('/superadmin/connector-profiles')
             ->assertOk()
             ->assertSee('Synthetic Hub Provider')
+            ->assertSee('NOT_ADMITTED')
+            ->assertSee('NO_DISPATCH_CONTRACT')
+            ->assertSee('DISPATCH: DENIED')
+            ->assertSee('PROBE: NOT_RUN')
             ->assertDontSee('SYNTHETIC-HUB-KEY-NOT-REAL');
     }
 
