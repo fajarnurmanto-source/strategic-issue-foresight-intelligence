@@ -60,9 +60,8 @@ export default function CollectorObservations({
         <section aria-label="Observasi metadata sumber publik" className="min-w-0 space-y-4 rounded-xl border bg-card p-5">
             <h2 className="text-xl font-semibold">Observasi sumber publik pada objek ini</h2>
             <p className="text-sm text-muted-foreground">
-                Metadata yang tersimpan dari collector yang sebelumnya diizinkan. Judul, tautan, dan tanggal
-                publikasi tidak membuktikan kebenaran klaim, waktu kejadian, jumlah asal independen, atau dampak.
-                Tidak ada bukti yang diterima secara otomatis.
+                Hasil metadata dari sumber publik yang diizinkan. Belum menjadi bukti atau klaim terverifikasi.
+                Rincian teknis tersedia saat dibutuhkan; tidak ada langkah verifikasi manual per publikasi.
             </p>
             <Link className="inline-block underline" href={`/sifi/monitoring-objects/${objectId}/research-multi`}>
                 Buka penelitian dan collector
@@ -76,29 +75,34 @@ export default function CollectorObservations({
                         {' · '}Provider: {session.provider_ids?.join(', ') || 'UNKNOWN'}
                         {' · '}Jumlah metadata ditampilkan: {session.entries.length}
                     </p>
-                    <p className="text-sm">
-                        {session.state === 'SAVED' ? 'Disimpan oleh analis' : 'Draf penelitian'}
-                        {' · '}HTTP {session.receipt.http_status ?? 'UNKNOWN'}
-                        {' · '}Respons tercatat: {session.receipt.wire_delivery_confirmed ? 'Ya' : 'Belum terbukti'}
-                        {' · '}{session.receipt.response_bytes} byte
-                        {' · '}{session.receipt.retrieved_at ?? 'Waktu pengambilan UNKNOWN'}
-                    </p>
-                    <p className="break-all text-xs">
-                        SHA-256 respons: {session.receipt.response_sha256 ?? 'UNKNOWN'}
-                    </p>
-                    <p className="break-all text-xs">
-                        SHA-256 envelope: {session.envelope_sha256 ?? 'UNKNOWN'}
-                    </p>
-                    <p className="text-sm">
-                        Cakupan: {session.coverage ?? 'Tidak dinyatakan'}.
-                        {' · '}Asal independen: {session.independent_origin_state ?? 'NOT_VERIFIED'}
-                        {' · '}Verifikasi klaim: {session.claim_verification ?? 'NOT_PERFORMED'}
-                    </p>
-                    <p className="text-sm">
-                        Kesalahan: {session.receipt.failure_category ?? 'tidak ada'}
-                        {' · '}{session.filtered_count} hasil disaring karena judul/periode
-                        {' · '}Admission evidence: {session.evidence_admission ?? 'NONE'}
-                    </p>
+                    <details className="rounded-md border border-dashed p-3 text-sm">
+                        <summary className="cursor-pointer font-medium">Rincian teknis, hak dan provenance</summary>
+                        <div className="mt-3 space-y-2">
+                        <p className="text-sm">
+                            {session.state === 'SAVED' ? 'Disimpan oleh analis' : 'Draf penelitian'}
+                            {' · '}HTTP {session.receipt.http_status ?? 'UNKNOWN'}
+                            {' · '}Respons tercatat: {session.receipt.wire_delivery_confirmed ? 'Ya' : 'Belum terbukti'}
+                            {' · '}{session.receipt.response_bytes} byte
+                            {' · '}{session.receipt.retrieved_at ?? 'Waktu pengambilan UNKNOWN'}
+                        </p>
+                        <p className="break-all text-xs">
+                            SHA-256 respons: {session.receipt.response_sha256 ?? 'UNKNOWN'}
+                        </p>
+                        <p className="break-all text-xs">
+                            SHA-256 envelope: {session.envelope_sha256 ?? 'UNKNOWN'}
+                        </p>
+                        <p className="text-sm">
+                            Cakupan: {session.coverage ?? 'Tidak dinyatakan'}.
+                            {' · '}Asal independen: {session.independent_origin_state ?? 'NOT_VERIFIED'}
+                            {' · '}Verifikasi klaim: {session.claim_verification ?? 'NOT_PERFORMED'}
+                        </p>
+                        <p className="text-sm">
+                            Kesalahan: {session.receipt.failure_category ?? 'tidak ada'}
+                            {' · '}{session.filtered_count} hasil disaring karena judul/periode
+                            {' · '}Admission evidence: {session.evidence_admission ?? 'NONE'}
+                        </p>
+                        </div>
+                    </details>
                     {session.entries.map((entry) => (
                         <div key={entry.id} className="min-w-0 space-y-1 border-l-2 pl-3 text-sm">
                             <p className="break-words font-medium">{entry.title}</p>
