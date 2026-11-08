@@ -129,6 +129,35 @@ final class ReviewedBlueskySearchTest extends TestCase
         app(ReviewedBlueskySearch::class)->collect($owner, $object, 'sampah', 'maintainer@example.org');
     }
 
+    public function test_public_search_403_is_a_restricted_provider_not_an_empty_corpus(): void
+    {
+        $transport = new class extends BlueskySearchTransport {
+            public int $calls = 0;
+
+            protected function address(): string
+            {
+                return '1.1.1.1'; // Unused dummy IP; no real network dispatched.
+            }
+
+            protected function request(array $options, array $query): \Illuminate\Http\Client\Response
+            {
+                $this->calls++;
+                ($options['on_headers'])(new \GuzzleHttp\Psr7\Response(403));
+
+                throw new \LogicException('HTTP 403 must abort in header policy');
+            }
+        };
+
+        $result = $transport->fetch('sampah', 'maintainer@example.org');
+        $this->assertSame('RESTRICTED', $result['state']);
+        $this->assertSame(403, $result['http_status']);
+        $this->assertSame('PUBLIC_SEARCH_ACCESS_RESTRICTED', $result['failure_category']);
+        $this->assertSame(1, $result['network_requests']);
+        $this->assertSame([], $result['entries']);
+        $this->assertSame(1, $transport->calls);
+        Http::assertNothingSent();
+    }
+
     public function test_default_opt_out_never_calls_provider(): void
     {
         config(['sifi_social.bluesky_public_search_enabled' => false]);
