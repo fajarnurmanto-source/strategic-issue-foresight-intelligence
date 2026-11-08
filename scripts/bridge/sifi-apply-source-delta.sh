@@ -187,7 +187,11 @@ for ((i=0; i<${#rels[@]}; i++)); do
     rollback
     fail "STAGING_COPY_FAILED:$rel"
   fi
-  if [[ -f "$local_file" ]]; then chmod --reference="$local_file" "$temp_target"; fi
+  if [[ -f "$local_file" ]]; then
+    chmod --reference="$local_file" "$temp_target" || { rm -f -- "$temp_target"; rollback; fail "CHMOD_FAILED:$rel"; }
+  else
+    chmod 0644 -- "$temp_target" || { rm -f -- "$temp_target"; rollback; fail "CHMOD_FAILED:$rel"; }
+  fi
   if ! mv -f -- "$temp_target" "$local_file"; then
     rm -f -- "$temp_target"
     rollback
