@@ -14,7 +14,7 @@ final class MultiSourceResearchController extends Controller
     public function index(Request $r,SifiMonitoringObject $object):Response{Gate::authorize('view',$object);return $this->page($r,$object);}
     private function page(Request $r,?SifiMonitoringObject $o):Response
     {
-        return Inertia::render('sifi/multi-source-research',['object'=>$o?->only(['id','name','revision','state']),
+        return Inertia::render('sifi/multi-source-research',['object'=>$o?->only(['id','name','revision','state','keywords_json','aliases_json']),
             'objectChoices'=>SifiMonitoringObject::where('user_id',$r->user()->id)->orderByDesc('updated_at')->limit(100)->get(['id','name','state'])->toArray(),
             'history'=>$o?app(MultiSourceResearchWorkspace::class)->history($r->user(),$o):[],
             'collector'=>app(\App\Services\Sifi\RealCollectorWorkspace::class)->status($r->user(),$o),'providerIds'=>MultiSourceResearchWorkspace::PROVIDERS,'scenarios'=>($this->scenarios($r,$o)),'selectedSessionId'=>$r->query('research')]);
