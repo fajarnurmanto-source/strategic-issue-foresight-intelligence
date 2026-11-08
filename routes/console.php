@@ -10,4 +10,4 @@ Artisan::command('inspire', function () {
 
 // At most one explicitly opted-in social watch scan per eight-hour tick.
 // Requires an operator-controlled local Laravel scheduler; no automatic production activation.
-Schedule::command('sifi:social-watch:tick')->everyEightHours()->withoutOverlapping(30);
+Schedule::command('sifi:social-watch:tick')->cron('0 0,8,16 * * *')->withoutOverlapping(30);
