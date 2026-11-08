@@ -31,7 +31,16 @@ Source branch: sync/sifi-laravel-vnext-ih03j-20261108_134500
 
 - Synthetic local -> GitHub -> ChatGPT -> GitHub -> local transport: PASS.
 - Current Laravel source -> GitHub private branch: PASS.
-- GitHub source branch -> isolated local checkout: pending owner pull.
-- GitHub code modifications -> active Laravel WSL checkout: not yet implemented.
+- GitHub source branch -> isolated local checkout: PASS (`bdc6507` fast-forward observed, 2026-11-08).
+- GitHub source branch -> active WSL Laravel: bridge script committed (`scripts/bridge/sifi-apply-source-delta.sh`); **owner's first docs-only run still pending**.
+- GitHub code modifications -> active Laravel WSL checkout: pending post-smoke acceptance.
 
 No secrets, operational DBs, real evidence, or credentials belong in the GitHub source branch.
+
+## Apply bridge operating modes
+
+- `--plan` (default) examines only GitHub commits since the last local bridge state; no changes to live code.
+- `--docs-only` is the **first-run acceptance**: installs documentation only, refuses pending application-code diffs. Requires no server restart.
+- `--apply` installs subsequent allowlisted source changes with exact-content or three-way-merge detection, local-original backups, and no deletion support. A conflict stops before application.
+- The bridge reads the independent GitHub snapshot but never runs `git pull` or `git reset` in the active WSL Laravel checkout.
+- Use the source snapshot's `scripts/bridge/sifi-apply-source-delta.sh` as the entry point. A successful first docs-only run should report `SIFI_GITHUB_TO_LIVE=PASS`, `MODE=--docs-only`, and `PRODUCTION_ADMISSION=DENIED`.
