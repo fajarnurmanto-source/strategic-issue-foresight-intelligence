@@ -7,6 +7,7 @@ type Readiness = {
     crossref_allowed: boolean;
     antara_allowed: boolean;
     bluesky_allowed: boolean;
+    social_autowatch_configured: boolean;
     social_contact_configured: boolean;
     object_ready: boolean;
     production_admission: 'DENIED';
@@ -78,6 +79,7 @@ export default function OwnerBoundRealSourceControls({ object }: { object: Objec
             : status.crossref_allowed || status.antara_allowed || status.bluesky_allowed
                 ? `Izin lokal: Crossref ${status.crossref_allowed ? 'tersedia' : 'terkunci'} · ANTARA ${status.antara_allowed ? 'tersedia' : 'terkunci'} · Bluesky ${status.bluesky_allowed ? 'tersedia' : 'terkunci'}.`
                 : 'Pengambilan nyata terkunci. Dibutuhkan izin lokal aktif dan database SQLite terisolasi di D:\\Research\\SIFI\\05_VALIDATION.'}</p>
+        {status?.social_autowatch_configured&&<p className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">Social Watch terjadwal: <strong>diizinkan untuk objek akun Anda</strong>. Satu objek dipilih bergiliran pada setiap tick, maksimal sesuai kuota. Pengambilan otomatis hanya berjalan jika Laravel scheduler lokal dijalankan; status ini bukan bukti permintaan jaringan sudah terjadi.</p>}
         <form onSubmit={collect} className="space-y-3">
             <label className="block text-sm font-medium">Sumber
                 <select className="mt-1 w-full rounded-lg border bg-background p-3" value={provider} onChange={event => { setProvider(event.target.value as 'CROSSREF' | 'ANTARA_RSS' | 'BLUESKY_PUBLIC_SEARCH'); setErrors({}); }}>
