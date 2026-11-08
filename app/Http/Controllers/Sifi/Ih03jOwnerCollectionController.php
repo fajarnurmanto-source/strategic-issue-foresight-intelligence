@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SifiMonitoringObject;
 use App\Services\Sifi\Integration\AntaraLocalPermission;
 use App\Services\Sifi\Integration\BlueskyLocalPermission;
+use App\Services\Sifi\Integration\ConnectorObservationProjector;
 use App\Services\Sifi\Integration\ReviewedBlueskySearch;
 use App\Services\Sifi\Integration\CrossrefLocalPermission;
 use App\Services\Sifi\Integration\ReviewedAntaraRss;
@@ -29,6 +30,10 @@ final class Ih03jOwnerCollectionController extends Controller
             'crossref_allowed' => $this->eligible('CROSSREF'),
             'antara_allowed' => $this->eligible('ANTARA_RSS'),
             'bluesky_allowed' => $this->eligible('BLUESKY_PUBLIC_SEARCH'),
+            'social_autowatch_configured' => config('sifi_social.auto_watch_enabled') === true
+                && (int) config('sifi_social.auto_watch_owner_id') === (int) $request->user()->id
+                && $this->eligible('BLUESKY_PUBLIC_SEARCH')
+                && app(ConnectorObservationProjector::class)->eligible(),
             'social_contact_configured' => is_string(config('sifi_social.contact_email'))
                 && filter_var(config('sifi_social.contact_email'), FILTER_VALIDATE_EMAIL) !== false,
             'object_ready' => $object->state === 'CONFIGURED',
