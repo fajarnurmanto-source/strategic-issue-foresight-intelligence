@@ -92,6 +92,15 @@ final class ReviewedCrossrefResearchTest extends TestCase
         $this->assertDatabaseCount('sifi_connector_observations', 1);
         $this->assertDatabaseCount('sifi_real_source_signals', 0);
         $this->assertDatabaseCount('sifi_evidence_drafts', 0);
+
+        $observations = app(\App\Services\Sifi\CollectorObservations::class)->forObject($owner, $object);
+        $this->assertCount(1, $observations);
+        $this->assertSame(['CROSSREF'], $observations[0]['provider_ids']);
+        $this->assertSame('SCHOLARLY_BIBLIOGRAPHIC_METADATA', $observations[0]['source_kind']);
+        $this->assertSame('SIFI synthetic wire response', $observations[0]['entries'][0]['title']);
+        $this->assertSame('NONE', $observations[0]['entries'][0]['evidence_admission']);
+        $this->assertSame('NOT_VERIFIED', $observations[0]['independent_origin_state']);
+        $this->assertNotNull($observations[0]['envelope_sha256']);
         Http::assertNothingSent();
     }
 

@@ -19,6 +19,7 @@ final class Ih03jOwnerCollectionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
         $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
         $this->temporary = sys_get_temp_dir() . '/sifi-ih03j-review-' . Str::uuid();
         mkdir($this->temporary, 0700);
@@ -139,6 +140,22 @@ final class Ih03jOwnerCollectionTest extends TestCase
         $this->assertSame(1, $transport->calls);
         $this->assertDatabaseCount('sifi_research_sessions', 1);
         $this->assertDatabaseCount('sifi_evidence_drafts', 0);
+
+        $observations = app(\App\Services\Sifi\CollectorObservations::class)->forObject($owner, $object);
+        $this->assertCount(1, $observations);
+        $this->assertSame(['ANTARA_RSS'], $observations[0]['provider_ids']);
+        $this->assertSame('PUBLISHER_RSS_HEADLINES', $observations[0]['source_kind']);
+        $this->assertSame('Judul berita QA', $observations[0]['entries'][0]['title']);
+        $this->assertSame('www.antaranews.com', $observations[0]['entries'][0]['publisher']);
+        $this->assertSame('RSS_TITLE_LINK_ONLY_ARTICLE_RIGHTS_UNASSESSED',
+            $observations[0]['entries'][0]['rights_state']);
+        $this->assertSame('NONE', $observations[0]['entries'][0]['evidence_admission']);
+        $this->assertSame('NOT_VERIFIED', $observations[0]['independent_origin_state']);
+        $this->assertSame(str_repeat('a', 64), $observations[0]['receipt']['response_sha256']);
+        $this->get('/sifi/workbench?object='.$object->id)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('collectorObservations', 1)
+                ->where('collectorObservations.0.source_kind', 'PUBLISHER_RSS_HEADLINES'));
         Http::assertNothingSent();
     }
 }
