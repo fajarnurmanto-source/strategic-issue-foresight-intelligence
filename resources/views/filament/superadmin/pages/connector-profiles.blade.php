@@ -16,8 +16,15 @@
                     tetapi formulir pembuatan draft tidak diaktifkan. Tidak ada migrasi otomatis.
                 </p>
             @else
-                <div>{{ $this->createDraftAction }}</div>
+                <div class="flex flex-wrap items-center gap-3">
+                    {{ $this->createDraftAction }}
+                    {{ $this->revokeCredentialAction }}
+                </div>
             @endif
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Pencabutan kredensial hanya dilakukan setelah konfirmasi Superadmin,
+                bersifat permanen, dan tercatat di audit. Tidak memberikan izin eksekusi.
+            </p>
         </div>
     </x-filament::section>
 
@@ -34,7 +41,12 @@
                          wire:key="draft-{{ $profile['id'] }}">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <h3 class="font-semibold">{{ $profile['label'] }}</h3>
-                            <x-filament::badge color="danger">{{ $profile['readiness']['state'] }}</x-filament::badge>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-filament::badge color="danger">{{ $profile['readiness']['state'] }}</x-filament::badge>
+                                @if ($profile['rights_status'] === 'REVOKED')
+                                    <x-filament::badge color="danger">CREDENTIAL REVOKED</x-filament::badge>
+                                @endif
+                            </div>
                         </div>
                         <p class="text-sm text-gray-600 dark:text-gray-300">
                             {{ $profile['kind'] }} / {{ $profile['provider_key'] }}
