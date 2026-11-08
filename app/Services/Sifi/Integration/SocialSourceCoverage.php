@@ -17,9 +17,9 @@ final class SocialSourceCoverage
                 'id' => 'BLUESKY_PUBLIC_SEARCH',
                 'label' => 'Bluesky',
                 'state' => $blueskyState,
-                'access' => 'Public AppView search; no account login',
+                'access' => 'Unauthenticated AppView search may return HTTP 403 due to provider policy',
                 'scope' => 'Max 10 public links / explicit scan; not entire platform',
-                'action' => 'Gunakan objek pantauan + kata kunci; satu kali opt-in lokal.',
+                'action' => 'Jika pencarian publik mendapat 403, hentikan percobaan; gunakan jalur resmi Jetstream untuk data langsung.',
             ],
             [
                 'id' => 'INSTAGRAM',
