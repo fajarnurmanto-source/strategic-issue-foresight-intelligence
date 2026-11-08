@@ -96,6 +96,51 @@ final class ConnectorProfileDrafts
         });
     }
 
+    /**
+     * Explicit, fail-closed credential revocation for a Superadmin-owned draft.
+     * Does not contact the provider or grant activation/production authority.
+     */
+    public function revokeCredential(User $actor, string $profileId): void
+    {
+        $this->authorize($actor);
+
+        if (! Str::isUuid($profileId)) {
+            throw new \InvalidArgumentException('INVALID_CONNECTOR_PROFILE_ID');
+        }
+
+        DB::transaction(function () use ($actor, $profileId): void {
+            $profile = SifiConnectorProfile::query()->whereKey($profileId)->lockForUpdate()->firstOrFail();
+
+            if ($profile->rights_status === 'REVOKED'
+                && ! $profile->credentialIsStored()
+                && ! $profile->enabled
+                && ! $profile->billing_authorized
+                && $profile->max_cost_micros === 0
+                && $profile->rate_limit_per_minute === 0) {
+                return;
+            }
+
+            // A credential cannot be restored by a UI field or reactivated implicitly.
+            $profile->credential_ciphertext = null;
+            $profile->enabled = false;
+            $profile->billing_authorized = false;
+            $profile->max_cost_micros = 0;
+            $profile->rate_limit_per_minute = 0;
+            $profile->rights_status = 'REVOKED';
+            $profile->connection_status = 'NOT_TESTED';
+            $profile->save();
+
+            $timestamp = now();
+            DB::table('sifi_connector_audits')->insert([
+                'profile_id' => $profile->id,
+                'actor_id' => $actor->id,
+                'event_code' => 'PROFILE_CREDENTIAL_REVOKED',
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ]);
+        });
+    }
+
     /** Only safe display fields. Never returns the encrypted blob or plaintext. */
     public function publicList(User $actor): array
     {
