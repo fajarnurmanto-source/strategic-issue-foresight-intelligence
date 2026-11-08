@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Sifi\Integration\BlueskyPublicSearchParser;
 use App\Services\Sifi\Integration\BlueskySearchTransport;
 use App\Services\Sifi\Integration\ReviewedBlueskySearch;
+use App\Services\Sifi\Integration\SocialWatchHistory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -113,7 +114,14 @@ final class ReviewedBlueskySearchTest extends TestCase
             JSON_THROW_ON_ERROR)['multi_source']['envelope'];
         $this->assertSame('APPROVED_LIVE_CORPUS_METADATA', $envelope['mode']);
         $this->assertSame('NONE', $envelope['entries'][0]['evidence_admission']);
+        $this->assertSame('FIRST_OBSERVED_IN_LOCAL_INDEX', $envelope['entries'][0]['local_history_state']);
+        $this->assertSame(1, $envelope['social_watch_history']['first_observed_count']);
+        $this->assertSame(0, $envelope['social_watch_history']['previously_observed_count']);
         $this->assertDatabaseCount('sifi_connector_observations', 1);
+        $nextScan = app(SocialWatchHistory::class)->classify($owner->id, $object, $envelope['entries']);
+        $this->assertSame(0, $nextScan['summary']['first_observed_count']);
+        $this->assertSame(1, $nextScan['summary']['previously_observed_count']);
+        $this->assertSame('PREVIOUSLY_OBSERVED', $nextScan['entries'][0]['local_history_state']);
         $this->assertDatabaseCount('sifi_evidence_drafts', 0);
         Http::assertNothingSent();
 
