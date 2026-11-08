@@ -5,6 +5,7 @@ namespace Tests\Feature\Sifi;
 use App\Models\SifiMonitoringObject;
 use App\Models\User;
 use App\Services\Sifi\Integration\AntaraRssTransport;
+use App\Services\Sifi\Integration\BlueskySearchTransport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -31,6 +32,7 @@ final class Ih03jOwnerCollectionTest extends TestCase
             'sifi_ih03j.owner_collection_enabled' => false,
             'sifi_ih03b.crossref_metadata_enabled' => false,
             'sifi_ih03e.antara_rss_enabled' => false,
+            'sifi_social.bluesky_public_search_enabled' => false,
         ]);
         Http::preventStrayRequests();
     }
@@ -95,6 +97,59 @@ final class Ih03jOwnerCollectionTest extends TestCase
         $this->actingAs($owner)->post(route('sifi.ih03j.collect', $object), [
             ...$this->requestPayload(), 'endpoint' => 'https://example.com/private',
         ])->assertSessionHasErrors('real_source');
+        Http::assertNothingSent();
+    }
+
+    public function test_owner_can_launch_one_social_watch_scan_from_existing_form_without_per_post_review(): void
+    {
+        config([
+            'sifi_social.bluesky_public_search_enabled' => true,
+            'sifi_social.contact_email' => 'maintainer@example.org',
+        ]);
+        $transport = new class extends BlueskySearchTransport {
+            public int $calls = 0;
+
+            public function fetch(string $query, string $contact): array
+            {
+                $this->calls++;
+                $url = 'https://bsky.app/profile/did:plc:u5cwb2mwiv2bfq53cjufe6yn/post/3k4duaz5vfs2b';
+
+                return [
+                    'state' => 'OK', 'network_requests' => 1,
+                    'http_status' => 200, 'response_bytes' => 150,
+                    'response_sha256' => str_repeat('b', 64), 'elapsed_ms' => 120,
+                    'entries' => [[
+                        'id' => hash('sha256', $url),
+                        'title' => 'Unggahan publik Bluesky terkait: misinformation',
+                        'canonical_url' => $url, 'url' => $url,
+                        'snippet' => '', 'snippet_sha256' => hash('sha256', ''),
+                        'published_at' => '2026-11-09T04:00:00Z',
+                        'rights_state' => 'PUBLIC_POST_LINK_AND_DERIVED_METADATA_ONLY',
+                        'origins' => ['bsky.app'],
+                        'lineage' => [['provider' => 'BLUESKY_PUBLIC_SEARCH']],
+                        'evidence_admission' => 'NONE',
+                    ]],
+                ];
+            }
+        };
+        app()->instance(BlueskySearchTransport::class, $transport);
+        $owner = User::factory()->create(['email_verified_at' => now()]);
+        $object = $this->object($owner);
+        $this->actingAs($owner)->getJson(route('sifi.ih03j.status', $object))
+            ->assertOk()->assertJsonPath('bluesky_allowed', true)
+            ->assertJsonPath('social_contact_configured', true);
+
+        $this->post(route('sifi.ih03j.collect', $object), [
+            'provider' => 'BLUESKY_PUBLIC_SEARCH',
+            'contact_email' => '',
+            'question' => 'misinformation',
+            'object_revision' => $object->revision,
+            'submission_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $this->assertSame(1, $transport->calls);
+        $this->assertDatabaseCount('sifi_research_sessions', 1);
+        $this->assertDatabaseCount('sifi_evidence_drafts', 0);
         Http::assertNothingSent();
     }
 
