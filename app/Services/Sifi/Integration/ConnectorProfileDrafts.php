@@ -101,12 +101,15 @@ final class ConnectorProfileDrafts
     {
         $this->authorize($actor);
 
+        $readiness = new ConnectorReadiness;
+
         return SifiConnectorProfile::query()->orderBy('label')->get()
             ->map(fn (SifiConnectorProfile $p): array => [
                 'id' => $p->id,
                 'provider_key' => $p->provider_key,
                 'label' => $p->label,
                 'kind' => $p->kind,
+                'auth_scheme' => $p->auth_scheme,
                 'endpoint_host' => parse_url($p->endpoint, PHP_URL_HOST),
                 'credential_saved' => $p->credentialIsStored(),
                 'rate_limit_per_minute' => $p->rate_limit_per_minute,
@@ -115,6 +118,7 @@ final class ConnectorProfileDrafts
                 'billing_authorized' => $p->billing_authorized,
                 'rights_status' => $p->rights_status,
                 'connection_status' => $p->connection_status,
+                'readiness' => $readiness->describe($p),
             ])->all();
     }
 
