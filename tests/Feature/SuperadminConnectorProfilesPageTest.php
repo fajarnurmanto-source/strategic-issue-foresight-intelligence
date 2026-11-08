@@ -104,4 +104,37 @@ final class SuperadminConnectorProfilesPageTest extends TestCase
         $this->assertSame(0, (int) $profile->billing_authorized);
         $this->assertSame(0, (int) $profile->max_cost_micros);
     }
+    public function test_superadmin_can_revoke_a_credential_through_confirmed_filament_action(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        $admin = $this->verifiedAdmin();
+        $this->actingAs($admin);
+        $profile = app(\App\Services\Sifi\Integration\ConnectorProfileDrafts::class)
+            ->create($admin, $this->syntheticInput());
+
+        Filament::setCurrentPanel(Filament::getPanel('superadmin'));
+        Livewire::test(ConnectorProfiles::class)
+            ->callAction('revokeCredential', data: ['profile_id' => $profile->id])
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('sifi_connector_profiles', [
+            'id' => $profile->id,
+            'enabled' => false,
+            'billing_authorized' => false,
+            'rights_status' => 'REVOKED',
+            'rate_limit_per_minute' => 0,
+            'credential_ciphertext' => null,
+        ]);
+        $this->assertDatabaseHas('sifi_connector_audits', [
+            'profile_id' => $profile->id,
+            'actor_id' => $admin->id,
+            'event_code' => 'PROFILE_CREDENTIAL_REVOKED',
+        ]);
+
+        $this->get('/superadmin/connector-profiles')
+            ->assertOk()
+            ->assertSee('CREDENTIAL REVOKED')
+            ->assertDontSee('SYNTHETIC-HUB-KEY-NOT-REAL');
+    }
+
 }
