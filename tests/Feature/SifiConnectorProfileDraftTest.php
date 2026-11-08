@@ -106,4 +106,84 @@ final class SifiConnectorProfileDraftTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         app(ConnectorProfileDrafts::class)->create($this->admin(), $input);
     }
+
+    public function test_readonly_readiness_lists_all_fail_closed_dispatch_blockers_without_network_or_writes(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        $admin = $this->admin();
+        $service = app(ConnectorProfileDrafts::class);
+        $service->create($admin, $this->syntheticInput());
+
+        $result = $service->publicList($admin);
+        $this->assertCount(1, $result);
+        $this->assertSame('NOT_ADMITTED', $result[0]['readiness']['state']);
+        $this->assertFalse($result[0]['readiness']['can_dispatch']);
+        $this->assertSame('NOT_RUN', $result[0]['readiness']['connection_probe']);
+        $codes = array_column($result[0]['readiness']['reasons'], 'code');
+        $this->assertContains('NO_DISPATCH_CONTRACT', $codes);
+        $this->assertContains('CONFIGURATION_DISABLED', $codes);
+        $this->assertContains('RIGHTS_NOT_APPROVED', $codes);
+        $this->assertContains('CONNECTION_NOT_VERIFIED', $codes);
+        $this->assertNotContains('CREDENTIAL_REFERENCE_MISSING', $codes);
+        $this->assertArrayNotHasKey('credential', $result[0]);
+        $this->assertArrayNotHasKey('credential_ciphertext', $result[0]);
+        $this->assertDatabaseCount('sifi_connector_audits', 1);
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+    }
+
+    public function test_missing_credential_and_unset_rate_are_visible_as_diagnostic_reasons(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        $admin = $this->admin();
+        $input = $this->syntheticInput();
+        unset($input['credential']);
+        $input['rate_limit_per_minute'] = 0;
+        app(ConnectorProfileDrafts::class)->create($admin, $input);
+
+        $profile = app(ConnectorProfileDrafts::class)->publicList($admin)[0];
+        $codes = array_column($profile['readiness']['reasons'], 'code');
+        $this->assertContains('CREDENTIAL_REFERENCE_MISSING', $codes);
+        $this->assertContains('RATE_LIMIT_UNSET', $codes);
+        $this->assertFalse($profile['credential_saved']);
+        $this->assertFalse($profile['readiness']['can_dispatch']);
+    }
+
+    public function test_verified_superadmin_can_revoke_a_draft_credential_without_dispatch_or_duplicate_audit(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        $admin = $this->admin();
+        $service = app(ConnectorProfileDrafts::class);
+        $profile = $service->create($admin, $this->syntheticInput());
+
+        $service->revokeCredential($admin, $profile->id);
+        $profile->refresh();
+
+        $this->assertFalse($profile->credentialIsStored());
+        $this->assertNull($profile->getRawOriginal('credential_ciphertext'));
+        $this->assertFalse($profile->enabled);
+        $this->assertFalse($profile->billing_authorized);
+        $this->assertSame(0, $profile->max_cost_micros);
+        $this->assertSame(0, $profile->rate_limit_per_minute);
+        $this->assertSame('REVOKED', $profile->rights_status);
+        $this->assertSame('NOT_TESTED', $profile->connection_status);
+        $this->assertSame(['PROFILE_DRAFT_CREATED', 'PROFILE_CREDENTIAL_REVOKED'],
+            DB::table('sifi_connector_audits')->orderBy('id')->pluck('event_code')->all());
+
+        $service->revokeCredential($admin, $profile->id);
+        $this->assertDatabaseCount('sifi_connector_audits', 2);
+        $this->assertFalse($service->publicList($admin)[0]['credential_saved']);
+    }
+
+    public function test_regular_user_cannot_revoke_a_superadmin_draft(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        $service = app(ConnectorProfileDrafts::class);
+        $profile = $service->create($this->admin(), $this->syntheticInput());
+        $regularUser = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->expectException(AuthorizationException::class);
+        $service->revokeCredential($regularUser, $profile->id);
+    }
+
 }
