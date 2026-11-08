@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Sifi;
 use App\Http\Controllers\Controller;
 use App\Models\SifiMonitoringObject;
 use App\Services\Sifi\Integration\AntaraLocalPermission;
+use App\Services\Sifi\Integration\BlueskyLocalPermission;
+use App\Services\Sifi\Integration\ReviewedBlueskySearch;
 use App\Services\Sifi\Integration\CrossrefLocalPermission;
 use App\Services\Sifi\Integration\ReviewedAntaraRss;
 use App\Services\Sifi\Integration\ReviewedCrossrefResearch;
@@ -26,6 +28,9 @@ final class Ih03jOwnerCollectionController extends Controller
             'enabled' => $this->localSwitch(),
             'crossref_allowed' => $this->eligible('CROSSREF'),
             'antara_allowed' => $this->eligible('ANTARA_RSS'),
+            'bluesky_allowed' => $this->eligible('BLUESKY_PUBLIC_SEARCH'),
+            'social_contact_configured' => is_string(config('sifi_social.contact_email'))
+                && filter_var(config('sifi_social.contact_email'), FILTER_VALIDATE_EMAIL) !== false,
             'object_ready' => $object->state === 'CONFIGURED',
             'production_admission' => 'DENIED',
             'evidence_admission' => 'NONE',
@@ -43,8 +48,8 @@ final class Ih03jOwnerCollectionController extends Controller
             ]);
         }
         $values = $request->validate([
-            'provider' => ['required', Rule::in(['CROSSREF', 'ANTARA_RSS'])],
-            'contact_email' => ['required', 'email', 'max:254'],
+            'provider' => ['required', Rule::in(['CROSSREF', 'ANTARA_RSS', 'BLUESKY_PUBLIC_SEARCH'])],
+            'contact_email' => ['nullable', 'email', 'max:254'],
             'question' => ['nullable', 'string', 'max:600'],
             'object_revision' => ['required', 'integer', 'min:1'],
             'submission_key' => ['required', 'uuid'],
@@ -57,6 +62,9 @@ final class Ih03jOwnerCollectionController extends Controller
             ]);
         }
         $provider = $values['provider'];
+        if ($provider !== 'BLUESKY_PUBLIC_SEARCH' && empty($values['contact_email'])) {
+            throw ValidationException::withMessages(['contact_email' => 'Email kontak wajib untuk sumber ini.']);
+        }
         if (! $this->eligible($provider)) {
             throw ValidationException::withMessages([
                 'real_source' => 'Konektor terkunci: gunakan konfigurasi lokal dan database SQLite terisolasi yang diizinkan.',
@@ -76,9 +84,18 @@ final class Ih03jOwnerCollectionController extends Controller
                     'submission_key' => $values['submission_key'],
                     'contact_email' => $values['contact_email'],
                 ]);
-            } else {
+            } elseif ($provider === 'ANTARA_RSS') {
                 $outcome = app(ReviewedAntaraRss::class)->collect(
                     $request->user(), $object, $values['contact_email']
+                );
+                $id = $outcome['session_id'];
+            } else {
+                $configuredContact = config('sifi_social.contact_email');
+                $contact = is_string($configuredContact)
+                    && filter_var($configuredContact, FILTER_VALIDATE_EMAIL) !== false
+                        ? $configuredContact : (string) ($values['contact_email'] ?? '');
+                $outcome = app(ReviewedBlueskySearch::class)->collect(
+                    $request->user(), $object, (string) ($values['question'] ?? ''), $contact
                 );
                 $id = $outcome['session_id'];
             }
@@ -106,6 +123,14 @@ final class Ih03jOwnerCollectionController extends Controller
 
     private function eligible(string $provider): bool
     {
+        if ($provider === 'BLUESKY_PUBLIC_SEARCH') {
+            try {
+                app(BlueskyLocalPermission::class)->assertAllowed();
+                return true;
+            } catch (\RuntimeException $exception) {
+                return false;
+            }
+        }
         if (! $this->localSwitch()) {
             return false;
         }
