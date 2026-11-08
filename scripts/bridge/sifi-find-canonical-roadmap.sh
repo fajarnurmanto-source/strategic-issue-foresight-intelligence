@@ -30,7 +30,7 @@ done < <(find "$ROOT" \
      -o -iname '05_VALIDATION' -o -iname '*backup*' \
      -o -iname '__pycache__' -o -iname '.venv' \) -prune \) -o \
   \( -type f \( -iname '*roadmap*' -o -iname '*milestone*' \
-     -iname '*master*plan*' -o -iname '*canonical*' \) -print0 \))
+     -o -iname '*master*plan*' -o -iname '*canonical*' \) -print0 \))
 
 printf 'SIFI_ROADMAP_CANDIDATES=%s\n' "${#files[@]}"
 count=0
