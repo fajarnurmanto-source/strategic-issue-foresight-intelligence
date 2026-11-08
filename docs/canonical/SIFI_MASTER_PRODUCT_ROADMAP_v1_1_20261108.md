@@ -30,12 +30,21 @@
 | Universal lawful discovery, web research, scheduled monitoring | AE-13–AE-15, 26 Okt | Pencarian deterministik tanpa AI, registrasi/rights terpisah dari penemuan, monitoring terjadwal berkuota, cakupan transparan. |
 | Research-to-Intelligence | AE-16, 26 Okt | Hasil riset/pantauan masuk satu pipeline SIFI; dilarang menciptakan mesin kebenaran kedua. |
 | Autonomous media/social intelligence | Owner mandate 6 Nov; alignment 7 Nov | Normalisasi, dedup, origin independence, clustering, credibility, spread graph, velocity, scenarios, executive snapshots. |
+| **Social-first, operator-sederhana, source coverage jujur** | Mandat ulang 8 Nov | Utamakan sinyal publik Instagram/TikTok/X/YouTube/Bluesky/Mastodon sesuai izin API; satu objek dan keyword bundle, triase otomatis tanpa approval per post; perhatikan kuota, biaya, hak konten dan kemampuan laptop; benchmark pengoperasian Brand24 dkk. |
 | Comparative image/perception and declared assets | Mandat produk 6–7 Nov | Bandingkan sampel dan periode secara terbuka; aset hanya yang dilaporkan/dideklarasikan dengan sumber sah. |
 | CBM-01 benchmarking + selective integration | Mandat 6 Nov | Benchmark *user outcomes* terhadap produk matang; hanya adopsi fitur bernilai, lawful, dengan lisensi yang cocok. |
 | Superadmin Integration Hub | Mandat 6 Nov; alignment 7 Nov | Panel/role terpisah untuk provider/source/rights/quota/cost/health/audit; tidak perlu aplikasi/database kedua. |
 | EBPD-01 evidence-based product development | Mandat 6 Nov | Ukur capability, usability, reliability, commercial viability; gunakan satu acceptance gate terintegrasi per slice, bukan audit mikro berulang. |
 | Evidence-First Decision Workspace dan UX responsif | UI/UX handoff 18 Okt, hasil Core V2 Nov | Integrasi UI dengan status diketahui/tidak diketahui, source coverage, review, evidence, scenario, executive brief; desktop dan mobile layak digunakan. |
 | GitHub ↔ local Laravel development bridge | Log pengguna 8 Nov | GitHub private menjadi transport pengembangan; source sync/branch/PR dan local apply harus dilacak terpisah dari `main`/produksi. |
+
+### 1.2a Social-first ingestion — keputusan operasional 8 November 2026
+
+- **Social adalah sensor prioritas** untuk perhatian/persepsi publik, bukan pengganti data kejadian. Platform dominan dalam kebutuhan pengguna (Instagram, TikTok, X, YouTube) diprioritaskan untuk akses resmi, namun aksesnya **tidak boleh diklaim aktif** sebelum izin, kuota dan endpoint benar-benar tersedia. Gunakan jalur publik sah yang dapat dipakai lebih dulu untuk memperoleh data nyata.
+- Benchmark **kemudahan penggunaan** pesaing (Brand24: project + keywords, mentions, include/exclude, alerts) wajib diterjemahkan menjadi satu objek pantauan, satu alur monitor, triase otomatis, dan panel cakupan sumber; manusia hanya menangani pengecualian atau keputusan material. Tidak ada formulir/approval satu per satu untuk unggahan rutin.
+- **Capability E4-SOC1 source-only** pada commit `9cad973e98e00e8d976243ea7ebb6106bc7e97e5` di branch sinkronisasi: konektor pencarian publik Bluesky satu-permintaan, maksimal 10 tautan per scan, 3 scan/hari, deduplikasi per respons, metadata dan snapshot engagement, tanpa menyimpan fulltext/gambar/video, tanpa klaim asal independen. Status **MERGED_SOURCE_ONLY / PENDING_LOCAL_TEST_AND_OPT_IN**; bukan live production atau R3 PASS. Lihat `docs/SIFI_SOCIAL_INGESTION_PHASE1_20261108.md`.
+- E4-SOC2 berikutnya harus menyediakan **aksi Social Watch satu klik** pada Monitoring Object existing, default bundle keyword/alias/exclusions, hasil/limit per platform, dan penanda gap cakupan. E6 menjadwalkan secara idempoten hanya sumber yang diizinkan; E8 menghitung velocity, repost dan origin independence dengan denominator observasi yang benar.
+- Operasional terbatas CPU/RAM/disk HP 14s: prefer metadata-only, incremental cursor, batch kecil, backoff atas 429, cache/dedup dan retensi singkat. Jangan jalankan full firehose/crawl tanpa endpoint dan resource yang sah.
 
 ### 1.3 Resolusi konflik mandat
 
