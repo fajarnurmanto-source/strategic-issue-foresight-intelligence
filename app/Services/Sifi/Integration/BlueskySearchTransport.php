@@ -87,7 +87,8 @@ class BlueskySearchTransport
                 'on_headers' => static function ($response) use (&$status): void {
                     $status = $response->getStatusCode();
                     if ($status !== 200) {
-                        throw new \RuntimeException($status === 429 ? 'SOCIAL_PROVIDER_QUOTA' : 'SOCIAL_HTTP_UNAVAILABLE');
+                        throw new \RuntimeException($status === 429 ? 'SOCIAL_PROVIDER_QUOTA'
+                            : ($status === 403 ? 'SOCIAL_PUBLIC_SEARCH_RESTRICTED' : 'SOCIAL_HTTP_UNAVAILABLE'));
                     }
                     if (! str_contains(strtolower($response->getHeaderLine('Content-Type')), 'application/json')) {
                         throw new \RuntimeException('SOCIAL_CONTENT_TYPE');
@@ -124,16 +125,20 @@ class BlueskySearchTransport
             ];
         } catch (\Throwable $error) {
             return [
-                'state' => $status === 429 ? 'QUOTA' : 'UNAVAILABLE',
+                'state' => $status === 429 ? 'QUOTA'
+                    : ($status === 403 ? 'RESTRICTED' : 'UNAVAILABLE'),
                 'network_requests' => $requests,
                 'http_status' => $status,
                 'response_bytes' => 0,
                 'response_sha256' => null,
                 'entries' => [],
                 'failure_stage' => $phase,
-                'failure_category' => $status === 429 ? 'PROVIDER_QUOTA'
-                    : ($error instanceof \Illuminate\Http\Client\ConnectionException
-                        ? 'CONNECTION_FAILURE' : 'VALIDATION_OR_HTTP_FAILURE'),
+                'failure_category' => match ($status) {
+                    403 => 'PUBLIC_SEARCH_ACCESS_RESTRICTED',
+                    429 => 'PROVIDER_QUOTA',
+                    default => $error instanceof \Illuminate\Http\Client\ConnectionException
+                        ? 'CONNECTION_FAILURE' : 'VALIDATION_OR_HTTP_FAILURE',
+                },
                 'elapsed_ms' => (int) ((hrtime(true) - $start) / 1e6),
             ];
         }

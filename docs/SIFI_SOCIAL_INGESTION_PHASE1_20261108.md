@@ -44,3 +44,23 @@ No live request, enablement, background job, restart, migrations, paid provider 
 This phase does not claim cross-platform completeness, Instagram/TikTok/X coverage, representative sampling of public opinion, or factual validation of allegations. It does not fetch whole feeds or arbitrary accounts, bypass authentication, or train models on user posts. Full commercial/production admission remains denied.
 
 References: Bluesky API / public AppView (https://docs.bsky.app/docs/api/app-bsky-feed-search-posts); Brand24 project setup (https://help.brand24.com/en/articles/3392669-how-do-i-create-my-first-project); Brand24 mention relevance (https://help.brand24.com/en/articles/10021500-how-to-prevent-non-relevant-mentions).
+
+
+## Live access finding, 9 Nov 2026 — action on observed HTTP 403
+
+The first operator-run isolated pilot **did reach a provider**. It used a new SQLite file in `05_VALIDATION`, ran isolated migrations, made exactly one public search request, and received **HTTP 403** with zero accessible post links. These zero results **do not imply an absence of posts or issues**. SIFI's previous `VALIDATION_OR_HTTP_FAILURE` classification was too generic; HTTP 403 is now represented as `PUBLIC_SEARCH_ACCESS_RESTRICTED` and `RESTRICTED`.
+
+Official Bluesky maintainers have documented deliberate public search 403/load-shedding. **Do not** bypass that policy with case-shifted XRPC paths, alternate unprotected front doors, IP rotation, or automated retries. Do not claim generic unauthenticated keyword search coverage. Keep the existing search source opt-in default OFF; no new dispatch automatically occurs with this patch.
+
+**Next direct-data path:** the official Jetstream v2 **live** WebSocket at `wss://jetstream.us-east.bsky.network/xrpc/network.bsky.jetstream.subscribeEvents`, filtered by `collections=app.bsky.feed.post&kinds=commit`. Jetstream v2's live tail is unauthenticated, and streams published-post records as JSON; it has no server-side keyword filter, so bounded clients may match configured keywords locally. Do not misrepresent a 25-second global-window sample as exhaustive search, representative sentiment, or event prevalence. Historical replay/snapshot HTTP requires a provider API key and is not part of this zero-spend pilot.
+
+The source-only operator diagnostic `scripts/bridge/sifi-jetstream-live-probe.php` uses a single 25-second-or-less authenticated-TLS WebSocket handshake with strict frame, byte and event caps. It stores no user content, uses no DB, and starts no background watcher. Run from WSL after pulling the updated snapshot:
+
+```bash
+php -l "$SNAPSHOT/scripts/bridge/sifi-jetstream-live-probe.php" &&
+php "$SNAPSHOT/scripts/bridge/sifi-jetstream-live-probe.php" sampah
+```
+
+If Jetstream is reachable, proceed to a Laravel owner-scoped, one-click ingestion adapter only after a bounded real sample confirms the protocol. Preserve create/update/delete and account-deletion semantics before establishing a durable historical index.
+
+Sources: Bluesky maintainer 403 explanation (https://github.com/bluesky-social/bsky-docs/issues/332); official Jetstream access and filtering (https://bsky.network/docs/jetstream/); Jetstream replay authentication (https://bsky.network/docs/jetstream-replay/).
