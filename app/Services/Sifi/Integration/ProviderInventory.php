@@ -12,6 +12,9 @@ use App\Services\Sifi\SearchProviderRegistry;
  */
 final class ProviderInventory
 {
+    /** Presentation-only list; deliberately separate from dispatchable SearchProviderRegistry::IDS. */
+    public const VISIBLE_RESEARCH_IDS = ['WIKIPEDIA_ID', 'CROSSREF', 'GDELT_DOC', 'TAVILY_KEYLESS'];
+
     public function snapshot(?string $asOf = null): array
     {
         $asOf ??= now('Asia/Jakarta')->toDateString();
@@ -36,7 +39,7 @@ final class ProviderInventory
         $registry = new SearchProviderRegistry;
         $research = [];
 
-        foreach (SearchProviderRegistry::IDS as $id) {
+        foreach (self::VISIBLE_RESEARCH_IDS as $id) {
             $entry = $registry->get($id);
             $reviewUntil = (string) ($entry['expires_on'] ?? '');
 
@@ -47,14 +50,16 @@ final class ProviderInventory
                 'review_until' => $reviewUntil,
                 'review_state' => $reviewUntil === ''
                     ? 'REVIEW_UNVERIFIED'
-                    : ($reviewUntil < $asOf ? 'REVIEW_EXPIRED' : 'REVIEW_IN_DATE'),
+                    : ($reviewUntil <= $asOf ? 'REVIEW_EXPIRED' : 'REVIEW_IN_DATE'),
                 'connection_probe' => 'NOT_RUN',
+                'dispatch_state' => 'NOT_EVALUATED_BY_INVENTORY',
             ];
         }
 
         return [
             'as_of' => $asOf,
             'read_only' => true,
+            'grants_dispatch_authority' => false,
             'ai' => $ai,
             'research' => $research,
             'ai_tasks' => (new AiTaskCapabilityRegistry)->tasks(),

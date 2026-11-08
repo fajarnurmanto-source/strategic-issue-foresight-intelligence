@@ -1,7 +1,7 @@
 @php($inventory = $this->inventory())
 
 <x-filament-panels::page>
-    <x-filament::section heading="Integration Hub â€” katalog baca-saja">
+    <x-filament::section heading="Integration Hub - katalog baca-saja">
         <div class="space-y-3">
             <p class="text-sm text-gray-600 dark:text-gray-300">
                 Daftar ini bersumber dari registry SIFI yang sudah ada. Tidak ada koneksi API,
@@ -30,7 +30,7 @@
                     </div>
                     <p class="text-sm">Eligibility: {{ $provider['policy_state'] }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ $provider['model_count'] }} model dalam katalog Â· Koneksi {{ $provider['connection_probe'] }}
+                        {{ $provider['model_count'] }} model dalam katalog | Koneksi {{ $provider['connection_probe'] }}
                     </p>
                 </div>
             @endforeach
@@ -50,12 +50,20 @@
                     </div>
                     <p class="text-sm">Aturan penggunaan: {{ $source['rights'] }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Tinjauan berlaku hingga: {{ $source['review_until'] ?: 'belum diketahui' }}
-                        Â· Koneksi {{ $source['connection_probe'] }}
+                        Tanggal batas tinjauan: {{ $source['review_until'] ?: 'belum diketahui' }}
+                        | Koneksi {{ $source['connection_probe'] }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Status pemanggilan sumber: {{ $source['dispatch_state'] }}
                     </p>
                 </div>
             @endforeach
         </div>
+        <p class="mt-3 text-xs text-amber-700 dark:text-amber-300">
+            Sumber yang ditampilkan dalam katalog dan status REVIEW_IN_DATE tidak memberi izin
+            untuk menjalankan konektor atau mengambil data. Kelayakan penggunaan ditetapkan
+            terpisah oleh pemeriksaan hak akses serta batasan lingkungan saat eksekusi.
+        </p>
         <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
             REVIEW_EXPIRED berarti tanggal evaluasi izin dan ketentuan sumber harus ditinjau ulang,
             bukan berarti lisensi sumber tersebut otomatis berakhir.
