@@ -63,7 +63,8 @@ final class ReviewedBlueskySearch
             ];
 
             $packet = app(BlueskySearchTransport::class)->fetch($query, $contact);
-            $entries = $packet['entries'];
+            $history = app(SocialWatchHistory::class)->classify($owner->id, $locked, $packet['entries']);
+            $entries = $history['entries'];
             foreach ($entries as &$entry) {
                 $entry['lineage'][0]['response_sha256'] = $packet['response_sha256'];
                 $entry['lineage'][0]['binding_sha256'] = hash('sha256', json_encode($binding, JSON_THROW_ON_ERROR));
@@ -74,6 +75,7 @@ final class ReviewedBlueskySearch
                 'version' => 'sifi-bluesky-public-search-metadata-1',
                 'mode' => 'APPROVED_LIVE_CORPUS_METADATA',
                 'entries' => $entries,
+                'social_watch_history' => $history['summary'],
                 'comparisons' => [],
                 'calls' => [[
                     'provider' => 'BLUESKY_PUBLIC_SEARCH',
@@ -127,6 +129,8 @@ final class ReviewedBlueskySearch
                     'query_sha256' => hash('sha256', $query),
                     'state' => $packet['state'],
                     'public_post_links' => count($entries),
+                    'first_observed_in_local_history' => $history['summary']['first_observed_count'],
+                    'previously_observed_in_local_history' => $history['summary']['previously_observed_count'],
                     'evidence_admission' => 'NONE',
                 ], JSON_THROW_ON_ERROR),
                 'created_at' => now(),
