@@ -149,4 +149,41 @@ final class SifiConnectorProfileDraftTest extends TestCase
         $this->assertFalse($profile['readiness']['can_dispatch']);
     }
 
+    public function test_verified_superadmin_can_revoke_a_draft_credential_without_dispatch_or_duplicate_audit(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        $admin = $this->admin();
+        $service = app(ConnectorProfileDrafts::class);
+        $profile = $service->create($admin, $this->syntheticInput());
+
+        $service->revokeCredential($admin, $profile->id);
+        $profile->refresh();
+
+        $this->assertFalse($profile->credentialIsStored());
+        $this->assertNull($profile->getRawOriginal('credential_ciphertext'));
+        $this->assertFalse($profile->enabled);
+        $this->assertFalse($profile->billing_authorized);
+        $this->assertSame(0, $profile->max_cost_micros);
+        $this->assertSame(0, $profile->rate_limit_per_minute);
+        $this->assertSame('REVOKED', $profile->rights_status);
+        $this->assertSame('NOT_TESTED', $profile->connection_status);
+        $this->assertSame(['PROFILE_DRAFT_CREATED', 'PROFILE_CREDENTIAL_REVOKED'],
+            DB::table('sifi_connector_audits')->orderBy('id')->pluck('event_code')->all());
+
+        $service->revokeCredential($admin, $profile->id);
+        $this->assertDatabaseCount('sifi_connector_audits', 2);
+        $this->assertFalse($service->publicList($admin)[0]['credential_saved']);
+    }
+
+    public function test_regular_user_cannot_revoke_a_superadmin_draft(): void
+    {
+        config()->set('sifi_superadmin.enabled', true);
+        $service = app(ConnectorProfileDrafts::class);
+        $profile = $service->create($this->admin(), $this->syntheticInput());
+        $regularUser = User::factory()->create(['email_verified_at' => now()]);
+
+        $this->expectException(AuthorizationException::class);
+        $service->revokeCredential($regularUser, $profile->id);
+    }
+
 }
