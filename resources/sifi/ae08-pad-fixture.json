@@ -1,0 +1,16 @@
+{
+  "schema": "SIFI_YK_PAD_IMPORT_V1",
+  "synthetic": true,
+  "source_id": "SRC-OPENDATA-YK-PAD",
+  "endpoint": "https://opendata.jogjakota.go.id/data/pajak/pad_tahun_noseriesapi/index/",
+  "attribution": "SIMULASI SIFI; rujukan katalog Open Data Pemerintah Kota Yogyakarta, bukan angka resmi",
+  "source_updated_at": null,
+  "pages": [
+    {"page": 1, "total_pages": 2, "records": [
+      {"tax_code": "SIM-PAJAK-A", "tax_name": "Pajak A (SIMULASI)", "fiscal_year": 2025, "amount_rupiah": 200000000, "record_version": 1, "updated_at": null}
+    ]},
+    {"page": 2, "total_pages": 2, "records": [
+      {"tax_code": "SIM-PAJAK-B", "tax_name": "Pajak B (SIMULASI)", "fiscal_year": 2025, "amount_rupiah": 150000000, "record_version": 1, "updated_at": null}
+    ]}
+  ]
+}

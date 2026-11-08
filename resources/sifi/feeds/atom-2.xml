@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:s="urn:sifi:synthetic-feed:1" xml:lang="es"><id>https://atom.sources.invalid/feed</id><title>SYNTHETIC Atom Bulletin</title><updated>2025-08-01T08:00:00Z</updated>
+<entry><id>urn:sifi:synthetic:es</id><title>SYNTHETIC — {{OBJECT}}: información pública para investigación</title><link href="https://atom.sources.invalid/es"/><summary>SYNTHETIC. Este ejemplo de fuente para investigación pública no describe un evento real.</summary><published>2025-08-01T08:00:00Z</published><updated>2025-08-01T08:00:00Z</updated><s:region>WIDER_REGION</s:region></entry>
+</feed>
