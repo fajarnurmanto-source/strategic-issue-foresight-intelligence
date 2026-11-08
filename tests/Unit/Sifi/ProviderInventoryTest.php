@@ -6,7 +6,7 @@ use App\Services\Sifi\Ai\AiTaskCapabilityRegistry;
 use App\Services\Sifi\Ai\FreeAiCatalogue;
 use App\Services\Sifi\Integration\ProviderInventory;
 use App\Services\Sifi\SearchProviderRegistry;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 final class ProviderInventoryTest extends TestCase
 {
