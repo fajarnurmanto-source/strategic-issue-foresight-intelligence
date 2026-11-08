@@ -52,6 +52,46 @@ final class ConnectorProfiles extends Page
         return app(ConnectorProfileDrafts::class)->publicList($actor);
     }
 
+    public function revokeCredentialAction(): Action
+    {
+        return Action::make('revokeCredential')
+            ->label('Cabut kredensial draft')
+            ->color('danger')
+            ->modalHeading('Cabut kredensial provider?')
+            ->modalDescription('Kredensial tersimpan akan dihapus permanen. Izin penggunaan dan biaya tetap ditolak. Tidak ada koneksi API yang dijalankan.')
+            ->modalSubmitActionLabel('Ya, cabut kredensial')
+            ->requiresConfirmation()
+            ->visible(fn (): bool => static::canAccess() && $this->databaseReady()
+                && collect($this->profiles())->contains(fn (array $p): bool =>
+                    $p['credential_saved'] && $p['rights_status'] !== 'REVOKED'))
+            ->schema([
+                Select::make('profile_id')
+                    ->label('Pilih draft provider')
+                    ->options(fn (): array => collect($this->profiles())
+                        ->filter(fn (array $p): bool => $p['credential_saved'] && $p['rights_status'] !== 'REVOKED')
+                        ->mapWithKeys(fn (array $p): array => [$p['id'] => $p['label'].' ('.$p['provider_key'].')'])
+                        ->all())
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                if (! static::canAccess() || ! $this->databaseReady()) {
+                    throw new AuthorizationException('Connector revocation unavailable.');
+                }
+
+                $actor = auth()->user();
+                if (! $actor instanceof User) {
+                    throw new AuthorizationException('Superadmin required.');
+                }
+
+                app(ConnectorProfileDrafts::class)->revokeCredential($actor, (string) ($data['profile_id'] ?? ''));
+
+                Notification::make()
+                    ->title('Kredensial dicabut. Draft tetap nonaktif dan izin dinyatakan REVOKED.')
+                    ->success()
+                    ->send();
+            });
+    }
+
     public function createDraftAction(): Action
     {
         return Action::make('createDraft')
