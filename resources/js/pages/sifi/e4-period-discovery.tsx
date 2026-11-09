@@ -32,7 +32,11 @@ const statusLabel: Record<string, string> = {
     PERIOD_BACKFILL_NOT_IN_E4: 'Belum tersedia untuk backfill', HISTORICAL_COVERAGE_NOT_ESTABLISHED: 'Belum ada cakupan historis',
     ATTENTION_ONLY_NO_HISTORIC_POSTS: 'Sinyal perhatian saja', NO_REVIEWED_PERIOD_ADAPTER: 'Belum ada adapter periode',
 };
-const today = () => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date());
+const today = () => {
+    const parts = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Jakarta' }).formatToParts(new Date());
+    const piece = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+    return `${piece('year')}-${piece('month')}-${piece('day')}`;
+};
 
 export default function E4PeriodDiscovery({ objects, plan, report, live_enabled }: Props) {
     const params = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
