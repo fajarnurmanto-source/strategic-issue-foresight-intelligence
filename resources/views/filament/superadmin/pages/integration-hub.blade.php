@@ -70,6 +70,34 @@
         </p>
     </x-filament::section>
 
+    <x-filament::section heading="Google — sumber perhatian pencarian cadangan">
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+            Google Trends RSS merupakan sinyal meningkatnya minat pencarian, bukan Google web search,
+            data berita lengkap, kebenaran kejadian, atau pengganti seluruh media sosial.
+            Integrasi lokal tetap opt-in dan memerlukan database validasi terisolasi.
+        </p>
+        <div class="grid gap-3 md:grid-cols-2">
+            @foreach ($inventory['google_sources'] as $source)
+                <div class="space-y-2 rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                     wire:key="google-{{ $source['id'] }}">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-semibold">{{ $source['label'] }}</h3>
+                        <x-filament::badge :color="$source['state'] === 'LOCAL_OPT_IN_ONLY' ? 'success' : ($source['state'] === 'REVIEW_EXPIRED' ? 'danger' : 'gray')">
+                            {{ $source['state'] }}
+                        </x-filament::badge>
+                    </div>
+                    <p class="text-xs">{{ $source['access'] }}</p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">{{ $source['scope'] }}</p>
+                    <p class="text-xs text-primary-700 dark:text-primary-300">{{ $source['action'] }}</p>
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-3 text-xs text-amber-700 dark:text-amber-300">
+            Google Trends hanya tersedia untuk riset lokal terisolasi; hak pemakaian komersial dan
+            otomasi produksi belum diberikan. Jika permintaan ditolak atau dibatasi, hentikan uji sumber.
+        </p>
+    </x-filament::section>
+
     <x-filament::section heading="Pemantauan media sosial — cakupan sebenarnya">
         <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
             Media sosial menjadi sumber sinyal isu prioritas. Daftar ini menunjukkan akses yang benar-benar
