@@ -104,7 +104,7 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
     <Head title="SIFI · Source & Coverage"/>
     <main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8"><div className="mx-auto max-w-[1500px] space-y-5">
       <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Sumber Data</h1><p className="mt-2 text-sm text-muted-foreground">Pilih penyedia yang diperlukan. SIFI menjelaskan akses, biaya, serta metode koneksi setiap sumber. Pilihan sumber disimpan terpisah dari izin pengambilan data.</p></header>
-      <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'LOCAL DRAFT ONLY · NO LIVE ACQUISITION.'}</b> Usulan sumber dan Coverage Profile di bawah masih berstatus draf. Katalog modul di atas hanya menampilkan kesiapan konektor; tidak memberikan izin provider, menyalakan kolektor, atau menghasilkan admitted evidence.</p></div>
+      <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'PILIHAN SUMBER DRAF · PREVIEW RSS GOOGLE TERSEDIA.'}</b> Usulan sumber dan Coverage Profile di bawah masih berstatus draf. Katalog modul di atas hanya menampilkan kesiapan konektor; tidak memberikan izin provider, menyalakan kolektor, atau menghasilkan admitted evidence.</p></div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Gate izin lokal lolos',n:sourceModules.local_permission_pass_count,icon:ShieldAlert},{t:'Sumber dipilih',n:selectedSourceIds.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
       <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Pilih dan hubungkan sumber data">
          <div className="flex flex-wrap items-center justify-between gap-3">
@@ -180,7 +180,7 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
             <p className="text-xs text-muted-foreground">{googleTrendsPreview.coverage}</p>
           </div>}
         </section>
-       {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>
+       {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
       <SourcePipelinePanel key={pipeline.scenario+pipeline.packet_hash} pipeline={pipeline} sources={sources}/>
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-xl border bg-card p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 text-lg font-semibold"><Database className="h-5 w-5"/> Usulan sumber</h2><button onClick={()=>setSourceId(null)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium"><Plus className="h-4 w-4"/> Baru</button></div>
