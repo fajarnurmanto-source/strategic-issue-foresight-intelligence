@@ -65,6 +65,86 @@ final class E4PeriodDiscoveryController extends Controller
         ]);
     }
 
+    /**
+     * Public Google News RSS: one explicit bounded request, not E4 corpus admission.
+     * This independent preview remains available when paid/provider E4 collectors are OFF.
+     */
+    public function previewGoogleNews(
+        Request $request, E4PeriodDiscovery $discovery,
+        \App\Services\Sifi\Integration\GoogleNewsRssPreview $google
+    ): RedirectResponse {
+        if (array_diff(array_keys($request->all()), [
+            '_token', 'object_id', 'object_revision', 'start_date', 'end_date', 'consent',
+        ])) {
+            throw ValidationException::withMessages(['source' => 'Hanya parameter pencarian terdaftar yang diizinkan.']);
+        }
+        $values = $request->validate([
+            'object_id' => ['required', 'uuid'],
+            'object_revision' => ['required', 'integer', 'min:1'],
+            'start_date' => ['required', 'date_format:Y-m-d'],
+            'end_date' => ['required', 'date_format:Y-m-d'],
+            'consent' => ['accepted'],
+        ]);
+        $owner = $request->user();
+        $object = SifiMonitoringObject::query()->where('user_id', $owner->id)
+            ->findOrFail($values['object_id']);
+        Gate::authorize('update', $object);
+        $plan = $discovery->plan($owner, $object, $values['start_date'], $values['end_date']);
+        if ((int) $object->revision !== (int) $values['object_revision']) {
+            throw ValidationException::withMessages(['object_revision' => 'Objek berubah. Muat ulang cakupan sebelum mencari.']);
+        }
+
+        try {
+            $packet = $google->fetch($plan['query'], $plan['start_date'], $plan['end_date']);
+        } catch (\Throwable $exception) {
+            $reason = $exception->getMessage();
+            throw ValidationException::withMessages([
+                'source' => preg_match('/\AGOOGLE_NEWS_[A-Z0-9_]+\z/D', $reason)
+                    ? $reason : 'GOOGLE_NEWS_UPSTREAM_UNAVAILABLE',
+            ]);
+        }
+        $source = collect($plan['sources'])->firstWhere('id', 'GOOGLE_NEWS_RSS');
+        if (! is_array($source)) {
+            throw ValidationException::withMessages(['source' => 'GOOGLE_NEWS_NOT_IN_CATALOG']);
+        }
+        $items = array_map(static fn (array $item): array => [
+            'provider' => 'GOOGLE_NEWS_RSS',
+            'source_class' => 'NEWS_AGGREGATOR',
+            'platform' => 'Google News RSS',
+            'title' => $item['title'],
+            'url' => $item['url'],
+            'published_at' => $item['published_at'],
+            'rights_state' => 'PUBLIC_METADATA_UNASSESSED',
+            'session_id' => null,
+            'publisher' => $item['publisher'],
+        ], $packet['entries']);
+
+        return redirect()->route('sifi.e4.period-discovery.index', [
+            'object_id' => $object->id,
+            'start_date' => $plan['start_date'],
+            'end_date' => $plan['end_date'],
+        ])->with('e4_result', [
+            'schema' => 'sifi.e4.google-news-public-rss-preview.v1',
+            'owner_user_id' => (int) $owner->id,
+            'object_id' => $object->id,
+            'object_revision' => (int) $object->revision,
+            'start_date' => $plan['start_date'],
+            'end_date' => $plan['end_date'],
+            'sources' => [[...$source,
+                'result_state' => 'PUBLIC_RSS_PREVIEW_ONLY',
+                'result_count' => count($items),
+                'session_id' => null,
+            ]],
+            'items' => $items,
+            'result_state' => $items ? 'PUBLIC_REAL_METADATA_PREVIEW' : 'NO_MATCHING_RSS_METADATA',
+            'coverage' => $packet['coverage'].' No persistent retrieval, no billing, no evidence admission.',
+            'response_sha256' => $packet['response_sha256'],
+            'network_requests' => $packet['request_count'],
+            'evidence_admission' => 'NONE',
+            'production_admission' => 'DENIED',
+        ]);
+    }
+
     public function collect(Request $request, E4PeriodDiscovery $discovery): RedirectResponse
     {
         if (array_diff(array_keys($request->all()), [
