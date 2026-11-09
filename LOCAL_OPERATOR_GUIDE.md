@@ -1,4 +1,4 @@
-# Panduan Operator SIFI Lokal
+> **ARSIP PANDUAN PROTOTIPE v0 (BUKAN SIFI LARAVEL).** Panduan port 8765, Python, serta SQLite di bawah ini dipertahankan untuk riwayat. Aplikasi Laravel kanonis berada di `D:\Research\SIFI\laravel` dengan runtime WSL port 8821. Gunakan [panduan arsitektur kanonis](docs/SIFI_CANONICAL_MODULAR_LARAVEL_20261109.md) dan skrip `scripts/Verify-SifiCanonical.ps1` untuk pemeriksaan. Jangan mengaktifkan dua server sebagai dua produk SIFI.\n\n# Panduan Operator SIFI Lokal
 
 SIFI pada tahap ini adalah aplikasi analitis lokal dan non-produksi. Semua
 komponen aplikasi, data, log, konfigurasi, serta cadangan berada di dalam
