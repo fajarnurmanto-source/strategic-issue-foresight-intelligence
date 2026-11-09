@@ -29,3 +29,7 @@ data/raw/
 data/private/
 *.sqlite
 *.db
+
+# Operator-only, reversible cleanup (never commit cached payloads or receipts)
+/99_QUARANTINE/
+/00_CONTROL/CLEANUP_CANDIDATES/
