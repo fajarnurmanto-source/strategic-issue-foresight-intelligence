@@ -10,6 +10,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 
+// SIFI product roadmap: authenticated, read-only projection of docs/canonical.
+Route::middleware(['auth', 'verified'])->get('/sifi/product-roadmap',
+    [\\App\\Http\\Controllers\\Sifi\\ProductRoadmapController::class, 'index'])
+    ->name('sifi.product-roadmap.index');
+
 /* SIFI_AQ01_SIGNAL_INBOX_ROUTE_BEGIN — isolated offline demonstration only */
 \Illuminate\Support\Facades\Route::middleware(['auth', 'verified'])
     ->get('/sifi/signals', [\App\Http\Controllers\Sifi\SignalInboxController::class, 'index'])
