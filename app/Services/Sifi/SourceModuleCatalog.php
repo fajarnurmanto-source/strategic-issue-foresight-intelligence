@@ -155,6 +155,7 @@ final class SourceModuleCatalog
                 $source['permission_gate'] = array_key_exists($source['id'], $gates)
                     ? ($gates[$source['id']] ? 'LOCAL_GATE_PASSED' : 'LOCAL_GATE_DENIED')
                     : 'NOT_APPLICABLE';
+                $source = [...$source, ...$this->accessDescriptor($source['id'])];
             }
             unset($source);
         }
@@ -174,6 +175,49 @@ final class SourceModuleCatalog
             'rights_granted_by_catalog' => false,
             'production_admission' => 'DENIED',
             'live_enabled' => $live,
+        ];
+    }
+
+    /**
+     * Product labels are conservative and do not imply account approval,
+     * unrestricted search, a binding price quote, or live provider credentials.
+     */
+    private function accessDescriptor(string $id): array
+    {
+        [$access, $auth, $api, $hint] = match ($id) {
+            'CROSSREF', 'GDELT_DOC', 'OPENALEX', 'ARXIV', 'WIKIPEDIA_ID' =>
+                ['FREE_PUBLIC', 'NONE', 'REST', 'Metadata publik; tetap mengikuti kuota dan ketentuan sumber.'],
+            'ANTARA_RSS', 'MEDIA_RSS_ATOM', 'GOOGLE_NEWS_RSS', 'GOOGLE_TRENDS_RSS' =>
+                ['PUBLIC_FEED', 'NONE', 'RSS_ATOM', 'Feed publik tidak selalu memberi hak arsip atau konten lengkap.'],
+            'GOOGLE_WEB_SEARCH', 'BING_WEB_SEARCH', 'BRAVE_SEARCH_API', 'TAVILY_KEYLESS' =>
+                ['PLAN_OR_QUOTA', 'API_KEY', 'REST_SEARCH', 'Harga, jatah gratis, dan paket perlu diperiksa pada penyedia.'],
+            'INSTAGRAM_GRAPH', 'FACEBOOK_GRAPH', 'THREADS_API' =>
+                ['APP_APPROVAL_REQUIRED', 'OAUTH2', 'META_GRAPH_API', 'Login akun hanya memberi cakupan API dan scope yang disetujui Meta.'],
+            'TIKTOK_API' =>
+                ['APP_APPROVAL_REQUIRED', 'OAUTH2', 'TIKTOK_API', 'Login Kit dan izin scope tidak otomatis mengizinkan pencarian semua video.'],
+            'X_API' =>
+                ['PLAN_OR_QUOTA', 'OAUTH2', 'X_API', 'OAuth pengguna tetap membutuhkan paket API dan hak endpoint yang sesuai.'],
+            'YOUTUBE_DATA' =>
+                ['FREE_QUOTA_OR_PLAN', 'OAUTH2_OR_API_KEY', 'YOUTUBE_DATA_API', 'Metadata publik memakai API key; akun pribadi melalui OAuth.'],
+            'LINKEDIN_API' =>
+                ['APP_APPROVAL_REQUIRED', 'OAUTH2', 'LINKEDIN_API', 'Izin login berbeda dari akses unggahan dan pencarian umum.'],
+            'MASTODON_PUBLIC', 'BLUESKY_PUBLIC_SEARCH' =>
+                ['FREE_PUBLIC', 'OPTIONAL_OAUTH', 'PUBLIC_SOCIAL_API', 'Pencarian publik bergantung pada instance/penyedia dan keterbatasannya.'],
+            'WORLD_BANK_API', 'BPS_DATA', 'OFFICIAL_REGULATION_OPEN_DATA', 'LEGAL_REGULATION_INDEX' =>
+                ['PUBLIC_OR_REVIEW_REQUIRED', 'SOURCE_SPECIFIC', 'OPEN_DATA_API', 'Verifikasi sumber resmi, versi, hak, dan metode aksesnya.'],
+            'OWNED_DOCUMENT_UPLOAD', 'OWNED_DATASET_IMPORT' =>
+                ['USER_OWNED', 'LOCAL', 'FILE_IMPORT', 'Materi pengguna; izin pemanfaatan dan provenance wajib dicatat.'],
+            default =>
+                ['REVIEW_REQUIRED', 'SOURCE_SPECIFIC', 'UNCONFIGURED', 'Periksa biaya, API, dan hak sebelum mengaktifkan.'],
+        };
+
+        return [
+            'access_tier' => $access,
+            'auth_method' => $auth,
+            'api_family' => $api,
+            'access_note' => $hint,
+            'billing_authorized' => false,
+            'oauth_connected' => false,
         ];
     }
 
