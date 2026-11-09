@@ -28,6 +28,19 @@ final class SifiSourceCatalogWorkflowTest extends TestCase
         $this->get('/sifi/source-catalog')->assertRedirect('/login');
         $this->post('/sifi/source-catalog/sources',$this->sourceData())->assertRedirect('/login');
     }
+    public function test_catalog_exposes_modules_without_collecting_external_data(): void
+    {
+        config(['sifi_e4.live_enabled'=>false]);
+        $this->actingAs($this->user())->get('/sifi/source-catalog')->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('sifi/source-catalog')
+                ->where('sourceModules.module_count',8)
+                ->where('sourceModules.source_count',28)
+                ->where('sourceModules.rights_granted_by_catalog',false)
+                ->has('sourceModules.modules',8)
+                ->etc());
+        Http::assertNothingSent();
+    }
     public function test_source_draft_is_local_not_enabled(): void
     {
         $user=$this->user();$this->createSource($user);
