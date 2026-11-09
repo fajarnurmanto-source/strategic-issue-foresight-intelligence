@@ -8,7 +8,7 @@ use DOMElement;
 /** Convert Google's Trending Now RSS into bounded, non-evidentiary attention metadata. */
 final class GoogleTrendsRssParser
 {
-    public function parse(string $xml, array $watchTerms): array
+    public function parse(string $xml): array
     {
         if ($xml === '' || strlen($xml) > 524288 || ! mb_check_encoding($xml, 'UTF-8')
             || preg_match('/<!\s*(?:DOCTYPE|ENTITY)\b/i', $xml)) {
@@ -78,14 +78,6 @@ final class GoogleTrendsRssParser
                 || strlen($traffic) > 20) {
                 $traffic = null;
             }
-            $matched = [];
-            foreach ($watchTerms as $watch) {
-                if (is_string($watch) && mb_strlen($watch) <= 80 && $watch !== ''
-                    && mb_stripos($term, $watch) !== false) {
-                    $matched[] = $watch;
-                }
-            }
-            $matched = array_slice(array_values(array_unique($matched)), 0, 10);
             $entries[] = [
                 'id' => hash('sha256', $url),
                 'title' => 'Tren pencarian Google Indonesia: '.$term,
@@ -93,8 +85,9 @@ final class GoogleTrendsRssParser
                 'url' => $url,
                 'google_trend_term' => $term,
                 'search_volume_label' => $traffic,
-                'watch_term_matches' => $matched,
-                'watch_relevance' => $matched ? 'KEYWORD_MATCH_CANDIDATE' : 'NOT_MATCHED_TO_CURRENT_WATCH',
+                // No monitoring object configuration enters the RSS parser/transport.
+                'watch_term_matches' => [],
+                'watch_relevance' => 'NOT_CLASSIFIED_LOCAL',
                 'snippet' => '',
                 'snippet_sha256' => hash('sha256', ''),
                 'snippet_kind' => 'NOT_RETAINED',
@@ -111,8 +104,8 @@ final class GoogleTrendsRssParser
                     'url' => 'https://trends.google.com/trending/rss?geo=ID',
                     'origin' => 'trends.google.com',
                 ]],
-                'relevance' => ['score' => 0, 'question_hits' => $matched, 'context_hits' => []],
-                'relevance_group' => $matched ? 'PUBLIC_SEARCH_INTEREST_MATCH_UNVERIFIED' : 'GENERAL_SEARCH_TREND_ONLY',
+                'relevance' => ['score' => 0, 'question_hits' => [], 'context_hits' => []],
+                'relevance_group' => 'GENERAL_SEARCH_TREND_ONLY',
             ];
         }
 
