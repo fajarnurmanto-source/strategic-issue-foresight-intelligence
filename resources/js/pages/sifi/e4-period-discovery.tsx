@@ -18,7 +18,7 @@ type Plan = {
 type ResultSource = SourceRow & { result_state: string; session_id: string | null; result_count: number; error_code?: string | null };
 type Item = {
     provider: string; source_class: string; platform: string; title: string;
-    url: string; published_at: string; rights_state: string; session_id: string;
+    url: string; published_at: string; rights_state: string; session_id: string | null; publisher?: string;
 };
 type Report = {
     object_id: string; start_date: string; end_date: string; result_state: string;
@@ -35,6 +35,7 @@ const statusLabel: Record<string, string> = {
     ATTENTION_ONLY_NO_HISTORIC_POSTS: 'Sinyal perhatian saja', NO_REVIEWED_PERIOD_ADAPTER: 'Belum ada adapter periode',
     ADAPTER_NOT_IMPLEMENTED: 'Adapter belum dibangun', RIGHTS_REVIEW_REQUIRED: 'Perlu telaah hak akses',
     API_ACCESS_NOT_CONFIGURED: 'API belum dikonfigurasi', CONNECTOR_NOT_ADMITTED_E4: 'Di luar workflow E4',
+    PUBLIC_RSS_ON_DEMAND: 'Bisa mencoba RSS publik', LEGACY_CUSTOM_SEARCH_API_CLOSED: 'API lama ditutup untuk pelanggan baru',
     PLATFORM_PERMISSION_REQUIRED: 'Perlu izin platform', WORKFLOW_AVAILABLE_OUTSIDE_E4: 'Tersedia lewat modul lain',
 };
 const today = () => {
@@ -55,6 +56,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
     const matchesPlan = !!plan && !!selected && plan.object_id === selected.id
         && plan.object_revision === selected.revision && plan.start_date === startDate && plan.end_date === endDate;
     const canCollect = matchesPlan && !!plan?.live_enabled && (plan?.eligible_dispatch_count ?? 0) > 0 && consent && !busy;
+    const canPreviewGoogle = matchesPlan && consent && !busy;
     const keywords = selected?.keywords?.filter((k) => typeof k === 'string' && k.trim().length > 0) ?? [];
 
     function prepare(event: FormEvent) {
@@ -72,6 +74,17 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
             object_id: objectId, object_revision: plan.object_revision,
             start_date: startDate, end_date: endDate,
             consent: true, submission_key: crypto.randomUUID(),
+        }, {
+            preserveScroll: true, onStart: () => setBusy(true), onFinish: () => setBusy(false), onError: setErrors,
+        });
+    }
+
+    function previewGoogleNews() {
+        if (!canPreviewGoogle || !plan) return;
+        setErrors({});
+        router.post('/sifi/discovery-period/google-news-preview', {
+            object_id: objectId, object_revision: plan.object_revision,
+            start_date: startDate, end_date: endDate, consent: true,
         }, {
             preserveScroll: true, onStart: () => setBusy(true), onFinish: () => setBusy(false), onError: setErrors,
         });
@@ -163,6 +176,14 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                             {!live_enabled && <p className="rounded-lg bg-amber-50 p-2 text-sm text-amber-900">
                                 Akuisisi live E4 dinonaktifkan. Aktifkan hanya pada SQLite validasi terisolasi dan izin provider yang berlaku.</p>}
                             {errors.source && <p role="alert" className="text-sm text-destructive">{errors.source}</p>}
+                            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                                <p className="text-sm font-semibold">Coba data berita nyata dari Google</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Google News RSS publik: satu permintaan manual, maksimal 10 judul sesuai periode tersedia. Berfungsi terpisah dari konektor E4 yang masih terkunci; tanpa API key, biaya, arsip terjamin, atau penerimaan bukti.</p>
+                                <button disabled={!canPreviewGoogle} onClick={previewGoogleNews} type="button"
+                                    className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                                    {busy ? 'Mengambil metadata...' : 'Cari lewat Google News RSS'}
+                                </button>
+                            </div>
                             <button disabled={!canCollect} onClick={collect} type="button"
                                 className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                                 {busy ? 'Memproses...' : 'Jalankan akuisisi yang diizinkan'}
@@ -190,7 +211,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                         </div>
                         {report.items.length > 0 && <ul className="mt-4 space-y-2">{report.items.map((item, i) =>
                             <li key={i} className="rounded-lg border p-3">
-                                <p className="text-xs text-muted-foreground">{item.source_class} / {item.platform} · {item.published_at} · {item.rights_state}</p>
+                                <p className="text-xs text-muted-foreground">{item.source_class} / {item.platform} · {item.published_at} · {item.rights_state}{item.publisher ? ` · ${item.publisher}` : ''}</p>
                                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">{item.title || item.url}</a>
                             </li>)}</ul>}
                     </>}
