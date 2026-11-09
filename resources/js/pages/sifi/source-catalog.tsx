@@ -7,7 +7,11 @@ import { Database, Layers, MapPinned, ShieldAlert, Save, Plus, RefreshCw } from 
 
 type Source = {id:string;name:string;source_type:string;homepage_url:string|null;source_geography:string|null;notes:string|null;rights_state:string;collector_state:string;revision:number};
 type Profile = {id:string;name:string;level:string;region_name:string;domains:string[];source_ids:string[];profile_state:string;collector_state:string;revision:number};
-type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;acquisitionWorkspace?:AcquisitionWorkspace|null};
+type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string;permission_gate:string;access_tier:string;auth_method:string;api_family:string;access_note:string;billing_authorized:boolean;oauth_connected:boolean};
+type CatalogModule = {id:string;label:string;description:string;sources:CatalogSource[]};
+type SourceModules = {schema:string;modules:CatalogModule[];module_count:number;source_count:number;e4_dispatchable_count:number;local_permission_pass_count:number;rights_granted_by_catalog:boolean};
+type GoogleTrendsPreview = {entries:{title:string;started_at:string|null;approx_traffic:string}[];coverage:string;response_sha256:string;country:string;production_admission:string};
+type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;selectedSourceIds:string[];sourceSelectionReady:boolean;googleTrendsPreview?:GoogleTrendsPreview|null;acquisitionWorkspace?:AcquisitionWorkspace|null};
 const kinds = ['OFFICIAL','MEDIA','RESEARCH','OPEN_DATA','OTHER'];
 const levels = [{v:'CITY',t:'Kabupaten / Kota'},{v:'PROVINCE',t:'Provinsi'},{v:'NATIONAL',t:'Nasional'}];
 const control = 'mt-1.5 w-full rounded-lg border bg-background px-3 py-2.5 text-sm';
@@ -71,18 +75,112 @@ function ProfileEditor({item,sources,done}: {item?:Profile;sources:Source[];done
   </form>;
 }
 
-export default function SourceCatalog({sources,profiles,pipeline,acquisitionWorkspace}:Props) {
+export default function SourceCatalog({sources,profiles,pipeline,sourceModules,selectedSourceIds,sourceSelectionReady,googleTrendsPreview,acquisitionWorkspace}:Props) {
   const [sourceId,setSourceId]=useState<string|null>(null);
   const [profileId,setProfileId]=useState<string|null>(null);
+  const [sourceSelectionBusy,setSourceSelectionBusy]=useState<string|null>(null);
+  const [sourceSelectionError,setSourceSelectionError]=useState<string|null>(null);
+  const [trendBusy,setTrendBusy]=useState(false);
+  const [trendError,setTrendError]=useState<string|null>(null);
+  const selectProvider=(providerId:string,selected:boolean)=>{
+    setSourceSelectionBusy(providerId);
+    setSourceSelectionError(null);
+    router.post('/sifi/source-catalog/source-selection',{provider_id:providerId,selected},{
+      preserveScroll:true,
+      onError:errors=>setSourceSelectionError(errors.source_selection??errors.provider_id??'Pilihan sumber gagal disimpan.'),
+      onFinish:()=>setSourceSelectionBusy(null),
+    });
+  };
+  const previewGoogleTrends=()=>{
+    setTrendError(null);
+    router.post('/sifi/source-catalog/google-trends-preview',{consent:true},{
+      preserveScroll:true,onStart:()=>setTrendBusy(true),onFinish:()=>setTrendBusy(false),
+      onError:errors=>setTrendError(errors.google_trends??'Tidak dapat mengambil feed Google Trends.'),
+    });
+  };
   const activeSource=sources.find(s=>s.id===sourceId);
   const activeProfile=profiles.find(p=>p.id===profileId);
   return <AppLayout breadcrumbs={[{title:'SIFI — Source & Coverage',href:'/sifi/source-catalog'}]}>
     <Head title="SIFI · Source & Coverage"/>
     <main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8"><div className="mx-auto max-w-[1500px] space-y-5">
-      <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Source Registry & Coverage</h1><p className="mt-2 text-sm text-muted-foreground">Katalog usulan sumber dan cakupan isu yang dikonfigurasi analis. Pengelolaan draf di Laravel; otoritas provenance dan rights tetap terpisah.</p></header>
-      <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'LOCAL DRAFT ONLY · NO LIVE ACQUISITION.'}</b> Sumber di sini belum menjadi Source Registry Python yang berkualifikasi, tidak memperoleh izin penggunaan, tidak mengaktifkan RSS atau kolektor, dan tidak menghasilkan admitted evidence.</p></div>
-      <div className="grid gap-3 sm:grid-cols-3">{[{t:'Usulan sumber',n:sources.length,icon:Database},{t:'Coverage Profiles',n:profiles.length,icon:MapPinned},{t:'Collector aktif',n:0,icon:Layers}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
-      {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
+      <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Sumber Data</h1><p className="mt-2 text-sm text-muted-foreground">Pilih penyedia yang diperlukan. SIFI menjelaskan akses, biaya, serta metode koneksi setiap sumber. Pilihan sumber disimpan terpisah dari izin pengambilan data.</p></header>
+      <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'PILIHAN SUMBER DRAF · PREVIEW RSS GOOGLE TERSEDIA.'}</b> Usulan sumber dan Coverage Profile di bawah masih berstatus draf. Katalog modul di atas hanya menampilkan kesiapan konektor; tidak memberikan izin provider, menyalakan kolektor, atau menghasilkan admitted evidence.</p></div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Gate izin lokal lolos',n:sourceModules.local_permission_pass_count,icon:ShieldAlert},{t:'Sumber dipilih',n:selectedSourceIds.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
+      <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Pilih dan hubungkan sumber data">
+         <div className="flex flex-wrap items-center justify-between gap-3">
+           <div>
+             <h2 className="text-xl font-semibold">Pilih sumber data</h2>
+             <p className="mt-1 text-sm text-muted-foreground">Pilih sumber, lalu hubungkan API atau akun ketika konektor resmi tersedia. Tidak ada biaya atau permintaan data saat memilih.</p>
+           </div>
+           <Link href="/sifi/discovery-period" className="rounded-lg border px-3 py-2 text-sm font-medium text-primary hover:bg-muted">Telusuri objek & periode</Link>
+         </div>
+         {!sourceSelectionReady&&<p role="alert" className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">Penyimpanan pilihan sumber belum terpasang. Jalankan migrasi pada staging setelah QA.</p>}
+         {sourceSelectionError&&<p role="alert" className="mt-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{sourceSelectionError}</p>}
+         <div className="mt-4 grid gap-3 lg:grid-cols-2">
+           {sourceModules.modules.map((module,index)=><details key={module.id} open={index===0} className="rounded-xl border bg-background">
+             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">
+               {module.label}<span className="ml-2 text-xs font-normal text-muted-foreground">{module.sources.filter(s=>selectedSourceIds.includes(s.id)).length}/{module.sources.length} dipilih</span>
+             </summary>
+             <div className="space-y-2 border-t p-3">
+               {module.sources.map(s=>{
+                 const chosen=selectedSourceIds.includes(s.id);
+                 const login=['OAUTH2','OAUTH2_OR_API_KEY','OPTIONAL_OAUTH'].includes(s.auth_method);
+                 const payLabel=s.access_tier==='NOT_AVAILABLE_NEW_SIGNUPS'?'API lama ditutup bagi pendaftar baru'
+                    :s.access_tier==='PLAN_OR_QUOTA'?'Paket API/kuota: biaya mungkin berlaku'
+                   :s.access_tier==='FREE_QUOTA_OR_PLAN'?'Gratis berkuota / opsi paket'
+                   :s.access_tier==='APP_APPROVAL_REQUIRED'?'Persetujuan aplikasi diperlukan'
+                   :s.access_tier==='FREE_PUBLIC'||s.access_tier==='PUBLIC_FEED'?'Publik / gratis bersyarat'
+                   :'Biaya dan izin sesuai sumber';
+                 const payAttention=['PLAN_OR_QUOTA','FREE_QUOTA_OR_PLAN','APP_APPROVAL_REQUIRED','NOT_AVAILABLE_NEW_SIGNUPS'].includes(s.access_tier);
+                 return <div key={s.id} className={'rounded-lg border p-3 '+(chosen?'border-primary/40 bg-primary/5':'')}>
+                   <div className="flex items-start justify-between gap-3">
+                     <div className="min-w-0">
+                       <h3 className="text-sm font-semibold">{s.platform}</h3>
+                       <p className="mt-1 text-xs text-muted-foreground">{s.api_family} · {s.auth_method==='NONE'?'Tanpa login':s.auth_method==='LOCAL'?'File lokal':login?'OAuth / login akun':'Akses API / sumber'}</p>
+                     </div>
+                     <label className="flex shrink-0 items-center gap-2 text-xs font-medium">
+                       <input type="checkbox" className="size-4 accent-primary" checked={chosen}
+                         disabled={!sourceSelectionReady||sourceSelectionBusy===s.id}
+                         onChange={event=>selectProvider(s.id,event.target.checked)} aria-label={'Pilih '+s.platform}/>
+                       {chosen?'Dipilih':'Pilih'}
+                     </label>
+                   </div>
+                   <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                     <span className={payAttention?'rounded-full bg-amber-100 px-2 py-0.5 text-amber-800':'rounded-full bg-muted px-2 py-0.5 text-muted-foreground'}>{payLabel}</span>
+                     <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                       {s.connection==='PUBLIC_RSS_ONE_SHOT'?'Preview RSS publik tersedia':s.permission_gate==='LOCAL_GATE_PASSED'?'Gate lokal lulus':s.connection==='REVIEWED_OPT_IN'?'Perlu konfigurasi izin':'Konektor belum aktif'}
+                     </span>
+                   </div>
+                   {chosen&&<p className="mt-2 text-xs font-medium text-primary">Pilihan tersimpan; akuisisi belum diaktifkan.</p>}
+                   <p className="mt-2 text-xs text-muted-foreground">{s.access_note}</p>
+                   {login&&<p className="mt-1 text-xs text-muted-foreground">Hubungkan akun via OAuth resmi setelah aplikasi developer, redirect, dan scope disiapkan. SIFI tidak meminta kata sandi.</p>}
+                    {s.id==='GOOGLE_NEWS_RSS'&&<Link href="/sifi/discovery-period" className="mt-2 inline-flex rounded-md border border-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/5">Buka uji Google News RSS nyata</Link>}
+                 </div>;
+               })}
+             </div>
+           </details>)}
+         </div>
+         <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">Memilih sumber tidak mengaktifkan kolektor, membeli paket, atau memberi izin membaca seluruh data platform. Koneksi dan kuota diperiksa sebelum akuisisi.</p>
+       </section>
+       <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Data Google Trends Indonesia">
+          <h2 className="text-lg font-semibold">Google Trends Indonesia · Sinyal terkini</h2>
+          <p className="mt-1 text-sm text-muted-foreground">RSS tren pencarian yang diekspor Google. Ini indikator perhatian pencarian, bukan hasil Google Search, penyebutan berita, kejadian nyata, atau prevalensi penduduk.</p>
+          <button type="button" disabled={trendBusy} onClick={previewGoogleTrends}
+            className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+            {trendBusy?'Mengambil RSS...':'Saya setuju: ambil 1 feed RSS tren publik'}
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground">Satu permintaan saat diklik; tanpa API key berbayar, tanpa scheduler, dan tanpa penerimaan bukti.</p>
+          {trendError&&<p role="alert" className="mt-2 text-sm text-destructive">{trendError}</p>}
+          {googleTrendsPreview&&<div className="mt-4 space-y-2">
+            <p className="text-sm font-medium">{googleTrendsPreview.entries.length} topik tren tersedia · {googleTrendsPreview.country}</p>
+            <ol className="grid gap-2 md:grid-cols-2">{googleTrendsPreview.entries.map((entry,index)=><li key={index} className="rounded-lg border p-3">
+              <p className="text-sm font-semibold">{entry.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Mulai: {entry.started_at??'Tidak tercatat'} · Perkiraan volume: {entry.approx_traffic||'Tidak tersedia'}</p>
+            </li>)}</ol>
+            <p className="text-xs text-muted-foreground">{googleTrendsPreview.coverage}</p>
+          </div>}
+        </section>
+       {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
       <SourcePipelinePanel key={pipeline.scenario+pipeline.packet_hash} pipeline={pipeline} sources={sources}/>
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-xl border bg-card p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 text-lg font-semibold"><Database className="h-5 w-5"/> Usulan sumber</h2><button onClick={()=>setSourceId(null)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium"><Plus className="h-4 w-4"/> Baru</button></div>

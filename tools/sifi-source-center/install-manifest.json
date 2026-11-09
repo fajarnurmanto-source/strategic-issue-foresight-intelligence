@@ -1,0 +1,104 @@
+{
+  "schema": "sifi-source-center-install.v1",
+  "release": "2026-11-09",
+  "branch": "feat/sifi-modular-source-inventory-20261109",
+  "base_commit": "beafab132cdadafb3a8e77e3034fb9b8d82bc947",
+  "notes": "Exact-source file manifest for local Laravel installation; null baseline means file was absent from base branch. Does not install collector credentials or production access.",
+  "files": [
+    {
+      "path": "app/Console/Commands/SifiSourcesDoctor.php",
+      "baseline_blob": null,
+      "candidate_blob": "c4d45f6739da1a22b7fb3c7d87b8aefcf9c6692e"
+    },
+    {
+      "path": "app/Http/Controllers/Sifi/E4PeriodDiscoveryController.php",
+      "baseline_blob": "1475ec6c924f99c1623cc759cee2f2164ab271b1",
+      "candidate_blob": "3eda610bd76146565cce9d9d0f8b2b9ee5ad5576"
+    },
+    {
+      "path": "app/Http/Controllers/Sifi/SourceCatalogController.php",
+      "baseline_blob": "23bef9e5febcd2aa0ebccc668901b4402f4232b6",
+      "candidate_blob": "5b85e2b8cd45ad419cda62c59a7519f5f0b49c14"
+    },
+    {
+      "path": "app/Services/Sifi/E4PeriodDiscovery.php",
+      "baseline_blob": "ab1eaf202b60ef8ccf444506afc96bef98966e5e",
+      "candidate_blob": "090ba2134c01f63da53bf19eef66e29c544aab03"
+    },
+    {
+      "path": "app/Services/Sifi/Integration/GoogleNewsRssPreview.php",
+      "baseline_blob": null,
+      "candidate_blob": "e6e70ea67f505443e7cffcf1d83f6de58dfc32e2"
+    },
+    {
+      "path": "app/Services/Sifi/Integration/GoogleTrendsRssPreview.php",
+      "baseline_blob": null,
+      "candidate_blob": "137a54b7c43bc3d134b816acbba6e26242ecd203"
+    },
+    {
+      "path": "app/Services/Sifi/SourceModuleCatalog.php",
+      "baseline_blob": null,
+      "candidate_blob": "8487b45d5b43e5a36c00042c665cf61fde1965a3"
+    },
+    {
+      "path": "database/migrations/2026_11_09_000021_create_sifi_user_source_selections.php",
+      "baseline_blob": null,
+      "candidate_blob": "1ff65bc9af3944ad85add676748d0cdd6b03c8b6"
+    },
+    {
+      "path": "docs/SIFI_SOURCE_CONNECTION_UX_OAUTH_20261109.md",
+      "baseline_blob": null,
+      "candidate_blob": "4b37b6eec55471775e49be5f2aeea7081d071e5e"
+    },
+    {
+      "path": "docs/SIFI_SOURCE_MODULES_AND_ACTIVATION_20261109.md",
+      "baseline_blob": null,
+      "candidate_blob": "28a54e73ffa6965c39170430ba8d782981c84d5a"
+    },
+    {
+      "path": "resources/js/pages/sifi/e4-period-discovery.tsx",
+      "baseline_blob": "9ee322ec268f6a04bd1865e22f3e1001c377c819",
+      "candidate_blob": "8a8a1114e535e760fb97d8f5d76a568a6004e1d3"
+    },
+    {
+      "path": "resources/js/pages/sifi/source-catalog.tsx",
+      "baseline_blob": "d86349512e5044c1e808fadb82c0b2755f9753dd",
+      "candidate_blob": "d5971a22f7ce1bc237946c250dead5ba7d092885"
+    },
+    {
+      "path": "routes/web.php",
+      "baseline_blob": "5aa2f2d16d5229dee68b2be21586464dba91e32e",
+      "candidate_blob": "1917905c5901e6d379a5753f0ed6053f75fb24a0"
+    },
+    {
+      "path": "tests/Feature/Sifi/E4PeriodDiscoveryTest.php",
+      "baseline_blob": "31b08cb31a765da80df888a0764edb88fc99bd02",
+      "candidate_blob": "f12c6cd6f77715e9886e6fd7339313695019eb04"
+    },
+    {
+      "path": "tests/Feature/Sifi/GoogleNewsRssPreviewTest.php",
+      "baseline_blob": null,
+      "candidate_blob": "942fa6a228ba3c50a68feae302bca41b700ddac1"
+    },
+    {
+      "path": "tests/Feature/Sifi/GoogleTrendsRssPreviewTest.php",
+      "baseline_blob": null,
+      "candidate_blob": "76157f5e20ea5993c5f5200a9e75c0b66ee9ff84"
+    },
+    {
+      "path": "tests/Feature/Sifi/SifiSourceCatalogWorkflowTest.php",
+      "baseline_blob": "dcd50eee7564ca1e0883efc9affd9235aa7bc099",
+      "candidate_blob": "a14828c86ac5e66baf24b6c837bfcf8d67b24985"
+    },
+    {
+      "path": "tests/Feature/Sifi/SourceCenterDoctorCommandTest.php",
+      "baseline_blob": null,
+      "candidate_blob": "2c0ef86c7f7bbd49277320d3b19ecdd256923509"
+    },
+    {
+      "path": "tests/Feature/Sifi/SourceModuleCatalogTest.php",
+      "baseline_blob": null,
+      "candidate_blob": "be89fa691e2702512700441002d3ed01ff68fc4f"
+    }
+  ]
+}

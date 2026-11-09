@@ -66,7 +66,8 @@ final class E4PeriodDiscoveryTest extends TestCase
             ->where('plan.end_date', $today)
             ->where('plan.live_enabled', false)
             ->where('plan.eligible_dispatch_count', 0)
-            ->has('plan.sources', 6));
+            ->has('plan.modules', 8)
+            ->has('plan.sources', 28));
         $this->assertDatabaseCount('sifi_research_sessions', 0);
         Http::assertNothingSent();
     }

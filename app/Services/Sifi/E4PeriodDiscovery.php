@@ -4,8 +4,6 @@ namespace App\Services\Sifi;
 
 use App\Models\SifiMonitoringObject;
 use App\Models\User;
-use App\Services\Sifi\Integration\AntaraLocalPermission;
-use App\Services\Sifi\Integration\CrossrefLocalPermission;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -46,32 +44,12 @@ final class E4PeriodDiscovery
             $query = trim($object->name.' '.$query);
         }
         $query = mb_substr($query, 0, 200);
-        $antara = false;
-        try {
-            app(AntaraLocalPermission::class)->assertAllowed();
-            $antara = true;
-        } catch (\RuntimeException) {
-            // Availability is a source-state, not a reason to bypass restrictions.
-        }
-        $crossref = app(CrossrefLocalPermission::class)->eligible();
-        $live = config('sifi_e4.live_enabled') === true
-            && app()->environment(['local', 'testing'])
-            && config('database.default') === 'sqlite'
-            && ($db = config('database.connections.sqlite.database'))
-            && ($db === ':memory:' || (is_string($db)
-                && preg_match('#\A/mnt/d/Research/SIFI/05_VALIDATION/[^\r\n]+\.sqlite\z#D', $db) === 1));
-
-        $sources = [
-            ['id' => 'CROSSREF', 'class' => 'RESEARCH', 'platform' => 'Crossref', 'state' => $crossref ? 'ELIGIBLE' : 'PERMISSION_DISABLED', 'coverage' => 'HISTORICAL_PUBLISHED_DATE_FILTER', 'dispatchable' => $crossref && $live],
-            ['id' => 'ANTARA_RSS', 'class' => 'NEWS', 'platform' => 'ANTARA News', 'state' => ! $antara ? 'PERMISSION_DISABLED' : ($end !== $today ? 'HISTORICAL_COVERAGE_UNAVAILABLE' : 'ELIGIBLE_LATEST_ONLY'), 'coverage' => 'LATEST_FEED_NO_ARCHIVE', 'dispatchable' => $antara && $live && $end === $today],
-            ['id' => 'GDELT_DOC', 'class' => 'NEWS_INDEX', 'platform' => 'GDELT', 'state' => 'PERIOD_BACKFILL_NOT_IN_E4', 'coverage' => 'HISTORICAL_REVIEW_REQUIRED', 'dispatchable' => false],
-            ['id' => 'BLUESKY_PUBLIC_SEARCH', 'class' => 'SOCIAL', 'platform' => 'Bluesky', 'state' => 'HISTORICAL_COVERAGE_NOT_ESTABLISHED', 'coverage' => 'PUBLIC_SEARCH_NOT_BACKFILL', 'dispatchable' => false],
-            ['id' => 'GOOGLE_TRENDS_RSS', 'class' => 'ATTENTION', 'platform' => 'Google Trends', 'state' => 'ATTENTION_ONLY_NO_HISTORIC_POSTS', 'coverage' => 'LATEST_TRENDS_ONLY', 'dispatchable' => false],
-            ['id' => 'OFFICIAL_REGULATION_OPEN_DATA', 'class' => 'OFFICIAL_OPEN_DATA', 'platform' => 'Official/Regulation/Open Data', 'state' => 'NO_REVIEWED_PERIOD_ADAPTER', 'coverage' => 'NOT_AVAILABLE', 'dispatchable' => false],
-        ];
+        $catalog = app(SourceModuleCatalog::class)->forE4($end);
+        $sources = $catalog['sources'];
+        $live = $catalog['live_enabled'];
 
         return [
-            'schema' => 'sifi.e4.period-source-plan.v1',
+            'schema' => 'sifi.e4.period-source-plan.v2',
             'object_id' => $object->id,
             'object_name' => $object->name,
             'object_revision' => (int) $object->revision,
@@ -82,6 +60,8 @@ final class E4PeriodDiscovery
             'end_date' => $end,
             'end_exclusive' => (new \DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d'),
             'sources' => $sources,
+            'modules' => $catalog['modules'],
+            'module_count' => $catalog['module_count'],
             'eligible_dispatch_count' => count(array_filter($sources, static fn ($s) => $s['dispatchable'])),
             'live_enabled' => $live,
             'source_coverage' => 'PARTIAL_PER_SOURCE_RIGHTS_AND_HISTORICAL_AVAILABILITY',

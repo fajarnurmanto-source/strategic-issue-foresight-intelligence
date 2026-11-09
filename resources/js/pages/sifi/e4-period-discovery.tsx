@@ -6,20 +6,22 @@ import { ArrowRight, CalendarRange, DatabaseZap, Link2, Search, ShieldAlert } fr
 type ObjectRow = { id: string; name: string; revision: number; state: string; keywords: string[] };
 type SourceRow = {
     id: string; class: string; platform: string; state: string; coverage: string; dispatchable: boolean;
+    module_id: string; module_label: string; connection: string; workflow: string; notes: string; permission_gate: string;
 };
+type SourceModule = { id: string; label: string; description: string; sources: SourceRow[] };
 type Plan = {
     schema: string; object_id: string; object_name: string; object_revision: number;
     keyword_count: number; keyword_scope_sha256: string; query: string;
-    start_date: string; end_date: string; sources: SourceRow[];
+    start_date: string; end_date: string; sources: SourceRow[]; modules: SourceModule[]; module_count: number;
     eligible_dispatch_count: number; live_enabled: boolean; source_coverage: string;
 };
 type ResultSource = SourceRow & { result_state: string; session_id: string | null; result_count: number; error_code?: string | null };
 type Item = {
     provider: string; source_class: string; platform: string; title: string;
-    url: string; published_at: string; rights_state: string; session_id: string;
+    url: string; published_at: string; rights_state: string; session_id: string | null; publisher?: string;
 };
 type Report = {
-    object_id: string; start_date: string; end_date: string; result_state: string;
+    object_id: string; start_date: string; end_date: string; result_state: string; query_used?: string;
     sources: ResultSource[]; items: Item[]; coverage: string;
     evidence_admission: string; production_admission: string;
 };
@@ -31,6 +33,10 @@ const statusLabel: Record<string, string> = {
     PERMISSION_DISABLED: 'Belum diizinkan', HISTORICAL_COVERAGE_UNAVAILABLE: 'Arsip tanggal ini tidak tersedia',
     PERIOD_BACKFILL_NOT_IN_E4: 'Belum tersedia untuk backfill', HISTORICAL_COVERAGE_NOT_ESTABLISHED: 'Belum ada cakupan historis',
     ATTENTION_ONLY_NO_HISTORIC_POSTS: 'Sinyal perhatian saja', NO_REVIEWED_PERIOD_ADAPTER: 'Belum ada adapter periode',
+    ADAPTER_NOT_IMPLEMENTED: 'Adapter belum dibangun', RIGHTS_REVIEW_REQUIRED: 'Perlu telaah hak akses',
+    API_ACCESS_NOT_CONFIGURED: 'API belum dikonfigurasi', CONNECTOR_NOT_ADMITTED_E4: 'Di luar workflow E4',
+    PUBLIC_RSS_ON_DEMAND: 'Bisa mencoba RSS publik', LEGACY_CUSTOM_SEARCH_API_CLOSED: 'API lama ditutup untuk pelanggan baru',
+    PLATFORM_PERMISSION_REQUIRED: 'Perlu izin platform', WORKFLOW_AVAILABLE_OUTSIDE_E4: 'Tersedia lewat modul lain',
 };
 const today = () => {
     const parts = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Jakarta' }).formatToParts(new Date());
@@ -50,6 +56,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
     const matchesPlan = !!plan && !!selected && plan.object_id === selected.id
         && plan.object_revision === selected.revision && plan.start_date === startDate && plan.end_date === endDate;
     const canCollect = matchesPlan && !!plan?.live_enabled && (plan?.eligible_dispatch_count ?? 0) > 0 && consent && !busy;
+    const canPreviewGoogle = matchesPlan && consent && !busy;
     const keywords = selected?.keywords?.filter((k) => typeof k === 'string' && k.trim().length > 0) ?? [];
 
     function prepare(event: FormEvent) {
@@ -67,6 +74,17 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
             object_id: objectId, object_revision: plan.object_revision,
             start_date: startDate, end_date: endDate,
             consent: true, submission_key: crypto.randomUUID(),
+        }, {
+            preserveScroll: true, onStart: () => setBusy(true), onFinish: () => setBusy(false), onError: setErrors,
+        });
+    }
+
+    function previewGoogleNews() {
+        if (!canPreviewGoogle || !plan) return;
+        setErrors({});
+        router.post('/sifi/discovery-period/google-news-preview', {
+            object_id: objectId, object_revision: plan.object_revision,
+            start_date: startDate, end_date: endDate, consent: true,
         }, {
             preserveScroll: true, onStart: () => setBusy(true), onFinish: () => setBusy(false), onError: setErrors,
         });
@@ -126,13 +144,26 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                         : <>
                             <p className="text-sm">Objek <strong>{plan.object_name}</strong>, v{plan.object_revision}, {plan.start_date} sampai {plan.end_date}.</p>
                             <p className="text-sm text-muted-foreground">Istilah pencarian: {plan.query}</p>
-                            <div className="max-h-[430px] space-y-2 overflow-auto">
-                                {plan.sources.map((s) => <div key={s.id} className="rounded-lg border p-3 text-sm">
-                                    <div className="flex flex-wrap items-center justify-between gap-2"><strong>{s.platform}</strong>
-                                        <span className={s.dispatchable ? 'text-emerald-700' : 'text-amber-700'}>{statusLabel[s.state] ?? s.state}</span>
+                            <p className="text-xs text-muted-foreground">{plan.module_count} modul · {plan.sources.length} sumber terinventarisasi. Status “terdaftar” bukan berarti koneksi aktif atau izin akses diberikan.</p>
+                            <div className="max-h-[510px] space-y-2 overflow-auto" aria-label="Modul sumber informasi">
+                                {plan.modules.map((module, index) => <details key={module.id} open={index === 0 || index === 3}
+                                    className="rounded-lg border bg-background">
+                                    <summary className="cursor-pointer px-3 py-3 text-sm font-semibold">
+                                        {module.label} <span className="ml-1 text-xs font-normal text-muted-foreground">({module.sources.length} sumber)</span>
+                                    </summary>
+                                    <div className="space-y-2 border-t px-3 pb-3 pt-2">
+                                        <p className="text-xs text-muted-foreground">{module.description}</p>
+                                        {module.sources.map((s) => <div key={s.id} className="rounded-lg border p-2.5 text-sm">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <strong>{s.platform}</strong>
+                                                <span className={s.dispatchable ? 'text-emerald-700' : 'text-amber-700'}>{statusLabel[s.state] ?? s.state}</span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">{s.class} · {s.coverage}</p>
+                                            <p className="mt-1 text-xs text-muted-foreground">{s.notes}</p>
+                                            <p className="mt-1 text-[11px] text-muted-foreground">Konektor: {s.connection} · Izin lokal: {s.permission_gate} · Jalur: {s.workflow}</p>
+                                        </div>)}
                                     </div>
-                                    <p className="mt-1 text-xs text-muted-foreground">{s.class} · {s.coverage}</p>
-                                </div>)}
+                                </details>)}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {plan.eligible_dispatch_count} sumber siap untuk satu permintaan terbatas pada lingkungan validasi terisolasi.
@@ -145,6 +176,14 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                             {!live_enabled && <p className="rounded-lg bg-amber-50 p-2 text-sm text-amber-900">
                                 Akuisisi live E4 dinonaktifkan. Aktifkan hanya pada SQLite validasi terisolasi dan izin provider yang berlaku.</p>}
                             {errors.source && <p role="alert" className="text-sm text-destructive">{errors.source}</p>}
+                            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                                <p className="text-sm font-semibold">Coba data berita nyata dari Google</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Google News RSS publik: satu permintaan manual memakai keyword pertama yang terdaftar, maksimal 10 judul sesuai periode tersedia. Berfungsi terpisah dari konektor E4 yang masih terkunci; tanpa API key, biaya, arsip terjamin, atau penerimaan bukti.</p>
+                                <button disabled={!canPreviewGoogle} onClick={previewGoogleNews} type="button"
+                                    className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                                    {busy ? 'Mengambil metadata...' : 'Cari lewat Google News RSS'}
+                                </button>
+                            </div>
                             <button disabled={!canCollect} onClick={collect} type="button"
                                 className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                                 {busy ? 'Memproses...' : 'Jalankan akuisisi yang diizinkan'}
@@ -159,6 +198,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                     ? <p className="mt-3 text-sm text-muted-foreground">Belum ada hasil untuk pilihan objek dan periode saat ini. Cakupan sumber yang tidak tersedia tetap ditampilkan di atas.</p>
                     : <>
                         <p className="mt-2 text-sm font-medium">{report.result_state}</p>
+                        {report.query_used && <p className="mt-1 text-xs text-muted-foreground">Keyword yang dipakai Google News: {report.query_used}</p>}
                         <p className="mt-1 text-sm text-muted-foreground">{report.coverage}</p>
                         <div className="mt-4 grid gap-2 md:grid-cols-2">
                             {report.sources.map((s) => <div key={s.id} className="rounded-lg border p-3 text-sm">
@@ -172,7 +212,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                         </div>
                         {report.items.length > 0 && <ul className="mt-4 space-y-2">{report.items.map((item, i) =>
                             <li key={i} className="rounded-lg border p-3">
-                                <p className="text-xs text-muted-foreground">{item.source_class} / {item.platform} · {item.published_at} · {item.rights_state}</p>
+                                <p className="text-xs text-muted-foreground">{item.source_class} / {item.platform} · {item.published_at} · {item.rights_state}{item.publisher ? ` · ${item.publisher}` : ''}</p>
                                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline">{item.title || item.url}</a>
                             </li>)}</ul>}
                     </>}

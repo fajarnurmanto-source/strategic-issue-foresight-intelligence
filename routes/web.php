@@ -19,6 +19,9 @@ Route::middleware(['auth', 'verified'])->get('/sifi/product-roadmap',
 Route::middleware(['auth', 'verified'])->get('/sifi/discovery-period',
     [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'index'])
     ->name('sifi.e4.period-discovery.index');
+Route::middleware(['auth', 'verified', 'throttle:2,1'])->post('/sifi/discovery-period/google-news-preview',
+    [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'previewGoogleNews'])
+    ->name('sifi.e4.period-discovery.google-news-preview');
 Route::middleware(['auth', 'verified', 'throttle:2,1'])->post('/sifi/discovery-period/collect',
     [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'collect'])
     ->name('sifi.e4.period-discovery.collect');
@@ -56,6 +59,8 @@ Route::middleware(['auth', 'verified'])->post('/sifi/issue-candidates/{candidate
 /* SIFI_AQ01_INCREMENT8: proposal-only Source & Coverage drafts, no collector authority */
 Route::middleware(['auth','verified'])->prefix('sifi')->group(function () {
     Route::get('/source-catalog',[\App\Http\Controllers\Sifi\SourceCatalogController::class,'index'])->name('sifi.source-catalog.index');
+    Route::post('/source-catalog/google-trends-preview',[\App\Http\Controllers\Sifi\SourceCatalogController::class,'previewGoogleTrends'])->middleware('throttle:2,1')->name('sifi.source-catalog.google-trends-preview');
+    Route::post('/source-catalog/source-selection',[\App\Http\Controllers\Sifi\SourceCatalogController::class,'updateSourceSelection'])->middleware('throttle:30,1')->name('sifi.source-catalog.source-selection');
     Route::post('/source-catalog/connector-preview',[\App\Http\Controllers\Sifi\SourceCatalogController::class,'previewConnector'])->middleware('throttle:10,1')->name('sifi.source-catalog.connector-preview');
     Route::post('/source-catalog/acquisition-preview', [\App\Http\Controllers\Sifi\SourceCatalogController::class,'acquireWorldBank'])->middleware('throttle:5,1')->name('sifi.source-catalog.acquisition-preview');
     Route::post('/source-catalog/pipeline-draft',[\App\Http\Controllers\Sifi\SourceCatalogController::class,'createPipelineDraft'])->middleware('throttle:10,1')->name('sifi.source-catalog.pipeline-draft');
