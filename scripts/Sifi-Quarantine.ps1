@@ -147,7 +147,7 @@ if ($Mode -eq 'Plan') {
         $relative = $candidate.FullName.Substring($Root.Length).TrimStart('\').Replace('\', '/')
         Assert-Target $candidate.FullName $relative
         $stats = Get-Stats $candidate.FullName
-        $entries += [ordered]@{
+        $entries += [PSCustomObject][ordered]@{
             path = $candidate.FullName
             relative = $relative
             last_write_utc = $candidate.LastWriteTimeUtc.ToString('o')
@@ -170,7 +170,9 @@ if ($Mode -eq 'Plan') {
     $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding UTF8
     Write-Output "SIFI_CLEANUP_PLAN=$out"
     Write-Output "CANDIDATE_DIRECTORIES=$($entries.Count)"
-    Write-Output "CANDIDATE_BYTES=$(($entries | Measure-Object -Property bytes -Sum).Sum)"
+    [long]$candidateBytes = 0
+    foreach ($entry in $entries) { $candidateBytes += [long]$entry.bytes }
+    Write-Output "CANDIDATE_BYTES=$candidateBytes"
     $entries | Select-Object relative, bytes, files, last_write_utc | Format-Table -AutoSize
     Write-Output 'SIFI_CLEANUP=PLAN_ONLY; CHANGES=0'
     exit 0
