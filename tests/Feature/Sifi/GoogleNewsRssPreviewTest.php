@@ -52,7 +52,7 @@ final class GoogleNewsRssPreviewTest extends TestCase
             .'<link>https://news.google.com/rss/articles/test01</link>'
             .'<pubDate>'.$published.'</pubDate><source>Contoh Media</source></item>'
             .'</channel></rss>';
-        Http::fake(['news.google.com/rss/search*' => Http::response($xml, 200, [
+        Http::fake(['https://news.google.com/rss/search*' => Http::response($xml, 200, [
             'Content-Type' => 'application/rss+xml',
         ])]);
 
