@@ -52,7 +52,7 @@ Total registered in source taxonomy: 28 providers. This is **not** a connected-p
 
 Suggested focused checks on a disposable Laravel checkout:
 `php artisan test --filter='SourceModuleCatalogTest|E4PeriodDiscoveryTest|SifiSourceCatalogWorkflowTest'`
-`npm run types` (use the project's configured TypeScript script, if present) and `npm run build`.
+`npm run types:check` and `npm run build`.
 After the UI release gate and human UX acceptance, merge the feature into the authorized bridge branch; the bridge applies source files only with backups and hash checks.
 
 ## Limitations as of this change
