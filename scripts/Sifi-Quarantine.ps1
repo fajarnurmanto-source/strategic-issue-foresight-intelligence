@@ -112,6 +112,12 @@ function Assert-RestoreOrigin([string]$Absolute, [string]$Relative) {
 if (-not (Test-Path -LiteralPath (Join-Path $Root '.git'))) { Stop-Cleanup 'ROOT_NOT_GIT_PROJECT' }
 if (-not (Test-Path -LiteralPath (Join-Path $Root '00_CONTROL'))) { Stop-Cleanup 'GOVERNANCE_MISSING' }
 if ($MinimumAgeDays -lt 1) { Stop-Cleanup 'MINIMUM_AGE_MUST_BE_POSITIVE' }
+if ((Test-Path -LiteralPath $PlanFolder) -and (Has-ReparsePoint $PlanFolder)) {
+    Stop-Cleanup 'PLAN_DIRECTORY_REPARSE_POINT'
+}
+if ((Test-Path -LiteralPath $QuarantineFolder) -and (Has-ReparsePoint $QuarantineFolder)) {
+    Stop-Cleanup 'QUARANTINE_DIRECTORY_REPARSE_POINT'
+}
 
 if ($Mode -eq 'Plan') {
     $cutoff = (Get-Date).ToUniversalTime().AddDays(-$MinimumAgeDays)
@@ -191,6 +197,10 @@ if ($Mode -eq 'Apply') {
         }
     }
 
+    $receipt = Join-Path $PlanFolder ("SIFI_CLEANUP_RECEIPT_$batch.json")
+    $pendingReceipt = "$receipt.pending"
+    if (Test-Path -LiteralPath $receipt) { Stop-Cleanup 'QUARANTINE_RECEIPT_ALREADY_EXISTS' }
+    if (Test-Path -LiteralPath $pendingReceipt) { Stop-Cleanup 'QUARANTINE_PENDING_RECEIPT_ALREADY_EXISTS' }
     $moved = New-Object System.Collections.ArrayList
     try {
         foreach ($entry in @($plan.entries)) {
@@ -201,6 +211,15 @@ if ($Mode -eq 'Apply') {
             Move-Item -LiteralPath $from -Destination $to -ErrorAction Stop
             [void]$moved.Add([PSCustomObject]@{ from = $from; to = $to; relative = $entry.relative })
         }
+        [ordered]@{
+            schema = $Schema
+            source_plan = $PlanFile
+            applied_utc = (Get-Date).ToUniversalTime().ToString('o')
+            destination_root = $destinationRoot
+            moved = @($moved)
+            status = 'QUARANTINED_NOT_DELETED'
+        } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $pendingReceipt -Encoding UTF8
+        Move-Item -LiteralPath $pendingReceipt -Destination $receipt -ErrorAction Stop
     } catch {
         $originalError = $_
         foreach ($entry in (@($moved) | Sort-Object -Property { $_.from.Length } -Descending)) {
@@ -209,15 +228,6 @@ if ($Mode -eq 'Apply') {
         throw $originalError
     }
 
-    $receipt = Join-Path $PlanFolder ("SIFI_CLEANUP_RECEIPT_$batch.json")
-    [ordered]@{
-        schema = $Schema
-        source_plan = $PlanFile
-        applied_utc = (Get-Date).ToUniversalTime().ToString('o')
-        destination_root = $destinationRoot
-        moved = @($moved)
-        status = 'QUARANTINED_NOT_DELETED'
-    } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $receipt -Encoding UTF8
     Write-Output "SIFI_CLEANUP=QUARANTINED; FOLDERS=$($moved.Count); DELETED=0"
     Write-Output "RESTORE_RECEIPT=$receipt"
     exit 0
@@ -234,8 +244,13 @@ if ($Mode -eq 'Restore') {
     foreach ($entry in @($receipt.moved)) {
         Ensure-Under $entry.to $receipt.destination_root
         Assert-RestoreOrigin $entry.from $entry.relative
+        $expectedDestination = [IO.Path]::GetFullPath((Join-Path $receipt.destination_root ($entry.relative.Replace('/', '\')))).TrimEnd('\')
+        if ($expectedDestination -ine [IO.Path]::GetFullPath($entry.to).TrimEnd('\')) {
+            Stop-Cleanup 'RESTORE_DESTINATION_TAMPERED'
+        }
         if (Test-Path -LiteralPath $entry.from) { Stop-Cleanup 'ORIGINAL_PATH_OCCUPIED' }
         if (-not (Test-Path -LiteralPath $entry.to -PathType Container)) { Stop-Cleanup 'QUARANTINED_CACHE_MISSING' }
+        if (Has-ReparsePoint $entry.to) { Stop-Cleanup 'QUARANTINED_CACHE_REPARSE_POINT' }
     }
     $restored = New-Object System.Collections.ArrayList
     try {
