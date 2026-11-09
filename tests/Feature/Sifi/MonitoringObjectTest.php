@@ -68,7 +68,7 @@ final class MonitoringObjectTest extends TestCase {
  }
  public function test_object_list_reports_when_one_hundred_item_limit_truncates_results():void {
   $this->actingAs($this->owner);
-  for($i=0;$i<101;$i++) SifiMonitoringObject::create(['id'=>(string)\\Illuminate\\Support\\Str::uuid(),'user_id'=>$this->owner->id,'name'=>'Synthetic '.($i+1),'description'=>'Synthetic monitoring configuration','category'=>'Synthetic','objective'=>'Synthetic test objective','horizon'=>'90 days','state'=>'CONFIGURED','revision'=>1]);
+  for($i=0;$i<101;$i++) SifiMonitoringObject::create(['id'=>(string)\Illuminate\Support\Str::uuid(),'user_id'=>$this->owner->id,'name'=>'Synthetic '.($i+1),'description'=>'Synthetic monitoring configuration','category'=>'Synthetic','objective'=>'Synthetic test objective','horizon'=>'90 days','state'=>'CONFIGURED','revision'=>1]);
   $this->get('/sifi/monitoring-objects')->assertOk()->assertInertia(fn(Assert $p)=>$p->has('objects',100)->where('total',101)->where('hasMore',true)->where('limit',100));
   Http::assertNothingSent();
  }
