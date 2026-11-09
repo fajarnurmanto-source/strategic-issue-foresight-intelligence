@@ -21,7 +21,7 @@ type Item = {
     url: string; published_at: string; rights_state: string; session_id: string | null; publisher?: string;
 };
 type Report = {
-    object_id: string; start_date: string; end_date: string; result_state: string;
+    object_id: string; start_date: string; end_date: string; result_state: string; query_used?: string;
     sources: ResultSource[]; items: Item[]; coverage: string;
     evidence_admission: string; production_admission: string;
 };
@@ -178,7 +178,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                             {errors.source && <p role="alert" className="text-sm text-destructive">{errors.source}</p>}
                             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
                                 <p className="text-sm font-semibold">Coba data berita nyata dari Google</p>
-                                <p className="mt-1 text-xs text-muted-foreground">Google News RSS publik: satu permintaan manual, maksimal 10 judul sesuai periode tersedia. Berfungsi terpisah dari konektor E4 yang masih terkunci; tanpa API key, biaya, arsip terjamin, atau penerimaan bukti.</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Google News RSS publik: satu permintaan manual memakai keyword pertama yang terdaftar, maksimal 10 judul sesuai periode tersedia. Berfungsi terpisah dari konektor E4 yang masih terkunci; tanpa API key, biaya, arsip terjamin, atau penerimaan bukti.</p>
                                 <button disabled={!canPreviewGoogle} onClick={previewGoogleNews} type="button"
                                     className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                                     {busy ? 'Mengambil metadata...' : 'Cari lewat Google News RSS'}
@@ -198,6 +198,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                     ? <p className="mt-3 text-sm text-muted-foreground">Belum ada hasil untuk pilihan objek dan periode saat ini. Cakupan sumber yang tidak tersedia tetap ditampilkan di atas.</p>
                     : <>
                         <p className="mt-2 text-sm font-medium">{report.result_state}</p>
+                        {report.query_used && <p className="mt-1 text-xs text-muted-foreground">Keyword yang dipakai Google News: {report.query_used}</p>}
                         <p className="mt-1 text-sm text-muted-foreground">{report.coverage}</p>
                         <div className="mt-4 grid gap-2 md:grid-cols-2">
                             {report.sources.map((s) => <div key={s.id} className="rounded-lg border p-3 text-sm">
