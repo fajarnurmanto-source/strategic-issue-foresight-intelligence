@@ -4,6 +4,9 @@ namespace App\Services\Sifi;
 
 use App\Services\Sifi\Integration\AntaraLocalPermission;
 use App\Services\Sifi\Integration\CrossrefLocalPermission;
+use App\Services\Sifi\Integration\GdeltLocalPermission;
+use App\Services\Sifi\Integration\BlueskyLocalPermission;
+use App\Services\Sifi\Integration\GoogleTrendsLocalPermission;
 
 /**
  * Canonical, read-only provider taxonomy for E4 and Source & Coverage.
@@ -17,6 +20,9 @@ final class SourceModuleCatalog
     {
         $today = now('Asia/Jakarta')->toDateString();
         $crossref = app(CrossrefLocalPermission::class)->eligible();
+        $gdelt = app(GdeltLocalPermission::class)->eligible();
+        $bluesky = $this->permissionPasses(BlueskyLocalPermission::class);
+        $googleTrends = $this->permissionPasses(GoogleTrendsLocalPermission::class);
         $antara = false;
         try {
             app(AntaraLocalPermission::class)->assertAllowed();
@@ -135,6 +141,25 @@ final class SourceModuleCatalog
             ]),
         ];
 
+        // These local runtime checks do not contact a remote provider, validate
+        // credentials/contact, reserve quota, or authorize a real acquisition.
+        $gates = [
+            'CROSSREF' => $crossref,
+            'ANTARA_RSS' => $antara,
+            'GDELT_DOC' => $gdelt,
+            'BLUESKY_PUBLIC_SEARCH' => $bluesky,
+            'GOOGLE_TRENDS_RSS' => $googleTrends,
+        ];
+        foreach ($modules as &$module) {
+            foreach ($module['sources'] as &$source) {
+                $source['permission_gate'] = array_key_exists($source['id'], $gates)
+                    ? ($gates[$source['id']] ? 'LOCAL_GATE_PASSED' : 'LOCAL_GATE_DENIED')
+                    : 'NOT_APPLICABLE';
+            }
+            unset($source);
+        }
+        unset($module);
+
         $sources = array_merge([], ...array_map(static fn (array $module): array => $module['sources'], $modules));
 
         return [
@@ -144,11 +169,22 @@ final class SourceModuleCatalog
             'module_count' => count($modules),
             'source_count' => count($sources),
             'e4_dispatchable_count' => count(array_filter($sources, static fn (array $source): bool => $source['dispatchable'])),
+            'local_permission_pass_count' => count(array_filter($gates)),
             'external_requests' => 0,
             'rights_granted_by_catalog' => false,
             'production_admission' => 'DENIED',
             'live_enabled' => $live,
         ];
+    }
+
+    private function permissionPasses(string $permissionClass): bool
+    {
+        try {
+            app($permissionClass)->assertAllowed();
+            return true;
+        } catch (\\RuntimeException) {
+            return false;
+        }
     }
 
     private function module(string $id, string $label, string $description, array $sources): array
