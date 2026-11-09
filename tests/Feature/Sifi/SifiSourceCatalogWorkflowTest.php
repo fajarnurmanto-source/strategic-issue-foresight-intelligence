@@ -41,6 +41,62 @@ final class SifiSourceCatalogWorkflowTest extends TestCase
                 ->etc());
         Http::assertNothingSent();
     }
+    public function test_user_can_select_source_without_payment_login_or_acquisition(): void
+    {
+        $owner=$this->user();
+        $this->actingAs($owner)->post('/sifi/source-catalog/source-selection',[
+            'provider_id'=>'X_API','selected'=>true,
+        ])->assertRedirect('/sifi/source-catalog');
+
+        $this->assertDatabaseHas('sifi_user_source_selections',[
+            'user_id'=>$owner->id,'provider_id'=>'X_API','selected'=>1,
+        ]);
+        $this->assertDatabaseHas('sifi_user_source_selection_audits',[
+            'user_id'=>$owner->id,'provider_id'=>'X_API','event_code'=>'SOURCE_SELECTED',
+        ]);
+        $this->get('/sifi/source-catalog')->assertOk()->assertInertia(
+            fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('sifi/source-catalog')
+                ->where('sourceSelectionReady',true)
+                ->where('selectedSourceIds.0','X_API')
+                ->etc()
+        );
+
+        // Repeating a selection must not create duplicate audit noise.
+        $this->post('/sifi/source-catalog/source-selection',[
+            'provider_id'=>'X_API','selected'=>true,
+        ])->assertRedirect();
+        $this->assertDatabaseCount('sifi_user_source_selection_audits',1);
+        $this->actingAs($this->user())->get('/sifi/source-catalog')
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('selectedSourceIds',0)->etc());
+        $this->assertDatabaseCount('sifi_connector_profiles',0);
+        Http::assertNothingSent();
+
+        $this->actingAs($owner)->post('/sifi/source-catalog/source-selection',[
+            'provider_id'=>'X_API','selected'=>false,
+        ])->assertRedirect();
+        $this->assertDatabaseCount('sifi_user_source_selection_audits',2);
+        $this->assertDatabaseHas('sifi_user_source_selections',[
+            'user_id'=>$owner->id,'provider_id'=>'X_API','selected'=>0,
+        ]);
+        Http::assertNothingSent();
+    }
+
+    public function test_source_selection_rejects_unknown_provider_and_credentials(): void
+    {
+        $this->actingAs($this->user())->post('/sifi/source-catalog/source-selection',[
+            'provider_id'=>'UNTRUSTED_CRAWLER','selected'=>true,
+        ])->assertSessionHasErrors('provider_id');
+        $this->post('/sifi/source-catalog/source-selection',[
+            'provider_id'=>'INSTAGRAM_GRAPH','selected'=>true,
+            'access_token'=>'secret','billing_authorized'=>true,
+        ])->assertSessionHasErrors(['access_token','billing_authorized']);
+        $this->assertDatabaseCount('sifi_user_source_selections',0);
+        $this->assertDatabaseCount('sifi_user_source_selection_audits',0);
+        Http::assertNothingSent();
+    }
+
     public function test_source_draft_is_local_not_enabled(): void
     {
         $user=$this->user();$this->createSource($user);
