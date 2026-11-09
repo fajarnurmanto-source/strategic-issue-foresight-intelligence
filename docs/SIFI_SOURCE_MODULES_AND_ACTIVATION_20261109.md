@@ -59,3 +59,12 @@ After the UI release gate and human UX acceptance, merge the feature into the au
 ## Limitations as of this change
 
 The feature is a concrete **source classification and UI inventory**, not a declaration of provider activation. Provider credentials, Google Search APIs, social-platform approval, live source ingestion, broad historical backfill, and production activation are out of scope pending their own verified legal and technical requirements.
+
+## Live-data milestone appended 2026-11-09
+
+- **Google News RSS** is no longer merely inventoried: an authenticated, consented, date-filtered, one-shot public metadata preview is implemented in E4 and reachable from Source Catalog. It needs no API key or paid license; it exposes 10 or fewer links with publisher/date and a response hash. Google News RSS is an undocumented public feed, so coverage, availability and older backfill are *not* guaranteed.
+- **Google Search (Web)** must not promise new developer access through Custom Search JSON API, closed to new users and scheduled for discontinuation 2027-01-01. Alternative official/contracted Search API is a separate milestone and must not scrape Google SERPs.
+- **Google Trends RSS** remains an attention proxy and distinct provider; YouTube metadata and user-owned OAuth are also separate integrations.
+- **Benchmarking (Brand24, Mention, Meltwater, Sprout, Hootsuite, Brandwatch) is adopted as functional requirements**: compact source center, explicit public-versus-owned data separation, coverage lookup by URL, test connection/permission, estimated result preview, account OAuth and target-channel selection, rate limits/cost metadata, source pause and health, owner-scoped credentials and zero-spend default. These are requirements, not claims of current code readiness.
+- **Provider expansion priority:** (1) actually retrieve permitted free public metadata, (2) integrate approved provider-specific OAuth/API and BYOK, (3) show quota/cost/connection health, (4) only then schedule recurring acquisition, deduplication, issue provenance and confidence scoring. No publication count shall substitute for independent origins or real-world prevalence.
+- Acceptance check for this code branch: GoogleNewsRssPreviewTest, SourceModuleCatalogTest, E4PeriodDiscoveryTest, SifiSourceCatalogWorkflowTest plus TypeScript/build and real live smoke after local installation. Production admission stays DENIED pending QA.
