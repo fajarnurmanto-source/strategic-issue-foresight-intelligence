@@ -39,6 +39,7 @@ final class SourceCatalogController extends Controller
         $importJson=is_array($saved) && ($saved['owner_id']??null)===$uid ? ($saved['payload']??null) : null;
         return Inertia::render('sifi/source-catalog', [
             'sources'=>$sources, 'profiles'=>$profiles, 'scope'=>'LOCAL_CANDIDATE_ONLY',
+            'sourceModules'=>app(\App\Services\Sifi\SourceModuleCatalog::class)->forE4(now('Asia/Jakarta')->toDateString()),
             'acquisitionWorkspace'=>$selected==='wb_acquisition'?app(\App\Services\Sifi\WorldBankAcquisitionWorkspace::class)->view($request->user()):null,
             'pipeline'=>$pipeline->preview($selected,$selected==='wb_acquisition'?($request->query('receipt')??$request->session()->get('ae10_acquisition.'.$uid)):($selected==='pad_import'?$importJson:null),$uid),
         ]);
