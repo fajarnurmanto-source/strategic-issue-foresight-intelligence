@@ -38,7 +38,7 @@ class GoogleTrendsRssTransport
         return Http::withOptions($options)->connectTimeout(8)->timeout(18)->get(self::ENDPOINT);
     }
 
-    public function fetch(array $watchTerms): array
+    public function fetch(): array
     {
         app(GoogleTrendsLocalPermission::class)->assertAllowed();
         $sink = new class(Utils::streamFor(fopen('php://temp/maxmemory:524288', 'w+b'))) implements StreamInterface {
@@ -108,7 +108,7 @@ class GoogleTrendsRssTransport
             }
             $sink->rewind();
             $body = $sink->getContents();
-            $parsed = app(GoogleTrendsRssParser::class)->parse($body, $watchTerms);
+            $parsed = app(GoogleTrendsRssParser::class)->parse($body);
 
             return [
                 'state' => 'OK', 'network_requests' => 1, 'http_status' => 200,
