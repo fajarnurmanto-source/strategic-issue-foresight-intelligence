@@ -24,10 +24,11 @@ Total registered in source taxonomy: 28 providers. This is **not** a connected-p
 
 1. User registers monitoring object + aliases/keywords/exclusions and selects publication-date range.
 2. E4 calls `SourceModuleCatalog::forE4(endDate)` once; it produces no network traffic.
-3. Each provider has `module_id`, `state`, `connection`, `workflow`, `coverage`, `dispatchable` and explanation. The same catalog appears in E4 and Source & Coverage.
-4. E4 is allowed to **dispatch** only existing explicit Crossref and latest-feed ANTARA operations when the connector review, opt-in, isolated SQLite location, time window, local environment, and per-provider request budgets all pass.
-5. All other providers remain visible as unavailable/conditional, not silently omitted; adding rows never grants credentials or collection rights.
-6. Metadata/links obtained in authorized pilots remain non-admitted research drafts; no unverified claim or source count becomes a fact, event frequency, prevalence, or impact severity.
+3. Each provider has `module_id`, `state`, `connection`, `workflow`, `coverage`, `dispatchable`, `permission_gate` and explanation. `permission_gate` is a **local configuration/validity check**, not remote connectivity verification. The same catalog appears in E4 and Source & Coverage.
+4. Read-only gate diagnostics cover Crossref, ANTARA, GDELT, Bluesky and Google Trends, without a remote request. A passing local gate still requires owner-bound one-shot consent, provider availability, contact validation, quotas and the correct isolated workflow.
+5. E4 is allowed to **dispatch** only existing explicit Crossref and latest-feed ANTARA operations when the connector review, opt-in, isolated SQLite location, time window, local environment, and per-provider request budgets all pass.
+6. All other providers remain visible as unavailable/conditional, not silently omitted; adding rows never grants credentials or collection rights.
+7. Metadata/links obtained in authorized pilots remain non-admitted research drafts; no unverified claim or source count becomes a fact, event frequency, prevalence, or impact severity.
 
 ## Access-by-module activation backlog (priority)
 
