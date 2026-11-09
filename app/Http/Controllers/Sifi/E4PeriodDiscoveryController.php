@@ -37,7 +37,7 @@ final class E4PeriodDiscoveryController extends Controller
         $start = $request->query('start_date');
         $end = $request->query('end_date');
         $plan = null;
-        if ($selected !== null || $start !== null || $end !== null) {
+        if ($start !== null || $end !== null) {
             $values = $request->validate([
                 'object_id' => ['required', 'uuid'],
                 'start_date' => ['required', 'date_format:Y-m-d'],
