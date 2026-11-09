@@ -98,7 +98,9 @@ while IFS= read -r -d '' rel; do
     ((added+=1))
   fi
   mkdir -p -- "$(dirname -- "$dst")"
-  cp -p -- "$src" "$dst"
+  # DrvFs/NTFS may reject POSIX ownership or mode preservation; Git tracks
+  # source bytes, and core.filemode is disabled only in this staging clone.
+  cp -- "$src" "$dst"
 done < "$filelist"
 
 printf 'WSL_FILES_IN_GIT_INVENTORY=%s\n' "$total"
