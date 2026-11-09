@@ -12,8 +12,10 @@ use Inertia\{Inertia,Response};
 final class MonitoringObjectController extends Controller {
  public function index(Request $r,MonitoringObjectSources $sources):Response {
   Gate::authorize('viewAny',SifiMonitoringObject::class);
-  $objects=SifiMonitoringObject::where('user_id',$r->user()->id)->orderByDesc('updated_at')->limit(100)->get()->map(fn($o)=>$this->view($o))->all();
-  return Inertia::render('sifi/monitoring-objects',['objects'=>$objects,'sourceChoices'=>$sources->choices($r->user()),'limit'=>100,'mode'=>'CONFIGURATION_ONLY_COLLECTOR_OFF']);
+  $query=SifiMonitoringObject::where('user_id',$r->user()->id);
+  $total=(clone $query)->count();
+  $objects=$query->orderByDesc('updated_at')->limit(100)->get()->map(fn($o)=>$this->view($o))->all();
+  return Inertia::render('sifi/monitoring-objects',['objects'=>$objects,'sourceChoices'=>$sources->choices($r->user()),'limit'=>100,'total'=>$total,'hasMore'=>$total>100,'mode'=>'CONFIGURATION_ONLY_COLLECTOR_OFF']);
  }
  public function store(MonitoringObjectRequest $r,MonitoringObjectSources $sources):RedirectResponse {Gate::authorize('create',SifiMonitoringObject::class);return $this->save($r,$sources,null);}
  public function update(MonitoringObjectRequest $r,SifiMonitoringObject $object,MonitoringObjectSources $sources):RedirectResponse {Gate::authorize('update',$object);return $this->save($r,$sources,$object);}
