@@ -19,6 +19,9 @@ Route::middleware(['auth', 'verified'])->get('/sifi/product-roadmap',
 Route::middleware(['auth', 'verified'])->get('/sifi/discovery-period',
     [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'index'])
     ->name('sifi.e4.period-discovery.index');
+Route::middleware(['auth', 'verified', 'throttle:2,1'])->post('/sifi/discovery-period/google-news-preview',
+    [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'previewGoogleNews'])
+    ->name('sifi.e4.period-discovery.google-news-preview');
 Route::middleware(['auth', 'verified', 'throttle:2,1'])->post('/sifi/discovery-period/collect',
     [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'collect'])
     ->name('sifi.e4.period-discovery.collect');
