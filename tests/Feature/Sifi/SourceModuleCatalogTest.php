@@ -49,7 +49,7 @@ final class SourceModuleCatalogTest extends TestCase
     public function test_reviewed_connector_gates_can_pass_without_activating_any_e4_request(): void
     {
         Http::preventStrayRequests();
-        \\Carbon\\Carbon::setTestNow('2026-11-09 08:00:00');
+        \Carbon\Carbon::setTestNow('2026-11-09 08:00:00');
         try {
             config([
                 'sifi_e4.live_enabled' => false,
@@ -75,7 +75,7 @@ final class SourceModuleCatalogTest extends TestCase
             $this->assertSame('DENIED', $catalog['production_admission']);
             Http::assertNothingSent();
         } finally {
-            \\Carbon\\Carbon::setTestNow();
+            \Carbon\Carbon::setTestNow();
         }
     }
 
