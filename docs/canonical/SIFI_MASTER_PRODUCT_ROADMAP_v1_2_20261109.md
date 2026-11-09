@@ -1,22 +1,24 @@
 # SIFI — MASTER PRODUCT ROADMAP v1.2
-## Mandatory successor: period-first universal acquisition, source classification, issue graph, and longitudinal trends
+## Mandatory successor: registered-monitoring-object → period → multi-source acquisition, issue graph, and longitudinal trends
 
 **Owner instruction:** 9 November 2026 (Asia/Jakarta)  
 **Status:** OWNER-MANDATED PRODUCT REQUIREMENT — engineering implementation pending.  
 **Repository target:** `fajarnurmanto-source/strategic-issue-foresight-intelligence` (private); branch-level adoption via reviewed GitHub PR.  
 **Relationship:** This is an **additive successor** to [SIFI Master Product Roadmap v1.1 (8 Nov 2026)](https://chatgpt.com/library?file_id=libfile_415748d051548191b9e05f207004b849&account_id=personal), AE-12–AE-16 and frozen v1.0 R0–R11 gates. Do not silently rewrite the v1.0 historic baseline or count engineering work as R-gate admission.
 
+**Owner clarification (9 November 2026, same version):** The previously written *period-only, no monitoring object* entry flow was incorrect. A registered monitoring object with keyword(s) is mandatory **before** the user selects a monitoring time window. The clarification corrects that UX precondition; all cross-platform acquisition, horizontal/vertical issue grouping and longitudinal analysis obligations remain binding. This paragraph explicitly supersedes the earlier v1.2 period-only wording as corrected below.
+
 ## 1. Explicit interpretation of the owner's requirement
 
 SIFI is a **source-neutral intelligence acquisition and extraction system**. It must be able to discover, lawfully retrieve, classify, normalize and extract information from available sources, identify the originating platform/publication, group information into **horizontal** and **vertical** issue relationships, and analyze the development of those issues **over time**.
 
-**The only required input for the initial discovery mode is a user-selected time interval.** Users must be able to select `start_date` and `end_date`, then ask SIFI to scan *all currently eligible and configured source categories* within that interval. A keyword, brand, geographic area, named monitoring object, publisher or platform filter is **optional**, never a hard prerequisite for the first results. Optional filters refine or pivot the acquired data after discovery; they must not be secretly required to start.
+**The first mandatory step is registration or selection of a monitoring object with at least one keyword.** The owner names the object and registers its keyword set; aliases, exclusions, geography and other constraints may refine the scope. The next mandatory step is choosing `start_date` and `end_date` for that object. SIFI then scans *all currently eligible and configured source categories* for information relevant to the registered object and within the requested period. A separate free-text research question, publisher selection or platform filter is **not** a prerequisite. The saved object can be reused for later periods without re-registering keywords each run.
 
 This is **different** from a Google Trends connector or single-keyword search. Google is one optional discovery provider/sensor under lawful access; Google Trends RSS measures search attention, not full-text news discovery, and cannot substitute for the universal acquisition pipeline.
 
 ### Required operator journey
 
-`SELECT TIME WINDOW → ENUMERATE ELIGIBLE SOURCES → DISCOVER/FETCH → CLASSIFY SOURCE/PLATFORM → EXTRACT INFORMATION → NORMALIZE/DEDUP → HORIZONTAL ISSUE CLUSTERS → VERTICAL ISSUE GRAPH → TIME-SERIES ANALYTICS → REVIEWABLE ISSUE WORKSPACE/BRIEF`
+`REGISTER/SELECT MONITORING OBJECT + KEYWORDS → SELECT TIME WINDOW → ENUMERATE ELIGIBLE SOURCES → DISCOVER/FETCH FOR OBJECT → CLASSIFY SOURCE/PLATFORM → EXTRACT INFORMATION → NORMALIZE/DEDUP → HORIZONTAL ISSUE CLUSTERS → VERTICAL ISSUE GRAPH → TIME-SERIES ANALYTICS → REVIEWABLE ISSUE WORKSPACE/BRIEF`
 
 No manual review of every publication is required. Human review remains for exceptions, contested claims, important decisions, evidence admission and protected release gates.
 
@@ -39,9 +41,11 @@ Each source **must** have separate `source_class`, `platform_id`, `publisher/ori
 
 Acquisition adapters can use official APIs, RSS/Atom, permitted sitemaps, open-data endpoints, authorized web extraction, documented bulk exports and eligible user documents. They must operate under the existing SIFI source registry, owner/tenant context, rights Z0–Z3, host policy, quotas, costs, checkpoints, incremental windows and stop/error states. No CAPTCHA/paywall/login/anti-bot bypass or unapproved full-text storage. Do not assume free Google web-search API access exists.
 
-### Period-first acquisition and historical coverage
+### Object-first, then period-bound acquisition and historical coverage
 
-- The UI presents the **time interval as the first mandatory choice**; period selection can trigger source discovery directly, without a keyword or monitoring object.
+- The UI first requires an owner-registered **monitoring object with keyword(s)**, or selection of an already registered object. Only then does it request the **time interval**; both are mandatory for a new acquisition. Do not require the operator to type the keywords again for each time window.
+- Bind every acquisition plan, provider request, normalized observation and issue candidate to the owner, monitoring-object ID, object revision/keyword-set fingerprint and time window. Object changes must not silently relabel historical observations.
+- Discovery must find relevant information across eligible sources, not merely exact string matches: aliases, linguistic variants and semantic candidates may be proposed with confidence while exclusions, ambiguity and object provenance stay visible. Results unrelated to the object must not be treated as positive matches.
 - The source selector enumerates currently authorized source packs for the interval and records eligibility per source. Sources without archival/backfill rights or retention in the requested window yield `HISTORICAL_COVERAGE_UNAVAILABLE`, never a fabricated empty result.
 - Date filtering distinguishes `published_at` from `first_observed_at` and `retrieved_at`. Publication dates unknown or outside requested range are explicitly partitioned; no artificial backdating.
 - Pagination, historical availability, quotas and source-specific date search constraints must be shown. `ZERO_MATCH` means zero **among observed eligible results**, not no issue existed.
@@ -113,7 +117,7 @@ Issue graph and historical series must be **revision-safe and point-in-time repr
 
 ## 6. User-facing output contract
 
-After selecting dates, the operator sees:
+After selecting/creating the keyword-registered object and then selecting dates, the operator sees:
 
 1. Eligible/blocked/unavailable source inventory with retrieval progress and actual sampled coverage.
 2. Results split by source type and original platform/publisher, with provenance and rights state.
@@ -122,7 +126,7 @@ After selecting dates, the operator sees:
 5. Interactive timeline per issue and parent issue, with selectable daily/weekly/monthly granularity and source-composition changes.
 6. Investigation links, exceptions, source health, comparisons, watch conditions and draft executive brief, extending existing Core V2 UI.
 
-Optional keyword, monitoring object, location, publisher, platform and issue filters can be applied **after** the period-first initial discovery, without forcing the operator to start again. Do not require a manually named issue before the system discovers candidate issues.
+The **registered object and its keywords are required for scoping**, whereas location, publisher, platform, source class and discovered-issue filters remain optional. The user may edit/extend a monitoring object through the existing ownership/revision workflow, then choose another period; SIFI must make any scope change explicit. Do not require a manually named **issue** before discovering issue candidates **within** the registered monitoring object.
 
 ## 7. Milestone mapping and acceptance, integrated with existing E0–E12
 
@@ -130,7 +134,7 @@ Optional keyword, monitoring object, location, publisher, platform and issue fil
 |---|---|---|
 | **E2 / P0** | Source-class/platform/publisher taxonomy, rights/health and per-source coverage state in the existing Superadmin registry | At least 3 source families visible with honest access states; source eligibility does not imply content rights. |
 | **E3 / P0** | One lawful real-data period-bound acquisition flowing into existing research/observation consumers | A dated source item has provenance and isolated receipt; no evidence admission. |
-| **E4 / P0 (promoted)** | **Period-first multi-source discovery without mandatory keyword/object** | Select a window; source plan spans all eligible families; out-of-window and unsupported-history outcomes explicit. |
+| **E4 / P0 (promoted)** | **Registered-object → period multi-source discovery, no mandatory free-text question** | Register/select an object with keyword(s), then select a window; source plan spans all eligible families relevant to that scope; out-of-window and unsupported-history outcomes explicit. |
 | **E5 / P0 (promoted)** | Source-specific information extraction and normalized publication/claim records | Same schema from ≥2 distinct permitted source classes; metadata-only vs fulltext rights correctly distinguished. |
 | **E6 / P1** | Incremental date-window scheduler with source health/fallback/quotas and checkpoints | Repeat scan uses idempotence, bounded retries and no unauthorized endpoint; historical limitations visible. |
 | **E7 / P0 (promoted)** | Horizontal issue clusters plus vertical typed Issue Graph into Core V2 | Cross-platform mentions form one issue candidate; parent/subissue graph navigable; no unsupported causal edge. |
@@ -138,15 +142,15 @@ Optional keyword, monitoring object, location, publisher, platform and issue fil
 | **E10 / P1** | Trend-based watch/forecast and revision-safe executive snapshots | Foresight cites observed series, assumptions, alternative drivers and uncertainty. |
 | **E11 / continuous** | Period picker → source health → issue graph → timeline → investigation/brief UX | One readable end-to-end journey on desktop and mobile using existing screens. |
 
-**Acceptance scenario (real-data-first):** The operator selects only a bounded historic date range (e.g. 1–7 November 2026). SIFI enumerates eligible news, official/open-data, research/social or other permitted sources, retrieves only what source/date rights permit, classifies source/platform, extracts claim/issue candidates, horizontally groups common issues, vertically links supported subissues, and shows daily/weekly changes. At least two truly independent source classes and two comparable time bins must be demonstrated **when legally accessible**. If an eligible data pack cannot provide sufficient coverage, return `PARTIAL / INSUFFICIENT_COVERAGE`, not a synthetic PASS. One integrated acceptance receipt per usable increment; reuse existing tests and engines.
+**Acceptance scenario (real-data-first):** The operator registers/selects an owned monitoring object (e.g. `Persampahan`, keywords `sampah`, `pengelolaan sampah`) and then chooses a bounded historic date range (e.g. 1–7 November 2026), with no additional mandatory free-text question. SIFI enumerates eligible news, official/open-data, research/social or other permitted sources relevant to that object, retrieves only what source/date rights permit, classifies source/platform, extracts claim/issue candidates, horizontally groups common issues, vertically links supported subissues, and shows daily/weekly changes. The object ID, revision, keyword scope and chosen time window must accompany the analysis. At least two truly independent source classes and two comparable time bins must be demonstrated **when legally accessible**. If an eligible data pack cannot provide sufficient coverage, return `PARTIAL / INSUFFICIENT_COVERAGE`, not a synthetic PASS. One integrated acceptance receipt per usable increment; reuse existing tests and engines.
 
 ## 8. Work-order and precedence for the next executor
 
 1. **Do not repeat the Google Trends pilot as the main product milestone.** Its 9 November WSL receipt proved one public attention feed (`HTTP 200`, 10 trends, 10 isolated observations, zero keyword matches), not universal discovery or temporal issue intelligence.
 2. Inspect and reuse existing Laravel Core V2, research/monitoring, source registry, observation projector, extraction, issue candidate/case and graph/timeline components. Mark `EXISTING`, `PARTIAL`, `MISSING` against this mandate once, not repeated micro-audits.
-3. Implement exactly **one high-value, visible end-to-end slice at a time**, starting with date-range-only discovery over eligible sources; source classification and locally computed issue grouping should follow in the same analyst journey.
+3. Implement exactly **one high-value, visible end-to-end slice at a time**, starting with an **existing keyword-registered monitoring object → time-window → multi-source discovery** journey. Reuse existing object registration, owner authorization and revision guards; do not create a second object registry. Source classification and locally computed issue grouping should follow in the same analyst journey.
 4. Integrate horizontal identity and vertical relation models into existing issue/evidence contracts; no independent second truth engine, shadow-only until approved.
 5. Build period-comparable series and trend UI on top of persistent observations, ensuring no double counting and explicit source coverage.
 6. Preserve Laravel-first, reuse-first, real-data-first, zero-spend-first, privacy, immutable provenance, license/rights/quotas and production admission DENIED until a separate authorized gate.
 
-**Owner mandate summary:** **Time period first; broad lawful cross-platform acquisition; classify source/platform; extract actual information; cluster horizontally; relate issues vertically; analyze temporal change and risk.** This chain, not individual API availability, defines SIFI's product finish line.
+**Owner mandate summary:** **Register/select keyword-based monitoring object first → choose monitoring period → acquire relevant information lawfully across platforms → classify source/platform → extract actual information → cluster horizontally → relate issues vertically → analyze temporal change and risk.** This chain, not individual API availability, defines SIFI's product finish line.
