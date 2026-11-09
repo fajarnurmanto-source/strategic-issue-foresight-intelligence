@@ -15,6 +15,9 @@ final class SourceModuleCatalogTest extends TestCase
             'sifi_e4.live_enabled' => false,
             'sifi_ih03b.crossref_metadata_enabled' => false,
             'sifi_ih03e.antara_rss_enabled' => false,
+            'sifi_ih03d.gdelt_news_enabled' => false,
+            'sifi_social.bluesky_public_search_enabled' => false,
+            'sifi_google.trends_rss_enabled' => false,
         ]);
 
         $catalog = app(SourceModuleCatalog::class)->forE4(now('Asia/Jakarta')->toDateString());
@@ -38,6 +41,13 @@ final class SourceModuleCatalogTest extends TestCase
             'CROSSREF', 'ANTARA_RSS', 'GOOGLE_TRENDS_RSS'] as $provider) {
             $this->assertContains($provider, $ids);
         }
+        $byId = array_column($catalog['sources'], null, 'id');
+        $this->assertSame('OAUTH2', $byId['FACEBOOK_GRAPH']['auth_method']);
+        $this->assertSame('APP_APPROVAL_REQUIRED', $byId['INSTAGRAM_GRAPH']['access_tier']);
+        $this->assertSame('OAUTH2', $byId['X_API']['auth_method']);
+        $this->assertSame('PLAN_OR_QUOTA', $byId['X_API']['access_tier']);
+        $this->assertSame('OAUTH2_OR_API_KEY', $byId['YOUTUBE_DATA']['auth_method']);
+        $this->assertSame('FREE_PUBLIC', $byId['CROSSREF']['access_tier']);
         foreach ($catalog['sources'] as $source) {
             $this->assertFalse($source['dispatchable'], 'Unexpected E4 dispatch: '.$source['id']);
             $this->assertNotEmpty($source['module_id']);
