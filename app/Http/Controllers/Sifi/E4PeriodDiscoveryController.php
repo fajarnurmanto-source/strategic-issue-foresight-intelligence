@@ -95,7 +95,10 @@ final class E4PeriodDiscoveryController extends Controller
         }
 
         try {
-            $packet = $google->fetch($plan['query'], $plan['start_date'], $plan['end_date']);
+            $registeredKeywords = array_values(array_filter($object->keywords_json ?? [],
+                static fn ($value): bool => is_string($value) && trim($value) !== ''));
+            $rssQuery = trim((string) ($registeredKeywords[0] ?? $plan['query']));
+            $packet = $google->fetch($rssQuery, $plan['start_date'], $plan['end_date']);
         } catch (\Throwable $exception) {
             $reason = $exception->getMessage();
             throw ValidationException::withMessages([
@@ -138,6 +141,7 @@ final class E4PeriodDiscoveryController extends Controller
             'items' => $items,
             'result_state' => $items ? 'PUBLIC_REAL_METADATA_PREVIEW' : 'NO_MATCHING_RSS_METADATA',
             'coverage' => $packet['coverage'].' No persistent retrieval, no billing, no evidence admission.',
+            'query_used' => $rssQuery,
             'response_sha256' => $packet['response_sha256'],
             'network_requests' => $packet['request_count'],
             'evidence_admission' => 'NONE',
