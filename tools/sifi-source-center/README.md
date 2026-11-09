@@ -11,6 +11,12 @@
 
 ## Eksekusi (PowerShell Windows)
 
+Siapkan checkout baru pada folder sumber terpisah jika belum tersedia (perintah ini tidak mengubah runtime):
+
+```powershell
+git clone --branch feat/sifi-modular-source-inventory-20261109 https://github.com/fajarnurmanto-source/strategic-issue-foresight-intelligence.git D:\\Research\\SIFI\\SIFI_SOURCE_CENTER_INSTALL
+```
+
 Pada checkout sumber yang sudah berada di branch fitur:
 
 ```powershell
@@ -27,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File $Installer -SourceRepo $Sour
 
 Script menghentikan pemasangan jika target bukan Laravel, cabang tidak cocok, source berubah, atau file lokal memiliki perubahan yang tidak sama dengan baseline. **Tidak ada opsi paksa menimpa perubahan pengguna**. Berikan pesan `TARGET_DRIFT_BLOCKED` untuk rekonsiliasi terlebih dahulu.
 
-Jika semua lulus, hasil harus memuat:
+Pemasang menolak Laravel dengan environment `production`; gunakan instance/staging nonproduksi yang benar. Jika semua lulus, hasil harus memuat:
 
 - `SIFI_SOURCE_PREFLIGHT=PASS`
 - Tes Laravel terfokus, TypeScript typecheck, dan build UI berhasil (exit 0)
@@ -56,5 +62,5 @@ php artisan sifi:sources:doctor --live
 ## Batas dan dukungan
 
 - Belum memasang OAuth platform sosial, login pihak ketiga, Google Web Search API, scheduler, pemrosesan full-text atau pengambilan massal. Pilihan sumber milik akun adalah **preferensi koneksi**, bukan izin mengambil seluruh posting.
-- Folder `.env`, rahasia, basis data eksisting, provider token dan sumber luar daftar 19 file tidak dibaca atau ditimpa oleh installer. Laravel sendiri memakai konfigurasi DB yang sudah tersedia untuk migrasi **satu** berkas yang membuat dua tabel sumber.
+- Folder `.env`, rahasia, basis data eksisting, provider token dan sumber luar daftar 19 file tidak disalin atau ditimpa oleh installer. Laravel tetap membaca konfigurasi lingkungan normalnya saat pengujian dan migrasi. Laravel sendiri memakai konfigurasi DB yang sudah tersedia untuk migrasi **satu** berkas yang membuat dua tabel sumber.
 - Source-only PR #18 tetap **draft** sampai ada bukti hasil lokal: instalasi PASS, UI berjalan, dan paling tidak satu respons Google nyata melalui `--live`. Tidak ada bukti ini dari lingkungan GitHub saja.
