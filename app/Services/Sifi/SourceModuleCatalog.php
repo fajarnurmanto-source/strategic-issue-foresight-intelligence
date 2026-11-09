@@ -47,8 +47,8 @@ final class SourceModuleCatalog
                     'ADAPTER_NOT_IMPLEMENTED', 'FEED_PER_PUBLISHER_REQUIRED', false,
                     'NOT_CONNECTED', 'PLANNED', 'Registrasi feed, pemeriksaan robots/ketentuan, deduplikasi.'),
                 $this->source('GOOGLE_NEWS_RSS', 'Google News RSS', 'NEWS_AGGREGATOR',
-                    'RIGHTS_REVIEW_REQUIRED', 'FEED_NOT_HISTORICAL_ARCHIVE', false,
-                    'NOT_CONNECTED', 'PLANNED', 'Aggregator; bukan lisensi akses konten penerbit.'),
+                    'PUBLIC_RSS_ON_DEMAND', 'LATEST_PUBLIC_RSS_NO_ARCHIVE_GUARANTEE', false,
+                    'PUBLIC_RSS_ONE_SHOT', 'E4_GOOGLE_PREVIEW', 'Preview metadata RSS nyata tersedia melalui tombol E4 dengan persetujuan pengguna. Bukan Google Web Search, lisensi artikel, atau arsip lengkap.'),
             ]),
             $this->module('GDELT', 'GDELT & indeks berita', 'Indeks publikasi lintas negara; indeksasi tidak setara asal berita independen.', [
                 $this->source('GDELT_DOC', 'GDELT DOC API', 'NEWS_INDEX',
@@ -56,9 +56,9 @@ final class SourceModuleCatalog
                     'REVIEWED_OPT_IN', 'PILOT_OUTSIDE_E4', 'Konektor satu kali sudah ada; adapter rentang tanggal E4 belum diterima.'),
             ]),
             $this->module('WEB_SEARCH', 'Mesin pencari & penelusuran web', 'Hasil pencarian/indeks web; bukan sensor opini atau jaminan cakupan semua halaman.', [
-                $this->source('GOOGLE_WEB_SEARCH', 'Google Search', 'WEB_SEARCH',
-                    'API_ACCESS_NOT_CONFIGURED', 'SEARCH_API_LICENSE_AND_QUOTA_REQUIRED', false,
-                    'NOT_CONNECTED', 'PLANNED', 'Jangan scraping halaman hasil pencarian; API resmi memerlukan akses sesuai ketentuan.'),
+                $this->source('GOOGLE_WEB_SEARCH', 'Google Search (Web)', 'WEB_SEARCH',
+                    'LEGACY_CUSTOM_SEARCH_API_CLOSED', 'NO_NEW_CUSTOM_SEARCH_JSON_API_CUSTOMERS', false,
+                    'NOT_CONNECTED', 'ALTERNATIVE_API_REVIEW', 'Custom Search JSON API ditutup bagi pelanggan baru dan berakhir untuk pelanggan lama 1 Januari 2027. Jangan scraping halaman Google Search; tinjau pengganti resmi atau Search API lain.'),
                 $this->source('BING_WEB_SEARCH', 'Bing Search', 'WEB_SEARCH',
                     'API_ACCESS_NOT_CONFIGURED', 'SEARCH_API_LICENSE_AND_QUOTA_REQUIRED', false,
                     'NOT_CONNECTED', 'PLANNED', 'Perlu pemeriksaan produk API, kredensial, dan biaya.'),
@@ -189,7 +189,9 @@ final class SourceModuleCatalog
                 ['FREE_PUBLIC', 'NONE', 'REST', 'Metadata publik; tetap mengikuti kuota dan ketentuan sumber.'],
             'ANTARA_RSS', 'MEDIA_RSS_ATOM', 'GOOGLE_NEWS_RSS', 'GOOGLE_TRENDS_RSS' =>
                 ['PUBLIC_FEED', 'NONE', 'RSS_ATOM', 'Feed publik tidak selalu memberi hak arsip atau konten lengkap.'],
-            'GOOGLE_WEB_SEARCH', 'BING_WEB_SEARCH', 'BRAVE_SEARCH_API', 'TAVILY_KEYLESS' =>
+            'GOOGLE_WEB_SEARCH' =>
+                ['NOT_AVAILABLE_NEW_SIGNUPS', 'API_KEY', 'LEGACY_CUSTOM_SEARCH_JSON_API', 'Custom Search JSON API tidak menerima pelanggan baru; migrasi wajib sebelum 1 Januari 2027 bagi pelanggan lama.'],
+            'BING_WEB_SEARCH', 'BRAVE_SEARCH_API', 'TAVILY_KEYLESS' =>
                 ['PLAN_OR_QUOTA', 'API_KEY', 'REST_SEARCH', 'Harga, jatah gratis, dan paket perlu diperiksa pada penyedia.'],
             'INSTAGRAM_GRAPH', 'FACEBOOK_GRAPH', 'THREADS_API' =>
                 ['APP_APPROVAL_REQUIRED', 'OAUTH2', 'META_GRAPH_API', 'Login akun hanya memberi cakupan API dan scope yang disetujui Meta.'],
