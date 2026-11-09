@@ -1,0 +1,14 @@
+{
+ "id":"WORLD_BANK_WDI_IDN_GDP_2022_2024_V1",
+ "provider":"WORLD_BANK_CURATED_OFFICIAL_DATA",
+ "endpoint":"https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=2022:2024&source=2&per_page=3&page=1",
+ "method":"GET","host":"api.worldbank.org","port":443,
+ "format":"application/json","country":"IDN","indicator":"NY.GDP.MKTP.KD.ZG",
+ "max_records":3,"max_bytes":65536,"dns_seconds":1,"http_seconds":4,"total_seconds":5,
+ "retry":0,"redirect":0,"fallback":0,"cost":0,"scheduler":"OFF",
+ "rights_reference":"ae09-wb-rights.json",
+ "rights_authority":"Existing source-specific reviewed contract only; receipt never approves rights",
+ "publication_time":"UNKNOWN","dataset_update_time":"lastupdated, not record publication","retrieval_time":"Actual HTTP response time; loopback simulation explicitly labelled",
+ "parser":"WorldBankGdpSourceAdapter existing closed V2 decoder",
+ "limitations":"Historical national official-data pack; not general web search or universal crawler. Third-party exceptions and attribution remain source-specific."
+}

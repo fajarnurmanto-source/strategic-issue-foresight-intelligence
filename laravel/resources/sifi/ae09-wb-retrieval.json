@@ -1,0 +1,9 @@
+{
+  "url": "https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=2022:2024&source=2&per_page=3&page=1",
+  "retrieved_at": "2026-10-25T06:26:08Z",
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "sha256": "91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346",
+  "purpose": "One bounded public read-only manual schema audit; not collector activation",
+  "max_records": 3
+}

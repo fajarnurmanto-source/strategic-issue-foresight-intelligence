@@ -1,0 +1,140 @@
+@php($inventory = $this->inventory())
+
+<x-filament-panels::page>
+    <x-filament::section heading="Integration Hub - katalog baca-saja">
+        <div class="space-y-3">
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+                Daftar ini bersumber dari registry SIFI yang sudah ada. Tidak ada koneksi API,
+                pembacaan kredensial pengguna, ataupun verifikasi kelayakan paket yang dijalankan.
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+                <x-filament::badge color="warning">CONNECTION CHECK: NOT RUN</x-filament::badge>
+                <x-filament::badge color="gray">READ ONLY</x-filament::badge>
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                    Snapshot {{ $inventory['as_of'] }}
+                </span>
+            </div>
+        </div>
+    </x-filament::section>
+
+    <x-filament::section heading="Katalog AI">
+        <div class="grid gap-3 md:grid-cols-2">
+            @foreach ($inventory['ai'] as $provider)
+                <div class="space-y-2 rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                     wire:key="ai-{{ $provider['id'] }}">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-semibold">{{ $provider['label'] }}</h3>
+                        <x-filament::badge :color="$provider['catalog_allowed'] ? 'info' : 'gray'">
+                            {{ $provider['catalog_allowed'] ? 'CATALOG ALLOWED' : 'CATALOG DISABLED' }}
+                        </x-filament::badge>
+                    </div>
+                    <p class="text-sm">Eligibility: {{ $provider['policy_state'] }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ $provider['model_count'] }} model dalam katalog | Koneksi {{ $provider['connection_probe'] }}
+                    </p>
+                </div>
+            @endforeach
+        </div>
+    </x-filament::section>
+
+    <x-filament::section heading="Sumber data riset">
+        <div class="grid gap-3 md:grid-cols-2">
+            @foreach ($inventory['research'] as $source)
+                <div class="space-y-2 rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                     wire:key="data-{{ $source['id'] }}">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-semibold">{{ $source['label'] }}</h3>
+                        <x-filament::badge :color="$source['review_state'] === 'REVIEW_EXPIRED' ? 'danger' : 'warning'">
+                            {{ $source['review_state'] }}
+                        </x-filament::badge>
+                    </div>
+                    <p class="text-sm">Aturan penggunaan: {{ $source['rights'] }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Tanggal batas tinjauan: {{ $source['review_until'] ?: 'belum diketahui' }}
+                        | Koneksi {{ $source['connection_probe'] }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Status pemanggilan sumber: {{ $source['dispatch_state'] }}
+                    </p>
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-3 text-xs text-amber-700 dark:text-amber-300">
+            Sumber yang ditampilkan dalam katalog dan status REVIEW_IN_DATE tidak memberi izin
+            untuk menjalankan konektor atau mengambil data. Kelayakan penggunaan ditetapkan
+            terpisah oleh pemeriksaan hak akses serta batasan lingkungan saat eksekusi.
+        </p>
+        <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            REVIEW_EXPIRED berarti tanggal evaluasi izin dan ketentuan sumber harus ditinjau ulang,
+            bukan berarti lisensi sumber tersebut otomatis berakhir.
+        </p>
+    </x-filament::section>
+
+    <x-filament::section heading="Google — sumber perhatian pencarian cadangan">
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+            Google Trends RSS merupakan sinyal meningkatnya minat pencarian, bukan Google web search,
+            data berita lengkap, kebenaran kejadian, atau pengganti seluruh media sosial.
+            Integrasi lokal tetap opt-in dan memerlukan database validasi terisolasi.
+        </p>
+        <div class="grid gap-3 md:grid-cols-2">
+            @foreach ($inventory['google_sources'] as $source)
+                <div class="space-y-2 rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                     wire:key="google-{{ $source['id'] }}">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-semibold">{{ $source['label'] }}</h3>
+                        <x-filament::badge :color="$source['state'] === 'LOCAL_OPT_IN_ONLY' ? 'success' : ($source['state'] === 'REVIEW_EXPIRED' ? 'danger' : 'gray')">
+                            {{ $source['state'] }}
+                        </x-filament::badge>
+                    </div>
+                    <p class="text-xs">{{ $source['access'] }}</p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">{{ $source['scope'] }}</p>
+                    <p class="text-xs text-primary-700 dark:text-primary-300">{{ $source['action'] }}</p>
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-3 text-xs text-amber-700 dark:text-amber-300">
+            Google Trends hanya tersedia untuk riset lokal terisolasi; hak pemakaian komersial dan
+            otomasi produksi belum diberikan. Jika permintaan ditolak atau dibatasi, hentikan uji sumber.
+        </p>
+    </x-filament::section>
+
+    <x-filament::section heading="Pemantauan media sosial — cakupan sebenarnya">
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+            Media sosial menjadi sumber sinyal isu prioritas. Daftar ini menunjukkan akses yang benar-benar
+            tersedia, bukan klaim bahwa semua unggahan di suatu platform dapat diambil. Tidak diperlukan
+            verifikasi manual untuk tiap unggahan; tinjauan manusia dipakai untuk pengecualian dan keputusan penting.
+        </p>
+        <div class="grid gap-3 md:grid-cols-2">
+            @foreach ($inventory['social_sources'] as $source)
+                <div class="space-y-2 rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                     wire:key="social-{{ $source['id'] }}">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="font-semibold">{{ $source['label'] }}</h3>
+                        <x-filament::badge :color="$source['state'] === 'LOCAL_OPT_IN_ONLY' ? 'success' : ($source['state'] === 'REVIEW_EXPIRED' ? 'danger' : 'gray')">
+                            {{ $source['state'] }}
+                        </x-filament::badge>
+                    </div>
+                    <p class="text-xs">{{ $source['access'] }}</p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">{{ $source['scope'] }}</p>
+                    <p class="text-xs text-primary-700 dark:text-primary-300">{{ $source['action'] }}</p>
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-3 text-xs text-amber-700 dark:text-amber-300">
+            BLUESKY LOCAL_OPT_IN_ONLY bukan aktivasi produksi. X, Instagram, TikTok,
+            YouTube dan Mastodon tetap NOT_CONNECTED sampai sumber sah diintegrasikan.
+            Interaksi sosial menunjukkan perhatian, bukan frekuensi kejadian atau prevalensi.
+        </p>
+    </x-filament::section>
+
+    <x-filament::section heading="Tugas AI yang diizinkan oleh kontrak">
+        <ul class="list-disc space-y-1 pl-5 text-sm">
+            @foreach ($inventory['ai_tasks'] as $task)
+                <li>{{ $task }}</li>
+            @endforeach
+        </ul>
+        <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            AI tidak memiliki kewenangan menetapkan kebenaran klaim, status bukti, atau admission produksi.
+        </p>
+    </x-filament::section>
+</x-filament-panels::page>
