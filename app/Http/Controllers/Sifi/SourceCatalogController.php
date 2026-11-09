@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -37,12 +38,81 @@ final class SourceCatalogController extends Controller
         $selected=$request->validate(['scenario'=>['sometimes','string',\Illuminate\Validation\Rule::in(array_keys(\App\Services\Sifi\SourceObservationPipeline::SCENARIOS))]])['scenario']??'synthetic';
         $saved=$request->session()->get('ae08_pad_preview');
         $importJson=is_array($saved) && ($saved['owner_id']??null)===$uid ? ($saved['payload']??null) : null;
+        $selectionReady = Schema::hasTable('sifi_user_source_selections');
+        $selectedSources = $selectionReady
+            ? DB::table('sifi_user_source_selections')->where('user_id', $uid)
+                ->where('selected', true)->pluck('provider_id')->all()
+            : [];
         return Inertia::render('sifi/source-catalog', [
             'sources'=>$sources, 'profiles'=>$profiles, 'scope'=>'LOCAL_CANDIDATE_ONLY',
             'sourceModules'=>app(\App\Services\Sifi\SourceModuleCatalog::class)->forE4(now('Asia/Jakarta')->toDateString()),
+            'selectedSourceIds'=>$selectedSources,
+            'sourceSelectionReady'=>$selectionReady,
             'acquisitionWorkspace'=>$selected==='wb_acquisition'?app(\App\Services\Sifi\WorldBankAcquisitionWorkspace::class)->view($request->user()):null,
             'pipeline'=>$pipeline->preview($selected,$selected==='wb_acquisition'?($request->query('receipt')??$request->session()->get('ae10_acquisition.'.$uid)):($selected==='pad_import'?$importJson:null),$uid),
         ]);
+    }
+
+    /**
+     * Saves the user's desired provider list only. Never activates a collector,
+     * creates provider login state, authorizes billing, or sends an HTTP request.
+     */
+    public function updateSourceSelection(
+        Request $request, \App\Services\Sifi\SourceModuleCatalog $catalog
+    ): RedirectResponse {
+        Gate::authorize('viewAny', SifiSourceDraft::class);
+        if (! Schema::hasTable('sifi_user_source_selections')
+            || ! Schema::hasTable('sifi_user_source_selection_audits')) {
+            throw ValidationException::withMessages([
+                'source_selection' => 'Penyimpanan sumber belum dipasang pada aplikasi ini.',
+            ]);
+        }
+
+        $values = $request->validate([
+            'provider_id' => ['required', 'string', 'max:64'],
+            'selected' => ['required', 'boolean'],
+            'user_id' => ['prohibited'], 'api_key' => ['prohibited'],
+            'access_token' => ['prohibited'], 'password' => ['prohibited'],
+            'billing_authorized' => ['prohibited'], 'endpoint' => ['prohibited'],
+        ]);
+        $provider = $values['provider_id'];
+        $allowed = array_column($catalog->forE4(now('Asia/Jakarta')->toDateString())['sources'], 'id');
+        if (! in_array($provider, $allowed, true)) {
+            throw ValidationException::withMessages([
+                'provider_id' => 'Penyedia tidak ada dalam katalog SIFI.',
+            ]);
+        }
+
+        $userId = (int) $request->user()->id;
+        $desired = (bool) $values['selected'];
+        DB::transaction(function () use ($userId, $provider, $desired): void {
+            $existing = DB::table('sifi_user_source_selections')
+                ->where('user_id', $userId)->where('provider_id', $provider)
+                ->lockForUpdate()->first();
+            if ($existing !== null && (bool) $existing->selected === $desired) {
+                return;
+            }
+            $now = now();
+            if ($existing === null) {
+                if (! $desired) {
+                    return;
+                }
+                DB::table('sifi_user_source_selections')->insert([
+                    'user_id' => $userId, 'provider_id' => $provider,
+                    'selected' => true, 'created_at' => $now, 'updated_at' => $now,
+                ]);
+            } else {
+                DB::table('sifi_user_source_selections')->where('id', $existing->id)
+                    ->update(['selected' => $desired, 'updated_at' => $now]);
+            }
+            DB::table('sifi_user_source_selection_audits')->insert([
+                'user_id' => $userId, 'provider_id' => $provider,
+                'event_code' => $desired ? 'SOURCE_SELECTED' : 'SOURCE_DESELECTED',
+                'created_at' => $now,
+            ]);
+        });
+
+        return redirect()->route('sifi.source-catalog.index');
     }
 
     public function acquireWorldBank(Request $request, \App\Services\Sifi\WorldBankOneShotAcquisition $service): RedirectResponse
