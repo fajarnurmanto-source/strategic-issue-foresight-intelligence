@@ -16,6 +16,7 @@ void createInertiaApp({
         if (new Set([
             'dashboard',
             'sifi/claim-event-workspace',
+            'sifi/e4-period-discovery',
             'sifi/evidence-diagnostics',
             'sifi/evidence-intake',
             'sifi/evidence-review-queue',
@@ -26,6 +27,7 @@ void createInertiaApp({
             'sifi/issue-candidate-detail',
             'sifi/issue-candidates-index',
             'sifi/issue-case-workspace',
+            'sifi/product-roadmap',
             'sifi/signal-inbox',
             'sifi/signal-relations',
             'sifi/source-catalog',
