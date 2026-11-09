@@ -44,7 +44,7 @@ Superadmin manages **developer app credentials**, provider API URLs and policy; 
 - Present increment: `SourceModuleCatalog` exposes conservative `api_family`, `access_tier`, `auth_method` and explanatory warnings.
 - New `sifi_user_source_selections` + audit: owned, persisted **selection intent**; no token, password, billing authorization or external provider request.
 - Source & Coverage is refactored to a compact source picker. Selection requests reject unknown providers and client-supplied credentials.
-- OAuth implementation, real token storage, provider-consent redirect/callback, per-platform API calls and collector activation are **NOT YET IMPLEMENTED**. Never display a working Login/Connect button until implemented and tested.
+- OAuth implementation, real token storage, provider-consent redirect/callback and authenticated social-media API calls are **NOT YET IMPLEMENTED**. Public Google News/Trends RSS one-shot preview is implemented independently of those account integrations; recurrent collection remains OFF. Never display a working Login/Connect button until implemented and tested.
 - Migration and UI are candidate-only, awaiting isolated Laravel/TypeScript/UI validation. Production and real-evidence admission remain DENIED.
 
 ### Acceptance tests
@@ -69,7 +69,7 @@ No live user login, API credentials, provider account, remote payment, migration
 Google is not one universal source. SIFI must keep these capabilities distinct:
 
 - **Google News RSS:** public aggregated-news **headline metadata**, not Google Web Search. A one-shot, read-only preview is now implemented in E4 via \`POST /sifi/discovery-period/google-news-preview\`. It requires a registered/owned monitoring object, valid object revision and date window, explicit user consent, and at most one outbound GET to a fixed Google News RSS endpoint. It returns at most 10 dated metadata links and publisher labels, no full article body, with an upstream response hash. XML DTD/entity declarations, redirects, oversized responses, client-supplied URLs/API keys and all unauthorized extra parameters are rejected. No polling or automatic collection.
-- **Google Trends RSS:** attention/trend sensor already listed as a separate pilot, *not* Google Search results and not proof of prevalence. It remains under its own eligibility policy, not implicitly enabled by the Google News feature.
+- **Google Trends RSS:** real, consented, one-shot public Google Indonesia trending-search RSS at `POST /sifi/source-catalog/google-trends-preview`, independently visible in Source Center. Up to 10 trends with approximate traffic estimates are shown. This is *not* Google Web Search, a news feed or proof of population prevalence; no subscription, automatic polling or evidence admission.
 - **Google Web Search:** **do not build on Custom Search JSON API for new subscriptions**. Google's developer documentation states this API is closed to new customers and existing customers must migrate by **2027-01-01**. Keep the catalog entry explicitly unavailable to new sign-ups, and evaluate a current officially supported alternative or a separately licensed search provider. Do not scrape Google Search result pages.
 - **YouTube Data API:** metadata-only public queries may use an API key subject to quota, while owned/private account features require OAuth and scopes. Keep this provider separate from Google News and Search.
 
@@ -77,4 +77,4 @@ Google is not one universal source. SIFI must keep these capabilities distinct:
 
 **UX:** in Discovery Objek & Periode, run *Periksa cakupan sumber*, tick the consent checkbox, then click *Cari lewat Google News RSS* even when the gated E4 collector reports no dispatchable providers. Date filtering occurs on returned publication dates; older periods may yield zero because RSS backfill is not guaranteed.
 
-**Focused QA:** \`php artisan test --filter='GoogleNewsRssPreviewTest|SourceModuleCatalogTest|E4PeriodDiscoveryTest|SifiSourceCatalogWorkflowTest'\`, \`npm run types:check\`, \`npm run build\`. Tests fake Google HTTP, so they are no-cost and offline; a separate opt-in local smoke test with a real Google RSS response is still required. Source-only GitHub changes are **not** proof that the Windows runtime was updated or passed QA.
+**Focused QA:** \`php artisan test --filter='GoogleNewsRssPreviewTest|GoogleTrendsRssPreviewTest|SourceModuleCatalogTest|E4PeriodDiscoveryTest|SifiSourceCatalogWorkflowTest'\`, \`npm run types:check\`, \`npm run build\`. Tests fake Google HTTP, so they are no-cost and offline; a separate opt-in local smoke test with a real Google RSS response is still required. Source-only GitHub changes are **not** proof that the Windows runtime was updated or passed QA.
