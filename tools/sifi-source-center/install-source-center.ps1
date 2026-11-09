@@ -108,6 +108,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $targetRoot 'vendor\autoload.php') -
 if (-not (Test-Path -LiteralPath (Join-Path $targetRoot 'node_modules\typescript\bin\tsc') -PathType Leaf)) {
     throw 'SIFI_INSTALL_NODE_DEPENDENCIES_MISSING'
 }
+# This source-center package is not a production release.
+$environmentText = (& php (Join-Path $targetRoot 'artisan') env 2>&1 | Out-String)
+if ($LASTEXITCODE -ne 0 -or $environmentText -match 'production') {
+    throw 'SIFI_INSTALL_REQUIRES_NONPRODUCTION_LARAVEL'
+}
 
 $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd_HHmmss_fff')
 $parent = Split-Path -Parent $targetRoot
