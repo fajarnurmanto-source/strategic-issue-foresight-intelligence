@@ -7,7 +7,10 @@ import { Database, Layers, MapPinned, ShieldAlert, Save, Plus, RefreshCw } from 
 
 type Source = {id:string;name:string;source_type:string;homepage_url:string|null;source_geography:string|null;notes:string|null;rights_state:string;collector_state:string;revision:number};
 type Profile = {id:string;name:string;level:string;region_name:string;domains:string[];source_ids:string[];profile_state:string;collector_state:string;revision:number};
-type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;acquisitionWorkspace?:AcquisitionWorkspace|null};
+type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string};
+type CatalogModule = {id:string;label:string;description:string;sources:CatalogSource[]};
+type SourceModules = {schema:string;modules:CatalogModule[];module_count:number;source_count:number;e4_dispatchable_count:number;rights_granted_by_catalog:boolean};
+type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;acquisitionWorkspace?:AcquisitionWorkspace|null};
 const kinds = ['OFFICIAL','MEDIA','RESEARCH','OPEN_DATA','OTHER'];
 const levels = [{v:'CITY',t:'Kabupaten / Kota'},{v:'PROVINCE',t:'Provinsi'},{v:'NATIONAL',t:'Nasional'}];
 const control = 'mt-1.5 w-full rounded-lg border bg-background px-3 py-2.5 text-sm';
@@ -71,7 +74,7 @@ function ProfileEditor({item,sources,done}: {item?:Profile;sources:Source[];done
   </form>;
 }
 
-export default function SourceCatalog({sources,profiles,pipeline,acquisitionWorkspace}:Props) {
+export default function SourceCatalog({sources,profiles,pipeline,sourceModules,acquisitionWorkspace}:Props) {
   const [sourceId,setSourceId]=useState<string|null>(null);
   const [profileId,setProfileId]=useState<string|null>(null);
   const activeSource=sources.find(s=>s.id===sourceId);
@@ -79,10 +82,37 @@ export default function SourceCatalog({sources,profiles,pipeline,acquisitionWork
   return <AppLayout breadcrumbs={[{title:'SIFI — Source & Coverage',href:'/sifi/source-catalog'}]}>
     <Head title="SIFI · Source & Coverage"/>
     <main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8"><div className="mx-auto max-w-[1500px] space-y-5">
-      <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Source Registry & Coverage</h1><p className="mt-2 text-sm text-muted-foreground">Katalog usulan sumber dan cakupan isu yang dikonfigurasi analis. Pengelolaan draf di Laravel; otoritas provenance dan rights tetap terpisah.</p></header>
+      <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Katalog Modul Sumber & Coverage</h1><p className="mt-2 text-sm text-muted-foreground">Peta konektor media online, media sosial, GDELT, mesin pencari, riset, data resmi, dan usulan sumber yang dikonfigurasi analis. Pengelolaan draf di Laravel; otoritas provenance dan rights tetap terpisah.</p></header>
       <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'LOCAL DRAFT ONLY · NO LIVE ACQUISITION.'}</b> Sumber di sini belum menjadi Source Registry Python yang berkualifikasi, tidak memperoleh izin penggunaan, tidak mengaktifkan RSS atau kolektor, dan tidak menghasilkan admitted evidence.</p></div>
-      <div className="grid gap-3 sm:grid-cols-3">{[{t:'Usulan sumber',n:sources.length,icon:Database},{t:'Coverage Profiles',n:profiles.length,icon:MapPinned},{t:'Collector aktif',n:0,icon:Layers}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
-      {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
+      <div className="grid gap-3 sm:grid-cols-3">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Usulan pengguna',n:sources.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
+      <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Klasifikasi modul sumber informasi">
+         <div className="flex flex-wrap items-start justify-between gap-3">
+           <div><h2 className="text-xl font-semibold">Klasifikasi konektor berdasarkan sumber</h2>
+             <p className="mt-1 text-sm text-muted-foreground">Delapan modul dengan status kemampuan dan izin masing-masing. Modul tersedia di katalog tidak otomatis menyalakan crawler atau memberikan hak akses.</p>
+           </div>
+           <Link href="/sifi/discovery-period" className="rounded-lg border px-3 py-2 text-sm font-medium text-primary hover:bg-muted">Periksa sumber untuk objek & periode</Link>
+         </div>
+         <div className="mt-4 grid gap-3 lg:grid-cols-2">
+           {sourceModules.modules.map((module, index)=><details key={module.id} open={index===0 || index===3} className="rounded-xl border bg-background p-3">
+             <summary className="cursor-pointer text-sm font-semibold">{module.label}<span className="ml-2 text-xs font-normal text-muted-foreground">{module.sources.length} penyedia</span></summary>
+             <p className="mt-2 text-xs text-muted-foreground">{module.description}</p>
+             <div className="mt-3 space-y-2">
+               {module.sources.map(s=><div key={s.id} className="rounded-lg border p-2.5">
+                 <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{s.platform}</strong>
+                   <span className={s.dispatchable?'rounded-md bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800':'rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800'}>{s.dispatchable?'Siap E4 (validasi)':s.connection==='REVIEWED_OPT_IN'?'Konektor bersyarat':s.connection==='EXISTING_OTHER_WORKFLOW'?'Ada alur khusus':'Belum tersambung'}</span>
+                 </div>
+                 <p className="mt-1 text-xs text-muted-foreground">{s.state} · {s.coverage}</p>
+                 <p className="mt-1 text-xs text-muted-foreground">{s.notes}</p>
+                 <p className="mt-1 text-[11px] text-muted-foreground">Jalur: {s.workflow}</p>
+               </div>)}
+             </div>
+           </details>)}
+         </div>
+         <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
+           Konektor berizin tetap membutuhkan aktivasi pada lingkungan validasi dan kuota provider. Tidak ada scraping login, pengambilan historis yang tidak didukung, atau admission evidence secara otomatis.
+         </p>
+       </section>
+       {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
       <SourcePipelinePanel key={pipeline.scenario+pipeline.packet_hash} pipeline={pipeline} sources={sources}/>
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-xl border bg-card p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 text-lg font-semibold"><Database className="h-5 w-5"/> Usulan sumber</h2><button onClick={()=>setSourceId(null)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium"><Plus className="h-4 w-4"/> Baru</button></div>
