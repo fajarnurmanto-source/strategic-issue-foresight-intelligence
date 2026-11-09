@@ -182,7 +182,7 @@ final class SourceModuleCatalog
         try {
             app($permissionClass)->assertAllowed();
             return true;
-        } catch (\\RuntimeException) {
+        } catch (\RuntimeException) {
             return false;
         }
     }
