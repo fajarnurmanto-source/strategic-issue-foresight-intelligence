@@ -7,10 +7,10 @@ import { Database, Layers, MapPinned, ShieldAlert, Save, Plus, RefreshCw } from 
 
 type Source = {id:string;name:string;source_type:string;homepage_url:string|null;source_geography:string|null;notes:string|null;rights_state:string;collector_state:string;revision:number};
 type Profile = {id:string;name:string;level:string;region_name:string;domains:string[];source_ids:string[];profile_state:string;collector_state:string;revision:number};
-type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string;permission_gate:string};
+type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string;permission_gate:string;access_tier:string;auth_method:string;api_family:string;access_note:string;billing_authorized:boolean;oauth_connected:boolean};
 type CatalogModule = {id:string;label:string;description:string;sources:CatalogSource[]};
 type SourceModules = {schema:string;modules:CatalogModule[];module_count:number;source_count:number;e4_dispatchable_count:number;local_permission_pass_count:number;rights_granted_by_catalog:boolean};
-type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;acquisitionWorkspace?:AcquisitionWorkspace|null};
+type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;selectedSourceIds:string[];sourceSelectionReady:boolean;acquisitionWorkspace?:AcquisitionWorkspace|null};
 const kinds = ['OFFICIAL','MEDIA','RESEARCH','OPEN_DATA','OTHER'];
 const levels = [{v:'CITY',t:'Kabupaten / Kota'},{v:'PROVINCE',t:'Provinsi'},{v:'NATIONAL',t:'Nasional'}];
 const control = 'mt-1.5 w-full rounded-lg border bg-background px-3 py-2.5 text-sm';
@@ -74,44 +74,81 @@ function ProfileEditor({item,sources,done}: {item?:Profile;sources:Source[];done
   </form>;
 }
 
-export default function SourceCatalog({sources,profiles,pipeline,sourceModules,acquisitionWorkspace}:Props) {
+export default function SourceCatalog({sources,profiles,pipeline,sourceModules,selectedSourceIds,sourceSelectionReady,acquisitionWorkspace}:Props) {
   const [sourceId,setSourceId]=useState<string|null>(null);
   const [profileId,setProfileId]=useState<string|null>(null);
+  const [sourceSelectionBusy,setSourceSelectionBusy]=useState<string|null>(null);
+  const [sourceSelectionError,setSourceSelectionError]=useState<string|null>(null);
+  const selectProvider=(providerId:string,selected:boolean)=>{
+    setSourceSelectionBusy(providerId);
+    setSourceSelectionError(null);
+    router.post('/sifi/source-catalog/source-selection',{provider_id:providerId,selected},{
+      preserveScroll:true,
+      onError:errors=>setSourceSelectionError(errors.source_selection??errors.provider_id??'Pilihan sumber gagal disimpan.'),
+      onFinish:()=>setSourceSelectionBusy(null),
+    });
+  };
   const activeSource=sources.find(s=>s.id===sourceId);
   const activeProfile=profiles.find(p=>p.id===profileId);
   return <AppLayout breadcrumbs={[{title:'SIFI — Source & Coverage',href:'/sifi/source-catalog'}]}>
     <Head title="SIFI · Source & Coverage"/>
     <main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8"><div className="mx-auto max-w-[1500px] space-y-5">
-      <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Katalog Modul Sumber & Coverage</h1><p className="mt-2 text-sm text-muted-foreground">Peta konektor media online, media sosial, GDELT, mesin pencari, riset, data resmi, dan usulan sumber yang dikonfigurasi analis. Pengelolaan draf di Laravel; otoritas provenance dan rights tetap terpisah.</p></header>
+      <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Sumber Data</h1><p className="mt-2 text-sm text-muted-foreground">Pilih penyedia yang diperlukan. SIFI menjelaskan akses, biaya, serta metode koneksi setiap sumber. Pilihan sumber disimpan terpisah dari izin pengambilan data.</p></header>
       <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'LOCAL DRAFT ONLY · NO LIVE ACQUISITION.'}</b> Usulan sumber dan Coverage Profile di bawah masih berstatus draf. Katalog modul di atas hanya menampilkan kesiapan konektor; tidak memberikan izin provider, menyalakan kolektor, atau menghasilkan admitted evidence.</p></div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Gate izin lokal lolos',n:sourceModules.local_permission_pass_count,icon:ShieldAlert},{t:'Usulan pengguna',n:sources.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
-      <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Klasifikasi modul sumber informasi">
-         <div className="flex flex-wrap items-start justify-between gap-3">
-           <div><h2 className="text-xl font-semibold">Klasifikasi konektor berdasarkan sumber</h2>
-             <p className="mt-1 text-sm text-muted-foreground">Delapan modul dengan status kemampuan dan izin masing-masing. Modul tersedia di katalog tidak otomatis menyalakan crawler atau memberikan hak akses.</p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Gate izin lokal lolos',n:sourceModules.local_permission_pass_count,icon:ShieldAlert},{t:'Sumber dipilih',n:selectedSourceIds.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
+      <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Pilih dan hubungkan sumber data">
+         <div className="flex flex-wrap items-center justify-between gap-3">
+           <div>
+             <h2 className="text-xl font-semibold">Pilih sumber data</h2>
+             <p className="mt-1 text-sm text-muted-foreground">Pilih sumber, lalu hubungkan API atau akun ketika konektor resmi tersedia. Tidak ada biaya atau permintaan data saat memilih.</p>
            </div>
-           <Link href="/sifi/discovery-period" className="rounded-lg border px-3 py-2 text-sm font-medium text-primary hover:bg-muted">Periksa sumber untuk objek & periode</Link>
+           <Link href="/sifi/discovery-period" className="rounded-lg border px-3 py-2 text-sm font-medium text-primary hover:bg-muted">Telusuri objek & periode</Link>
          </div>
+         {!sourceSelectionReady&&<p role="alert" className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">Penyimpanan pilihan sumber belum terpasang. Jalankan migrasi pada staging setelah QA.</p>}
+         {sourceSelectionError&&<p role="alert" className="mt-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{sourceSelectionError}</p>}
          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-           {sourceModules.modules.map((module, index)=><details key={module.id} open={index===0 || index===3} className="rounded-xl border bg-background p-3">
-             <summary className="cursor-pointer text-sm font-semibold">{module.label}<span className="ml-2 text-xs font-normal text-muted-foreground">{module.sources.length} penyedia</span></summary>
-             <p className="mt-2 text-xs text-muted-foreground">{module.description}</p>
-             <div className="mt-3 space-y-2">
-               {module.sources.map(s=><div key={s.id} className="rounded-lg border p-2.5">
-                 <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{s.platform}</strong>
-                   <span className={s.dispatchable?'rounded-md bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800':'rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800'}>{s.dispatchable?'E4 terizin (isolasi)':s.permission_gate==='LOCAL_GATE_PASSED'?'Gate lokal lulus (pilot)':s.connection==='REVIEWED_OPT_IN'?'Perlu izin lokal':s.connection==='EXISTING_OTHER_WORKFLOW'?'Ada alur khusus':'Belum tersambung'}</span>
-                 </div>
-                 <p className="mt-1 text-xs text-muted-foreground">{s.state} · {s.coverage}</p>
-                 <p className="mt-1 text-[11px] text-muted-foreground">Status izin lokal: {s.permission_gate}</p>
-                 <p className="mt-1 text-xs text-muted-foreground">{s.notes}</p>
-                 <p className="mt-1 text-[11px] text-muted-foreground">Jalur: {s.workflow}</p>
-               </div>)}
+           {sourceModules.modules.map((module,index)=><details key={module.id} open={index===0} className="rounded-xl border bg-background">
+             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">
+               {module.label}<span className="ml-2 text-xs font-normal text-muted-foreground">{module.sources.filter(s=>selectedSourceIds.includes(s.id)).length}/{module.sources.length} dipilih</span>
+             </summary>
+             <div className="space-y-2 border-t p-3">
+               {module.sources.map(s=>{
+                 const chosen=selectedSourceIds.includes(s.id);
+                 const login=['OAUTH2','OAUTH2_OR_API_KEY','OPTIONAL_OAUTH'].includes(s.auth_method);
+                 const payLabel=s.access_tier==='PLAN_OR_QUOTA'?'Paket API/kuota: biaya mungkin berlaku'
+                   :s.access_tier==='FREE_QUOTA_OR_PLAN'?'Gratis berkuota / opsi paket'
+                   :s.access_tier==='APP_APPROVAL_REQUIRED'?'Persetujuan aplikasi diperlukan'
+                   :s.access_tier==='FREE_PUBLIC'||s.access_tier==='PUBLIC_FEED'?'Publik / gratis bersyarat'
+                   :'Biaya dan izin sesuai sumber';
+                 const payAttention=['PLAN_OR_QUOTA','FREE_QUOTA_OR_PLAN','APP_APPROVAL_REQUIRED'].includes(s.access_tier);
+                 return <div key={s.id} className={'rounded-lg border p-3 '+(chosen?'border-primary/40 bg-primary/5':'')}>
+                   <div className="flex items-start justify-between gap-3">
+                     <div className="min-w-0">
+                       <h3 className="text-sm font-semibold">{s.platform}</h3>
+                       <p className="mt-1 text-xs text-muted-foreground">{s.api_family} · {s.auth_method==='NONE'?'Tanpa login':s.auth_method==='LOCAL'?'File lokal':login?'OAuth / login akun':'Akses API / sumber'}</p>
+                     </div>
+                     <label className="flex shrink-0 items-center gap-2 text-xs font-medium">
+                       <input type="checkbox" className="size-4 accent-primary" checked={chosen}
+                         disabled={!sourceSelectionReady||sourceSelectionBusy===s.id}
+                         onChange={event=>selectProvider(s.id,event.target.checked)} aria-label={'Pilih '+s.platform}/>
+                       {chosen?'Dipilih':'Pilih'}
+                     </label>
+                   </div>
+                   <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                     <span className={payAttention?'rounded-full bg-amber-100 px-2 py-0.5 text-amber-800':'rounded-full bg-muted px-2 py-0.5 text-muted-foreground'}>{payLabel}</span>
+                     <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                       {s.permission_gate==='LOCAL_GATE_PASSED'?'Gate lokal lulus':s.connection==='REVIEWED_OPT_IN'?'Perlu konfigurasi izin':'Konektor belum aktif'}
+                     </span>
+                   </div>
+                   {chosen&&<p className="mt-2 text-xs font-medium text-primary">Pilihan tersimpan; akuisisi belum diaktifkan.</p>}
+                   <p className="mt-2 text-xs text-muted-foreground">{s.access_note}</p>
+                   {login&&<p className="mt-1 text-xs text-muted-foreground">Hubungkan akun via OAuth resmi setelah aplikasi developer, redirect, dan scope disiapkan. SIFI tidak meminta kata sandi.</p>}
+                 </div>;
+               })}
              </div>
            </details>)}
          </div>
-         <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
-           Gate izin lokal yang lulus hanya menunjukkan syarat konfigurasi dasar terpenuhi; bukan bukti provider dapat diakses. Konektor tetap membutuhkan persetujuan satu kali pada lingkungan validasi dan kuota provider. Tidak ada scraping login, pengambilan historis yang tidak didukung, atau admission evidence secara otomatis.
-         </p>
+         <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">Memilih sumber tidak mengaktifkan kolektor, membeli paket, atau memberi izin membaca seluruh data platform. Koneksi dan kuota diperiksa sebelum akuisisi.</p>
        </section>
        {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
       <SourcePipelinePanel key={pipeline.scenario+pipeline.packet_hash} pipeline={pipeline} sources={sources}/>
