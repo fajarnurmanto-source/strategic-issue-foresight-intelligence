@@ -6,11 +6,13 @@ import { ArrowRight, CalendarRange, DatabaseZap, Link2, Search, ShieldAlert } fr
 type ObjectRow = { id: string; name: string; revision: number; state: string; keywords: string[] };
 type SourceRow = {
     id: string; class: string; platform: string; state: string; coverage: string; dispatchable: boolean;
+    module_id: string; module_label: string; connection: string; workflow: string; notes: string;
 };
+type SourceModule = { id: string; label: string; description: string; sources: SourceRow[] };
 type Plan = {
     schema: string; object_id: string; object_name: string; object_revision: number;
     keyword_count: number; keyword_scope_sha256: string; query: string;
-    start_date: string; end_date: string; sources: SourceRow[];
+    start_date: string; end_date: string; sources: SourceRow[]; modules: SourceModule[]; module_count: number;
     eligible_dispatch_count: number; live_enabled: boolean; source_coverage: string;
 };
 type ResultSource = SourceRow & { result_state: string; session_id: string | null; result_count: number; error_code?: string | null };
@@ -31,6 +33,9 @@ const statusLabel: Record<string, string> = {
     PERMISSION_DISABLED: 'Belum diizinkan', HISTORICAL_COVERAGE_UNAVAILABLE: 'Arsip tanggal ini tidak tersedia',
     PERIOD_BACKFILL_NOT_IN_E4: 'Belum tersedia untuk backfill', HISTORICAL_COVERAGE_NOT_ESTABLISHED: 'Belum ada cakupan historis',
     ATTENTION_ONLY_NO_HISTORIC_POSTS: 'Sinyal perhatian saja', NO_REVIEWED_PERIOD_ADAPTER: 'Belum ada adapter periode',
+    ADAPTER_NOT_IMPLEMENTED: 'Adapter belum dibangun', RIGHTS_REVIEW_REQUIRED: 'Perlu telaah hak akses',
+    API_ACCESS_NOT_CONFIGURED: 'API belum dikonfigurasi', CONNECTOR_NOT_ADMITTED_E4: 'Di luar workflow E4',
+    PLATFORM_PERMISSION_REQUIRED: 'Perlu izin platform', WORKFLOW_AVAILABLE_OUTSIDE_E4: 'Tersedia lewat modul lain',
 };
 const today = () => {
     const parts = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Jakarta' }).formatToParts(new Date());
@@ -126,13 +131,26 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                         : <>
                             <p className="text-sm">Objek <strong>{plan.object_name}</strong>, v{plan.object_revision}, {plan.start_date} sampai {plan.end_date}.</p>
                             <p className="text-sm text-muted-foreground">Istilah pencarian: {plan.query}</p>
-                            <div className="max-h-[430px] space-y-2 overflow-auto">
-                                {plan.sources.map((s) => <div key={s.id} className="rounded-lg border p-3 text-sm">
-                                    <div className="flex flex-wrap items-center justify-between gap-2"><strong>{s.platform}</strong>
-                                        <span className={s.dispatchable ? 'text-emerald-700' : 'text-amber-700'}>{statusLabel[s.state] ?? s.state}</span>
+                            <p className="text-xs text-muted-foreground">{plan.module_count} modul · {plan.sources.length} sumber terinventarisasi. Status “terdaftar” bukan berarti koneksi aktif atau izin akses diberikan.</p>
+                            <div className="max-h-[510px] space-y-2 overflow-auto" aria-label="Modul sumber informasi">
+                                {plan.modules.map((module, index) => <details key={module.id} open={index === 0 || index === 3}
+                                    className="rounded-lg border bg-background">
+                                    <summary className="cursor-pointer px-3 py-3 text-sm font-semibold">
+                                        {module.label} <span className="ml-1 text-xs font-normal text-muted-foreground">({module.sources.length} sumber)</span>
+                                    </summary>
+                                    <div className="space-y-2 border-t px-3 pb-3 pt-2">
+                                        <p className="text-xs text-muted-foreground">{module.description}</p>
+                                        {module.sources.map((s) => <div key={s.id} className="rounded-lg border p-2.5 text-sm">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <strong>{s.platform}</strong>
+                                                <span className={s.dispatchable ? 'text-emerald-700' : 'text-amber-700'}>{statusLabel[s.state] ?? s.state}</span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">{s.class} · {s.coverage}</p>
+                                            <p className="mt-1 text-xs text-muted-foreground">{s.notes}</p>
+                                            <p className="mt-1 text-[11px] text-muted-foreground">Konektor: {s.connection} · Jalur: {s.workflow}</p>
+                                        </div>)}
                                     </div>
-                                    <p className="mt-1 text-xs text-muted-foreground">{s.class} · {s.coverage}</p>
-                                </div>)}
+                                </details>)}
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {plan.eligible_dispatch_count} sumber siap untuk satu permintaan terbatas pada lingkungan validasi terisolasi.
