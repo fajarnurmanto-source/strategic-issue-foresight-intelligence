@@ -15,6 +15,14 @@ Route::middleware(['auth', 'verified'])->get('/sifi/product-roadmap',
     [\App\Http\Controllers\Sifi\ProductRoadmapController::class, 'index'])
     ->name('sifi.product-roadmap.index');
 
+// SIFI E4: register keywords first, then choose a date-bound, owned, permission-aware discovery.
+Route::middleware(['auth', 'verified'])->get('/sifi/discovery-period',
+    [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'index'])
+    ->name('sifi.e4.period-discovery.index');
+Route::middleware(['auth', 'verified', 'throttle:2,1'])->post('/sifi/discovery-period/collect',
+    [\App\Http\Controllers\Sifi\E4PeriodDiscoveryController::class, 'collect'])
+    ->name('sifi.e4.period-discovery.collect');
+
 /* SIFI_AQ01_SIGNAL_INBOX_ROUTE_BEGIN — isolated offline demonstration only */
 \Illuminate\Support\Facades\Route::middleware(['auth', 'verified'])
     ->get('/sifi/signals', [\App\Http\Controllers\Sifi\SignalInboxController::class, 'index'])
