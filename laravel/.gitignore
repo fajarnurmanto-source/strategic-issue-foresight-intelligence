@@ -66,3 +66,8 @@ yarn-error.log
 *.p12
 *.pfx
 *.key
+
+# Canonical staging hygiene: never package historical backup duplicates or NTFS metadata.
+/.*-backup-*/
+/*.pre-security-fix
+*:Zone.Identifier
