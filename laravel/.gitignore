@@ -71,3 +71,4 @@ yarn-error.log
 /.*-backup-*/
 /*.pre-security-fix
 *:Zone.Identifier
+*Zone.Identifier
