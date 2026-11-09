@@ -47,6 +47,7 @@ while IFS= read -r -d '' rel; do
   ((total+=1))
   [[ -n "$rel" && "$rel" != /* && "$rel" != ../* && "$rel" != *'/../'* ]] || die BAD_LIVE_PATH
   case "$rel" in
+    .env.example|*/.env.example) ;;
     .git|.git/*|.env|.env.*|*/.env|*/.env.*|*.pem|*.key|*.p12|*.pfx|\
     vendor|vendor/*|node_modules|node_modules/*|storage|storage/*|\
     bootstrap/cache|bootstrap/cache/*|database/*.sqlite|database/*.db|\
