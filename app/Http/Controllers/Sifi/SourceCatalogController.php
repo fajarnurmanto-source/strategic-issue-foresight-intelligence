@@ -43,13 +43,46 @@ final class SourceCatalogController extends Controller
             ? DB::table('sifi_user_source_selections')->where('user_id', $uid)
                 ->where('selected', true)->pluck('provider_id')->all()
             : [];
+        $googleTrends = $request->session()->get('google_trends_preview');
+        if (! is_array($googleTrends) || ($googleTrends['owner_id'] ?? null) !== $uid) {
+            $googleTrends = null;
+        } else {
+            unset($googleTrends['owner_id']);
+        }
         return Inertia::render('sifi/source-catalog', [
             'sources'=>$sources, 'profiles'=>$profiles, 'scope'=>'LOCAL_CANDIDATE_ONLY',
             'sourceModules'=>app(\App\Services\Sifi\SourceModuleCatalog::class)->forE4(now('Asia/Jakarta')->toDateString()),
             'selectedSourceIds'=>$selectedSources,
             'sourceSelectionReady'=>$selectionReady,
+            'googleTrendsPreview'=>$googleTrends,
             'acquisitionWorkspace'=>$selected==='wb_acquisition'?app(\App\Services\Sifi\WorldBankAcquisitionWorkspace::class)->view($request->user()):null,
             'pipeline'=>$pipeline->preview($selected,$selected==='wb_acquisition'?($request->query('receipt')??$request->session()->get('ae10_acquisition.'.$uid)):($selected==='pad_import'?$importJson:null),$uid),
+        ]);
+    }
+
+    /**
+     * Explicit, single-request preview of Google's public Indonesia trends RSS export.
+     * Trend interest is not evidence of an event or population prevalence.
+     */
+    public function previewGoogleTrends(
+        Request $request, \App\Services\Sifi\Integration\GoogleTrendsRssPreview $trends
+    ): RedirectResponse {
+        Gate::authorize('viewAny', SifiSourceDraft::class);
+        if (array_diff(array_keys($request->all()), ['_token', 'consent'])) {
+            throw ValidationException::withMessages(['google_trends' => 'Hanya persetujuan permintaan RSS yang boleh dikirim.']);
+        }
+        $request->validate(['consent' => ['accepted']]);
+        try {
+            $packet = $trends->fetchIndonesia();
+        } catch (\Throwable $exception) {
+            $reason = $exception->getMessage();
+            throw ValidationException::withMessages([
+                'google_trends' => preg_match('/\AGOOGLE_TRENDS_[A-Z0-9_]+\z/D', $reason)
+                    ? $reason : 'GOOGLE_TRENDS_UPSTREAM_UNAVAILABLE',
+            ]);
+        }
+        return redirect()->route('sifi.source-catalog.index')->with('google_trends_preview', [
+            ...$packet, 'owner_id' => (int) $request->user()->id,
         ]);
     }
 
