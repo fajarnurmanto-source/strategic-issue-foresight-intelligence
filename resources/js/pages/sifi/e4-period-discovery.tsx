@@ -6,7 +6,7 @@ import { ArrowRight, CalendarRange, DatabaseZap, Link2, Search, ShieldAlert } fr
 type ObjectRow = { id: string; name: string; revision: number; state: string; keywords: string[] };
 type SourceRow = {
     id: string; class: string; platform: string; state: string; coverage: string; dispatchable: boolean;
-    module_id: string; module_label: string; connection: string; workflow: string; notes: string;
+    module_id: string; module_label: string; connection: string; workflow: string; notes: string; permission_gate: string;
 };
 type SourceModule = { id: string; label: string; description: string; sources: SourceRow[] };
 type Plan = {
@@ -147,7 +147,7 @@ export default function E4PeriodDiscovery({ objects, plan, report, live_enabled 
                                             </div>
                                             <p className="mt-1 text-xs text-muted-foreground">{s.class} · {s.coverage}</p>
                                             <p className="mt-1 text-xs text-muted-foreground">{s.notes}</p>
-                                            <p className="mt-1 text-[11px] text-muted-foreground">Konektor: {s.connection} · Jalur: {s.workflow}</p>
+                                            <p className="mt-1 text-[11px] text-muted-foreground">Konektor: {s.connection} · Izin lokal: {s.permission_gate} · Jalur: {s.workflow}</p>
                                         </div>)}
                                     </div>
                                 </details>)}
