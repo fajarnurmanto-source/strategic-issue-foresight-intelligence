@@ -7,9 +7,9 @@ import { Database, Layers, MapPinned, ShieldAlert, Save, Plus, RefreshCw } from 
 
 type Source = {id:string;name:string;source_type:string;homepage_url:string|null;source_geography:string|null;notes:string|null;rights_state:string;collector_state:string;revision:number};
 type Profile = {id:string;name:string;level:string;region_name:string;domains:string[];source_ids:string[];profile_state:string;collector_state:string;revision:number};
-type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string};
+type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string;permission_gate:string};
 type CatalogModule = {id:string;label:string;description:string;sources:CatalogSource[]};
-type SourceModules = {schema:string;modules:CatalogModule[];module_count:number;source_count:number;e4_dispatchable_count:number;rights_granted_by_catalog:boolean};
+type SourceModules = {schema:string;modules:CatalogModule[];module_count:number;source_count:number;e4_dispatchable_count:number;local_permission_pass_count:number;rights_granted_by_catalog:boolean};
 type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;acquisitionWorkspace?:AcquisitionWorkspace|null};
 const kinds = ['OFFICIAL','MEDIA','RESEARCH','OPEN_DATA','OTHER'];
 const levels = [{v:'CITY',t:'Kabupaten / Kota'},{v:'PROVINCE',t:'Provinsi'},{v:'NATIONAL',t:'Nasional'}];
@@ -84,7 +84,7 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,a
     <main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8"><div className="mx-auto max-w-[1500px] space-y-5">
       <header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Configuration Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Katalog Modul Sumber & Coverage</h1><p className="mt-2 text-sm text-muted-foreground">Peta konektor media online, media sosial, GDELT, mesin pencari, riset, data resmi, dan usulan sumber yang dikonfigurasi analis. Pengelolaan draf di Laravel; otoritas provenance dan rights tetap terpisah.</p></header>
       <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0 text-amber-600"/><p><b>{pipeline.scenario==='wb_acquisition'?'CONTROLLED ONE-SHOT · COLLECTOR OFF.':'LOCAL DRAFT ONLY · NO LIVE ACQUISITION.'}</b> Usulan sumber dan Coverage Profile di bawah masih berstatus draf. Katalog modul di atas hanya menampilkan kesiapan konektor; tidak memberikan izin provider, menyalakan kolektor, atau menghasilkan admitted evidence.</p></div>
-      <div className="grid gap-3 sm:grid-cols-3">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Usulan pengguna',n:sources.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[{t:'Modul sumber',n:sourceModules.module_count,icon:Layers},{t:'Sumber terinventarisasi',n:sourceModules.source_count,icon:Database},{t:'Gate izin lokal lolos',n:sourceModules.local_permission_pass_count,icon:ShieldAlert},{t:'Usulan pengguna',n:sources.length,icon:MapPinned}].map(x=><div key={x.t} className="rounded-xl border bg-card p-4"><x.icon className="mb-3 h-5 w-5 text-muted-foreground"/><p className="text-sm text-muted-foreground">{x.t}</p><p className="text-2xl font-semibold">{x.n}</p></div>)}</div>
       <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Klasifikasi modul sumber informasi">
          <div className="flex flex-wrap items-start justify-between gap-3">
            <div><h2 className="text-xl font-semibold">Klasifikasi konektor berdasarkan sumber</h2>
@@ -99,9 +99,10 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,a
              <div className="mt-3 space-y-2">
                {module.sources.map(s=><div key={s.id} className="rounded-lg border p-2.5">
                  <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{s.platform}</strong>
-                   <span className={s.dispatchable?'rounded-md bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800':'rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800'}>{s.dispatchable?'Siap E4 (validasi)':s.connection==='REVIEWED_OPT_IN'?'Konektor bersyarat':s.connection==='EXISTING_OTHER_WORKFLOW'?'Ada alur khusus':'Belum tersambung'}</span>
+                   <span className={s.dispatchable?'rounded-md bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800':'rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800'}>{s.dispatchable?'E4 terizin (isolasi)':s.permission_gate==='LOCAL_GATE_PASSED'?'Gate lokal lulus (pilot)':s.connection==='REVIEWED_OPT_IN'?'Perlu izin lokal':s.connection==='EXISTING_OTHER_WORKFLOW'?'Ada alur khusus':'Belum tersambung'}</span>
                  </div>
                  <p className="mt-1 text-xs text-muted-foreground">{s.state} · {s.coverage}</p>
+                 <p className="mt-1 text-[11px] text-muted-foreground">Status izin lokal: {s.permission_gate}</p>
                  <p className="mt-1 text-xs text-muted-foreground">{s.notes}</p>
                  <p className="mt-1 text-[11px] text-muted-foreground">Jalur: {s.workflow}</p>
                </div>)}
@@ -109,7 +110,7 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,a
            </details>)}
          </div>
          <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
-           Konektor berizin tetap membutuhkan aktivasi pada lingkungan validasi dan kuota provider. Tidak ada scraping login, pengambilan historis yang tidak didukung, atau admission evidence secara otomatis.
+           Gate izin lokal yang lulus hanya menunjukkan syarat konfigurasi dasar terpenuhi; bukan bukti provider dapat diakses. Konektor tetap membutuhkan persetujuan satu kali pada lingkungan validasi dan kuota provider. Tidak ada scraping login, pengambilan historis yang tidak didukung, atau admission evidence secara otomatis.
          </p>
        </section>
        {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
