@@ -62,6 +62,7 @@ final class ProviderInventory
             'grants_dispatch_authority' => false,
             'ai' => $ai,
             'research' => $research,
+            'google_sources' => (new GoogleSourceCoverage)->snapshot($asOf),
             'social_sources' => (new SocialSourceCoverage)->snapshot($asOf),
             'ai_tasks' => (new AiTaskCapabilityRegistry)->tasks(),
         ];
