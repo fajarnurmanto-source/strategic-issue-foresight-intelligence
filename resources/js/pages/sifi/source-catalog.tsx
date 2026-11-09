@@ -10,7 +10,8 @@ type Profile = {id:string;name:string;level:string;region_name:string;domains:st
 type CatalogSource = {id:string;platform:string;class:string;state:string;coverage:string;dispatchable:boolean;connection:string;workflow:string;notes:string;permission_gate:string;access_tier:string;auth_method:string;api_family:string;access_note:string;billing_authorized:boolean;oauth_connected:boolean};
 type CatalogModule = {id:string;label:string;description:string;sources:CatalogSource[]};
 type SourceModules = {schema:string;modules:CatalogModule[];module_count:number;source_count:number;e4_dispatchable_count:number;local_permission_pass_count:number;rights_granted_by_catalog:boolean};
-type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;selectedSourceIds:string[];sourceSelectionReady:boolean;acquisitionWorkspace?:AcquisitionWorkspace|null};
+type GoogleTrendsPreview = {entries:{title:string;started_at:string|null;approx_traffic:string}[];coverage:string;response_sha256:string;country:string;production_admission:string};
+type Props = {sources:Source[];profiles:Profile[];scope:string;pipeline:Pipeline;sourceModules:SourceModules;selectedSourceIds:string[];sourceSelectionReady:boolean;googleTrendsPreview?:GoogleTrendsPreview|null;acquisitionWorkspace?:AcquisitionWorkspace|null};
 const kinds = ['OFFICIAL','MEDIA','RESEARCH','OPEN_DATA','OTHER'];
 const levels = [{v:'CITY',t:'Kabupaten / Kota'},{v:'PROVINCE',t:'Provinsi'},{v:'NATIONAL',t:'Nasional'}];
 const control = 'mt-1.5 w-full rounded-lg border bg-background px-3 py-2.5 text-sm';
@@ -74,11 +75,13 @@ function ProfileEditor({item,sources,done}: {item?:Profile;sources:Source[];done
   </form>;
 }
 
-export default function SourceCatalog({sources,profiles,pipeline,sourceModules,selectedSourceIds,sourceSelectionReady,acquisitionWorkspace}:Props) {
+export default function SourceCatalog({sources,profiles,pipeline,sourceModules,selectedSourceIds,sourceSelectionReady,googleTrendsPreview,acquisitionWorkspace}:Props) {
   const [sourceId,setSourceId]=useState<string|null>(null);
   const [profileId,setProfileId]=useState<string|null>(null);
   const [sourceSelectionBusy,setSourceSelectionBusy]=useState<string|null>(null);
   const [sourceSelectionError,setSourceSelectionError]=useState<string|null>(null);
+  const [trendBusy,setTrendBusy]=useState(false);
+  const [trendError,setTrendError]=useState<string|null>(null);
   const selectProvider=(providerId:string,selected:boolean)=>{
     setSourceSelectionBusy(providerId);
     setSourceSelectionError(null);
@@ -86,6 +89,13 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
       preserveScroll:true,
       onError:errors=>setSourceSelectionError(errors.source_selection??errors.provider_id??'Pilihan sumber gagal disimpan.'),
       onFinish:()=>setSourceSelectionBusy(null),
+    });
+  };
+  const previewGoogleTrends=()=>{
+    setTrendError(null);
+    router.post('/sifi/source-catalog/google-trends-preview',{consent:true},{
+      preserveScroll:true,onStart:()=>setTrendBusy(true),onFinish:()=>setTrendBusy(false),
+      onError:errors=>setTrendError(errors.google_trends??'Tidak dapat mengambil feed Google Trends.'),
     });
   };
   const activeSource=sources.find(s=>s.id===sourceId);
@@ -152,7 +162,25 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
          </div>
          <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">Memilih sumber tidak mengaktifkan kolektor, membeli paket, atau memberi izin membaca seluruh data platform. Koneksi dan kuota diperiksa sebelum akuisisi.</p>
        </section>
-       {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>}
+       <section className="rounded-xl border bg-card p-5 shadow-sm" aria-label="Data Google Trends Indonesia">
+          <h2 className="text-lg font-semibold">Google Trends Indonesia · Sinyal terkini</h2>
+          <p className="mt-1 text-sm text-muted-foreground">RSS tren pencarian yang diekspor Google. Ini indikator perhatian pencarian, bukan hasil Google Search, penyebutan berita, kejadian nyata, atau prevalensi penduduk.</p>
+          <button type="button" disabled={trendBusy} onClick={previewGoogleTrends}
+            className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+            {trendBusy?'Mengambil RSS...':'Saya setuju: ambil 1 feed RSS tren publik'}
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground">Satu permintaan saat diklik; tanpa API key berbayar, tanpa scheduler, dan tanpa penerimaan bukti.</p>
+          {trendError&&<p role="alert" className="mt-2 text-sm text-destructive">{trendError}</p>}
+          {googleTrendsPreview&&<div className="mt-4 space-y-2">
+            <p className="text-sm font-medium">{googleTrendsPreview.entries.length} topik tren tersedia · {googleTrendsPreview.country}</p>
+            <ol className="grid gap-2 md:grid-cols-2">{googleTrendsPreview.entries.map((entry,index)=><li key={index} className="rounded-lg border p-3">
+              <p className="text-sm font-semibold">{entry.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Mulai: {entry.started_at??'Tidak tercatat'} · Perkiraan volume: {entry.approx_traffic||'Tidak tersedia'}</p>
+            </li>)}</ol>
+            <p className="text-xs text-muted-foreground">{googleTrendsPreview.coverage}</p>
+          </div>}
+        </section>
+       {acquisitionWorkspace&&<AcquisitionReceipts workspace={acquisitionWorkspace}/>
       <SourcePipelinePanel key={pipeline.scenario+pipeline.packet_hash} pipeline={pipeline} sources={sources}/>
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-xl border bg-card p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="flex items-center gap-2 text-lg font-semibold"><Database className="h-5 w-5"/> Usulan sumber</h2><button onClick={()=>setSourceId(null)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-medium"><Plus className="h-4 w-4"/> Baru</button></div>
