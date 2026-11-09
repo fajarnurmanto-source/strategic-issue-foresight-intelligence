@@ -8,6 +8,12 @@ STAGE_INPUT="${1:-}"
 LIVE_INPUT="${2:-/home/fajar/projects/sifi-laravel-vnext}"
 
 die() { printf 'SIFI_CANONICAL_STAGE=BLOCKED:%s\n' "$1" >&2; exit 2; }
+is_historical_copy() {
+  case "$1" in
+    .*-backup-*|.*-backup-*/*|*.pre-security-fix|*:Zone.Identifier) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 [[ -n "$STAGE_INPUT" ]] || die STAGE_PATH_REQUIRED
 command -v git >/dev/null || die GIT_MISSING
 command -v realpath >/dev/null || die REALPATH_MISSING
@@ -43,9 +49,14 @@ protected=0
 unsafe=0
 missing=0
 total=0
+historical=0
 while IFS= read -r -d '' rel; do
   ((total+=1))
   [[ -n "$rel" && "$rel" != /* && "$rel" != ../* && "$rel" != *'/../'* ]] || die BAD_LIVE_PATH
+  if is_historical_copy "$rel"; then
+    ((historical+=1))
+    continue
+  fi
   case "$rel" in
     .env.example|*/.env.example) ;;
     .git|.git/*|.env|.env.*|*/.env|*/.env.*|*.pem|*.key|*.p12|*.pfx|\
@@ -85,6 +96,7 @@ matched=0
 updated=0
 added=0
 while IFS= read -r -d '' rel; do
+  if is_historical_copy "$rel"; then continue; fi
   src="$live/$rel"
   [[ -f "$src" && ! -L "$src" ]] || continue
   dst="$stage/laravel/$rel"
@@ -104,6 +116,7 @@ while IFS= read -r -d '' rel; do
 done < "$filelist"
 
 printf 'WSL_FILES_IN_GIT_INVENTORY=%s\n' "$total"
+printf 'HISTORICAL_COPIES_EXCLUDED=%s\n' "$historical"
 printf 'WSL_FILES_IDENTICAL=%s\n' "$matched"
 printf 'STAGED_UPDATED_FILES=%s\n' "$updated"
 printf 'STAGED_ADDED_FILES=%s\n' "$added"
