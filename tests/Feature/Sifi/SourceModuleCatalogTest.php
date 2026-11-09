@@ -26,6 +26,7 @@ final class SourceModuleCatalogTest extends TestCase
         $this->assertFalse($catalog['rights_granted_by_catalog']);
         $this->assertSame('DENIED', $catalog['production_admission']);
         $this->assertSame(0, $catalog['e4_dispatchable_count']);
+        $this->assertSame(0, $catalog['local_permission_pass_count']);
 
         $expected = ['MEDIA_ONLINE', 'GDELT', 'WEB_SEARCH', 'SOCIAL_MEDIA', 'RESEARCH',
             'SEARCH_TRENDS', 'OFFICIAL_OPEN_DATA', 'DOCUMENTS_DATASETS'];
@@ -45,4 +46,37 @@ final class SourceModuleCatalogTest extends TestCase
         }
         Http::assertNothingSent();
     }
+    public function test_reviewed_connector_gates_can_pass_without_activating_any_e4_request(): void
+    {
+        Http::preventStrayRequests();
+        \\Carbon\\Carbon::setTestNow('2026-11-09 08:00:00');
+        try {
+            config([
+                'sifi_e4.live_enabled' => false,
+                'database.default' => 'sqlite',
+                'database.connections.sqlite.database' => ':memory:',
+                'sifi_ih03b.crossref_metadata_enabled' => true,
+                'sifi_ih03e.antara_rss_enabled' => true,
+                'sifi_ih03d.gdelt_news_enabled' => true,
+                'sifi_social.bluesky_public_search_enabled' => true,
+                'sifi_google.trends_rss_enabled' => true,
+            ]);
+
+            $catalog = app(SourceModuleCatalog::class)->forE4('2026-11-09');
+            $gates = array_column($catalog['sources'], 'permission_gate', 'id');
+
+            $this->assertSame(5, $catalog['local_permission_pass_count']);
+            $this->assertSame(0, $catalog['e4_dispatchable_count']);
+            foreach (['CROSSREF', 'ANTARA_RSS', 'GDELT_DOC',
+                'BLUESKY_PUBLIC_SEARCH', 'GOOGLE_TRENDS_RSS'] as $provider) {
+                $this->assertSame('LOCAL_GATE_PASSED', $gates[$provider]);
+            }
+            $this->assertSame('NOT_APPLICABLE', $gates['GOOGLE_WEB_SEARCH']);
+            $this->assertSame('DENIED', $catalog['production_admission']);
+            Http::assertNothingSent();
+        } finally {
+            \\Carbon\\Carbon::setTestNow();
+        }
+    }
+
 }
