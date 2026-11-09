@@ -9,12 +9,12 @@ Module IDs (8):
 
 | Module | Providers / roles | Safe current delivery |
 | --- | --- | --- |
-| MEDIA_ONLINE | ANTARA RSS, generic RSS/Atom, Google News RSS | Existing ANTARA latest-only one-shot E4 with local permission; other feeds planned or rights review |
+| MEDIA_ONLINE | ANTARA RSS, generic RSS/Atom, Google News RSS | Existing ANTARA latest-only one-shot E4 with local permission; Google News RSS real one-shot preview on explicit consent; generic feeds planned |
 | GDELT | GDELT DOC API | Existing bounded GDELT pilot outside E4; historical period adapter not admitted |
 | WEB_SEARCH | Google Search, Bing, Brave, Tavily candidate | Listed, not activated; official API credentials, terms and quotas must be assessed |
 | SOCIAL_MEDIA | Bluesky, Mastodon, Instagram, Facebook, TikTok, X, YouTube, Threads, LinkedIn | Existing Bluesky public metadata pilot outside E4; remaining APIs require adapters and, for many, app permissions |
 | RESEARCH | Crossref, OpenAlex, arXiv, Wikipedia | Existing Crossref historical publication-date filter E4 with local permission; rest not E4 |
-| SEARCH_TRENDS | Google Trends RSS | Existing one-shot Indonesian trending terms pilot outside E4; NOT Google Search results or post archive |
+| SEARCH_TRENDS | Google Trends RSS | Real user-triggered public Indonesia RSS preview in Source Center; attention signals only, NOT Google Web Search or a post archive |
 | OFFICIAL_OPEN_DATA | Government/regulation, BPS, World Bank, legal index | Existing World Bank workflow outside E4; no blanket historical news adapter |
 | DOCUMENTS_DATASETS | Owned documents, owned datasets | Internal controlled workflow only; rights must be verified |
 
@@ -64,7 +64,7 @@ The feature is a concrete **source classification and UI inventory**, not a decl
 
 - **Google News RSS** is no longer merely inventoried: an authenticated, consented, date-filtered, one-shot public metadata preview is implemented in E4 and reachable from Source Catalog. It needs no API key or paid license; it exposes 10 or fewer links with publisher/date and a response hash. Google News RSS is an undocumented public feed, so coverage, availability and older backfill are *not* guaranteed.
 - **Google Search (Web)** must not promise new developer access through Custom Search JSON API, closed to new users and scheduled for discontinuation 2027-01-01. Alternative official/contracted Search API is a separate milestone and must not scrape Google SERPs.
-- **Google Trends RSS** remains an attention proxy and distinct provider; YouTube metadata and user-owned OAuth are also separate integrations.
+- **Google Trends RSS now has a separate, consented, one-shot live preview** via `/sifi/source-catalog/google-trends-preview`, visible in Source Center. Top ten Indonesia trending searches and available approximate traffic values are shown without API key or subscription. These are attention estimates, not representative population opinion or news volume. YouTube metadata and user-owned OAuth remain separate integrations.
 - **Benchmarking (Brand24, Mention, Meltwater, Sprout, Hootsuite, Brandwatch) is adopted as functional requirements**: compact source center, explicit public-versus-owned data separation, coverage lookup by URL, test connection/permission, estimated result preview, account OAuth and target-channel selection, rate limits/cost metadata, source pause and health, owner-scoped credentials and zero-spend default. These are requirements, not claims of current code readiness.
 - **Provider expansion priority:** (1) actually retrieve permitted free public metadata, (2) integrate approved provider-specific OAuth/API and BYOK, (3) show quota/cost/connection health, (4) only then schedule recurring acquisition, deduplication, issue provenance and confidence scoring. No publication count shall substitute for independent origins or real-world prevalence.
-- Acceptance check for this code branch: GoogleNewsRssPreviewTest, SourceModuleCatalogTest, E4PeriodDiscoveryTest, SifiSourceCatalogWorkflowTest plus TypeScript/build and real live smoke after local installation. Production admission stays DENIED pending QA.
+- Acceptance check for this code branch: GoogleNewsRssPreviewTest, GoogleTrendsRssPreviewTest, SourceModuleCatalogTest, E4PeriodDiscoveryTest, SifiSourceCatalogWorkflowTest plus TypeScript/build and real live smoke after local installation. Production admission stays DENIED pending QA.
