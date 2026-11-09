@@ -30,6 +30,9 @@ final class ReviewedCrossrefResearch
             'object_revision' => ['required', 'integer', 'min:1'],
             'submission_key' => ['required', 'uuid'],
             'contact_email' => ['required', 'string', 'max:254'],
+            'date_window' => ['sometimes', 'required', 'array:start,end'],
+            'date_window.start' => ['required_with:date_window', 'date_format:Y-m-d'],
+            'date_window.end' => ['required_with:date_window', 'date_format:Y-m-d', 'after:date_window.start'],
         ])->validate();
         app(CrossrefLocalPermission::class)->assertContact($values['contact_email']);
         if (! $owner->hasVerifiedEmail() || ! $owner->exists) {
@@ -65,7 +68,9 @@ final class ReviewedCrossrefResearch
                 'object_revision' => (int) $locked->revision,
                 'query_limit' => 1,
                 'result_limit' => 5,
-                'time_window' => 'UNSPECIFIED',
+                'time_window' => isset($values['date_window'])
+                    ? $values['date_window']['start'].' / '.date('Y-m-d', strtotime($values['date_window']['end'].' -1 day'))
+                    : 'UNSPECIFIED',
             ]);
             $session = app(ResearchRetrievalWorkspace::class)->session($owner, $locked, $sessionId);
             $plan = json_decode($session->plan_json, true, 32, JSON_THROW_ON_ERROR);
@@ -87,13 +92,17 @@ final class ReviewedCrossrefResearch
                 'binding' => $binding,
                 'limit' => 5,
             ];
+            if (isset($values['date_window'])) {
+                $context['date_window'] = $values['date_window'];
+            }
 
             $this->issueOneShotAuthority($owner, $locked, $values, $context);
             $previous = config('sifi.real_search_live');
             try {
                 config(['sifi.real_search_live' => true]);
                 $envelope = app(RealSearchWorkspace::class)->execute(
-                    $locked, $plan, $binding, 'approved_live', ['CROSSREF'], 'LIVE', 0, false
+                    $locked, $plan, $binding, 'approved_live', ['CROSSREF'], 'LIVE', 0, false,
+                    $values['date_window'] ?? []
                 );
             } finally {
                 config(['sifi.real_search_live' => $previous]);

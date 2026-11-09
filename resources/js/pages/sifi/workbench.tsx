@@ -38,6 +38,7 @@ const modules = [
     { title: 'Issue Candidates', note: 'Draf isu dan penilaian analis', href: '/sifi/issue-candidates', icon: FileQuestion },
     { title: 'Evidence Reviews', note: 'Antrean pemeriksaan manusia', href: '/sifi/evidence-reviews', icon: ShieldCheck },
     { title: 'Source & Coverage', note: 'Usulan sumber dan profil wilayah', href: '/sifi/source-catalog', icon: LibraryBig },
+    { title: 'E4 Discovery', note: 'Pilih objek, periode, dan cakupan sumber', href: '/sifi/discovery-period', icon: Telescope },
 ];
 
 export default function Workbench({ cases, total, showing, mode, evidence_state, production_authorized, focus, monitoringObject, objectSources=[], objectSourceIds=[], collectorObservations=[] }: Props) {

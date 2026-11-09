@@ -2,11 +2,18 @@
 ## Mandatory successor: registered-monitoring-object → period → multi-source acquisition, issue graph, and longitudinal trends
 
 **Owner instruction:** 9 November 2026 (Asia/Jakarta)  
-**Status:** OWNER-MANDATED PRODUCT REQUIREMENT — engineering implementation pending.  
+**Status:** OWNER-MANDATED PRODUCT REQUIREMENT — roadmap UI and E4 bounded source implementation submitted 9 Nov 2026; runtime acceptance pending; E5+ engineering pending.  
 **Repository target:** `fajarnurmanto-source/strategic-issue-foresight-intelligence` (private); branch-level adoption via reviewed GitHub PR.  
 **Relationship:** This is an **additive successor** to [SIFI Master Product Roadmap v1.1 (8 Nov 2026)](https://chatgpt.com/library?file_id=libfile_415748d051548191b9e05f207004b849&account_id=personal), AE-12–AE-16 and frozen v1.0 R0–R11 gates. Do not silently rewrite the v1.0 historic baseline or count engineering work as R-gate admission.
 
 **Owner clarification (9 November 2026, same version):** The previously written *period-only, no monitoring object* entry flow was incorrect. A registered monitoring object with keyword(s) is mandatory **before** the user selects a monitoring time window. The clarification corrects that UX precondition; all cross-platform acquisition, horizontal/vertical issue grouping and longitudinal analysis obligations remain binding. This paragraph explicitly supersedes the earlier v1.2 period-only wording as corrected below.
+
+## 0. Delivery checkpoint (9 November 2026)
+
+- **Application roadmap**: authenticated read-only `/sifi/product-roadmap` page reflecting this canonical document, milestones and object-first workflow; source-only changes, no production admission.
+- **E4 delivered in source**: `/sifi/discovery-period` selection of owned configured keyword object followed by bounded inclusive dates, rights-aware source capability plan, explicit one-shot opt-in, isolated Crossref date-filtered research metadata and ANTARA latest headline metadata, with per-platform provenance receipts and coverage exclusions.
+- **Coverage limit**: only two distinct provider families are currently eligible for E4 requests when their individual rights and isolation checks are satisfied; GDELT, social historical search, Google Trends and official sources are recorded as not dispatchable for E4. This is an **E4 bounded integration increment**, not a claim of comprehensive all-platform crawling. Full source expansion and E5–E9 remain required.
+- **Verification**: source integrated into GitHub; PHP and Vite runtime validation on user WSL and live one-shot isolation remain pending. Do not mark production or exhaustive platform coverage ready based on this checkpoint.
 
 ## 1. Explicit interpretation of the owner's requirement
 

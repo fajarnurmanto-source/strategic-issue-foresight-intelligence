@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, ClipboardList, FileQuestion, LayoutGrid, ScanSearch, LibraryBig, ShieldCheck, Workflow, GitCompareArrows } from 'lucide-react';
+import { BookOpen, ClipboardList, FileQuestion, LayoutGrid, ScanSearch, LibraryBig, ShieldCheck, Workflow, GitCompareArrows, CalendarRange } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -19,6 +19,7 @@ import type { NavItem } from '@/types';
 const mainNavItems: NavItem[] = [
     { title: 'SIFI Workbench', href: '/sifi/workbench', icon: Workflow },
     { title: 'Roadmap Produk', href: '/sifi/product-roadmap', icon: BookOpen },
+    { title: 'Discovery Objek & Periode', href: '/sifi/discovery-period', icon: CalendarRange },
     {
         title: 'Dashboard',
         href: dashboard(),

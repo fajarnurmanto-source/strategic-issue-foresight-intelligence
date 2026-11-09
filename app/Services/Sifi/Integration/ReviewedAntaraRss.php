@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Gate;
 /** Publisher-provided RSS as independent news metadata source, not GDELT fallback endpoint. */
 final class ReviewedAntaraRss
 {
-    public function collect(User $owner, SifiMonitoringObject $object, string $contact): array
+    public function collect(User $owner, SifiMonitoringObject $object, string $contact, array $dateWindow = [], array $keywords = []): array
     {
         app(AntaraLocalPermission::class)->assertAllowed();
         app(AntaraLocalPermission::class)->assertContact($contact);
@@ -24,7 +24,7 @@ final class ReviewedAntaraRss
         }
         Gate::forUser($owner)->authorize('update', $object);
 
-        return DB::transaction(function () use ($owner, $object, $contact): array {
+        return DB::transaction(function () use ($owner, $object, $contact, $dateWindow, $keywords): array {
             User::query()->whereKey($owner->id)->lockForUpdate()->firstOrFail();
             $locked = SifiMonitoringObject::query()->whereKey($object->id)->lockForUpdate()->firstOrFail();
             Gate::forUser($owner)->authorize('update', $locked);
@@ -53,6 +53,26 @@ final class ReviewedAntaraRss
 
             $packet = app(AntaraRssTransport::class)->fetch($contact);
             $entries = $packet['entries'];
+            $feedCount = count($entries);
+            if ($dateWindow !== []) {
+                if (array_keys($dateWindow) !== ['start', 'end'] || $keywords === []) {
+                    throw new \RuntimeException('E4_ANTARA_SCOPE_REQUIRED');
+                }
+                $entries = array_values(array_filter($entries, static function (array $entry) use ($dateWindow, $keywords): bool {
+                    $published = substr((string) ($entry['published_at'] ?? ''), 0, 10);
+                    if (preg_match('/\A\d{4}-\d{2}-\d{2}\z/D', $published) !== 1
+                        || $published < $dateWindow['start'] || $published >= $dateWindow['end']) {
+                        return false;
+                    }
+                    foreach ($keywords as $keyword) {
+                        if (is_string($keyword) && trim($keyword) !== ''
+                            && mb_stripos((string) ($entry['title'] ?? ''), trim($keyword)) !== false) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }));
+            }
             foreach ($entries as &$entry) {
                 $entry['lineage'][0]['response_sha256'] = $packet['response_sha256'];
                 $entry['lineage'][0]['binding_sha256'] = hash('sha256', json_encode($binding, JSON_THROW_ON_ERROR));
@@ -82,11 +102,14 @@ final class ReviewedAntaraRss
                     'documents_retrieved' => 0,
                     'cost' => 0,
                 ],
-                'raw_result_count' => count($entries),
+                'raw_result_count' => $feedCount,
                 'unique_result_count' => count($entries),
                 'stopping_reason' => $packet['state'] === 'OK'
                     ? ($entries ? 'COMPLETED' : 'NO_RESULTS') : 'NO_RESULTS_PROVIDER_ERRORS',
-                'coverage' => 'Five most recent available publisher RSS links; not keyword search or prevalence.',
+                'coverage' => $dateWindow !== []
+                    ? 'E4: latest available publisher RSS only; headline keyword and requested publication date bounded; not an archive or prevalence.'
+                    : 'Five most recent available publisher RSS links; not keyword search or prevalence.',
+                'e4_date_window' => $dateWindow ?: null,
                 'independence' => 'NOT_VERIFIED',
                 'claim_verification' => 'NOT_PERFORMED_METADATA_ONLY',
                 'ai' => 'OFF',
