@@ -144,6 +144,7 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
                    {chosen&&<p className="mt-2 text-xs font-medium text-primary">Pilihan tersimpan; akuisisi belum diaktifkan.</p>}
                    <p className="mt-2 text-xs text-muted-foreground">{s.access_note}</p>
                    {login&&<p className="mt-1 text-xs text-muted-foreground">Hubungkan akun via OAuth resmi setelah aplikasi developer, redirect, dan scope disiapkan. SIFI tidak meminta kata sandi.</p>}
+                    {s.id==='GOOGLE_NEWS_RSS'&&<Link href="/sifi/discovery-period" className="mt-2 inline-flex rounded-md border border-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/5">Buka uji Google News RSS nyata</Link>}
                  </div>;
                })}
              </div>
