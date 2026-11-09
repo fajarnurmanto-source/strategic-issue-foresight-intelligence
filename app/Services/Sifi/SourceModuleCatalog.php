@@ -114,8 +114,8 @@ final class SourceModuleCatalog
             ]),
             $this->module('SEARCH_TRENDS', 'Tren & perhatian pencarian', 'Indikator atensi; bukan hasil Google Search, prevalensi, atau sentimen.', [
                 $this->source('GOOGLE_TRENDS_RSS', 'Google Trends RSS', 'ATTENTION',
-                    'ATTENTION_ONLY_NO_HISTORIC_POSTS', 'LATEST_TRENDS_ONLY', false,
-                    'REVIEWED_OPT_IN', 'PILOT_OUTSIDE_E4', 'Konektor tren Indonesia satu kali; bukan pencarian semua kata kunci.'),
+                    'PUBLIC_TRENDS_RSS_ON_DEMAND', 'LATEST_TRENDS_ONLY', false,
+                    'PUBLIC_RSS_ONE_SHOT', 'SOURCE_CENTER_TREND_PREVIEW', 'Preview RSS tren Indonesia secara nyata tersedia lewat Source Center dengan persetujuan pengguna. Ini bukan Google Search Web dan bukan arsip unggahan.'),
             ]),
             $this->module('OFFICIAL_OPEN_DATA', 'Pemerintah, regulasi & open data', 'Sumber primer pemerintah dan indikator statistik resmi.', [
                 $this->source('OFFICIAL_REGULATION_OPEN_DATA', 'Portal pemerintah & regulasi', 'OFFICIAL_OPEN_DATA',
