@@ -115,12 +115,13 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
                {module.sources.map(s=>{
                  const chosen=selectedSourceIds.includes(s.id);
                  const login=['OAUTH2','OAUTH2_OR_API_KEY','OPTIONAL_OAUTH'].includes(s.auth_method);
-                 const payLabel=s.access_tier==='PLAN_OR_QUOTA'?'Paket API/kuota: biaya mungkin berlaku'
+                 const payLabel=s.access_tier==='NOT_AVAILABLE_NEW_SIGNUPS'?'API lama ditutup bagi pendaftar baru'
+                    :s.access_tier==='PLAN_OR_QUOTA'?'Paket API/kuota: biaya mungkin berlaku'
                    :s.access_tier==='FREE_QUOTA_OR_PLAN'?'Gratis berkuota / opsi paket'
                    :s.access_tier==='APP_APPROVAL_REQUIRED'?'Persetujuan aplikasi diperlukan'
                    :s.access_tier==='FREE_PUBLIC'||s.access_tier==='PUBLIC_FEED'?'Publik / gratis bersyarat'
                    :'Biaya dan izin sesuai sumber';
-                 const payAttention=['PLAN_OR_QUOTA','FREE_QUOTA_OR_PLAN','APP_APPROVAL_REQUIRED'].includes(s.access_tier);
+                 const payAttention=['PLAN_OR_QUOTA','FREE_QUOTA_OR_PLAN','APP_APPROVAL_REQUIRED','NOT_AVAILABLE_NEW_SIGNUPS'].includes(s.access_tier);
                  return <div key={s.id} className={'rounded-lg border p-3 '+(chosen?'border-primary/40 bg-primary/5':'')}>
                    <div className="flex items-start justify-between gap-3">
                      <div className="min-w-0">
@@ -137,7 +138,7 @@ export default function SourceCatalog({sources,profiles,pipeline,sourceModules,s
                    <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                      <span className={payAttention?'rounded-full bg-amber-100 px-2 py-0.5 text-amber-800':'rounded-full bg-muted px-2 py-0.5 text-muted-foreground'}>{payLabel}</span>
                      <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                       {s.permission_gate==='LOCAL_GATE_PASSED'?'Gate lokal lulus':s.connection==='REVIEWED_OPT_IN'?'Perlu konfigurasi izin':'Konektor belum aktif'}
+                       {s.connection==='PUBLIC_RSS_ONE_SHOT'?'Preview RSS publik tersedia':s.permission_gate==='LOCAL_GATE_PASSED'?'Gate lokal lulus':s.connection==='REVIEWED_OPT_IN'?'Perlu konfigurasi izin':'Konektor belum aktif'}
                      </span>
                    </div>
                    {chosen&&<p className="mt-2 text-xs font-medium text-primary">Pilihan tersimpan; akuisisi belum diaktifkan.</p>}
