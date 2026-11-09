@@ -62,3 +62,19 @@ Focused checks after isolated installation:
 `npm run build`
 
 No live user login, API credentials, provider account, remote payment, migration or production activation is performed by writing this document.
+
+
+## Google data correction / live-read slice (2026-11-09)
+
+Google is not one universal source. SIFI must keep these capabilities distinct:
+
+- **Google News RSS:** public aggregated-news **headline metadata**, not Google Web Search. A one-shot, read-only preview is now implemented in E4 via \`POST /sifi/discovery-period/google-news-preview\`. It requires a registered/owned monitoring object, valid object revision and date window, explicit user consent, and at most one outbound GET to a fixed Google News RSS endpoint. It returns at most 10 dated metadata links and publisher labels, no full article body, with an upstream response hash. XML DTD/entity declarations, redirects, oversized responses, client-supplied URLs/API keys and all unauthorized extra parameters are rejected. No polling or automatic collection.
+- **Google Trends RSS:** attention/trend sensor already listed as a separate pilot, *not* Google Search results and not proof of prevalence. It remains under its own eligibility policy, not implicitly enabled by the Google News feature.
+- **Google Web Search:** **do not build on Custom Search JSON API for new subscriptions**. Google's developer documentation states this API is closed to new customers and existing customers must migrate by **2027-01-01**. Keep the catalog entry explicitly unavailable to new sign-ups, and evaluate a current officially supported alternative or a separately licensed search provider. Do not scrape Google Search result pages.
+- **YouTube Data API:** metadata-only public queries may use an API key subject to quota, while owned/private account features require OAuth and scopes. Keep this provider separate from Google News and Search.
+
+**Safety/coverage contract:** Public RSS preview is a real remote request and is allowed on explicit consent when the public feed responds. It is not a grant to run unrelated restricted E4 collectors or to promote unreviewed metadata as evidence. The Google News RSS search feed is not a published stable developer API contract; support can change. If it fails, show a sanitized provider failure and preserve the approved SIFI workflows.
+
+**UX:** in Discovery Objek & Periode, run *Periksa cakupan sumber*, tick the consent checkbox, then click *Cari lewat Google News RSS* even when the gated E4 collector reports no dispatchable providers. Date filtering occurs on returned publication dates; older periods may yield zero because RSS backfill is not guaranteed.
+
+**Focused QA:** \`php artisan test --filter='GoogleNewsRssPreviewTest|SourceModuleCatalogTest|E4PeriodDiscoveryTest|SifiSourceCatalogWorkflowTest'\`, \`npm run types:check\`, \`npm run build\`. Tests fake Google HTTP, so they are no-cost and offline; a separate opt-in local smoke test with a real Google RSS response is still required. Source-only GitHub changes are **not** proof that the Windows runtime was updated or passed QA.
