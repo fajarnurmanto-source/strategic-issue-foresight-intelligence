@@ -189,7 +189,7 @@ final class InvestigationController extends Controller
         return redirect()->route('sifi.investigations.show', $row->id);
     }
 
-    private function owned(Request $request, string $id): object
+    private function owned(Request $request, string $id): \stdClass
     {
         $row = DB::table('sifi_investigations')
             ->where('id', $id)->where('user_id', (int) $request->user()->id)->first();
@@ -197,6 +197,7 @@ final class InvestigationController extends Controller
         return $row;
     }
 
+    /** @param array<string, mixed> $snapshot */
     private function audit(string $id, int $actorId, int $revision, string $action, array $snapshot, mixed $time): void
     {
         DB::table('sifi_investigation_audit')->insert([
