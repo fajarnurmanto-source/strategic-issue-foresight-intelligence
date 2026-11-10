@@ -16,6 +16,7 @@ use Illuminate\Validation\Rule;
  */
 final class ConnectorProfileDrafts
 {
+    /** @param array<string, mixed> $input */
     public function create(User $actor, array $input): SifiConnectorProfile
     {
         $this->authorize($actor);
@@ -61,11 +62,15 @@ final class ConnectorProfileDrafts
         $credential = $data['credential'] ?? null;
         if ($credential === '') { $credential = null; }
 
-        if ($data['auth_scheme'] === 'NONE' && $credential !== null && $credential !== '') {
+        if ($data['auth_scheme'] === 'NONE' && $credential !== null) {
             throw new \InvalidArgumentException('UNEXPECTED_CREDENTIAL');
         }
 
-        return DB::transaction(function () use ($actor, $data, $credential, $endpoint): SifiConnectorProfile {
+        $actorId=(int)$actor->id;
+        if($actorId<=0) throw new \InvalidArgumentException('INVALID_CONNECTOR_OWNER');
+        $rateLimit=(int)($data['rate_limit_per_minute']??0);
+        if($rateLimit<0) throw new \InvalidArgumentException('INVALID_RATE_LIMIT');
+        return DB::transaction(function () use ($actor, $actorId, $rateLimit, $data, $credential, $endpoint): SifiConnectorProfile {
             $profile = new SifiConnectorProfile;
             $profile->id = (string) Str::uuid();
             $profile->provider_key = $data['provider_key'];
@@ -74,13 +79,13 @@ final class ConnectorProfileDrafts
             $profile->endpoint = $endpoint;
             $profile->auth_scheme = $data['auth_scheme'];
             $profile->credential_ciphertext = $credential;
-            $profile->rate_limit_per_minute = (int) ($data['rate_limit_per_minute'] ?? 0);
+            $profile->rate_limit_per_minute = $rateLimit;
             $profile->max_cost_micros = 0;
             $profile->enabled = false;
             $profile->billing_authorized = false;
             $profile->rights_status = 'UNASSESSED';
             $profile->connection_status = 'NOT_TESTED';
-            $profile->created_by = $actor->id;
+            $profile->created_by = $actorId;
             $profile->save();
 
             $timestamp = now();
@@ -142,6 +147,7 @@ final class ConnectorProfileDrafts
     }
 
     /** Only safe display fields. Never returns the encrypted blob or plaintext. */
+    /** @return list<array<string, mixed>> */
     public function publicList(User $actor): array
     {
         $this->authorize($actor);
