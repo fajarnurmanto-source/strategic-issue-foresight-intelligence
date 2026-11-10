@@ -10,8 +10,9 @@ use Inertia\Inertia;
 
 final class AiModelController extends Controller
 {
+    /** @return array<string, mixed> */
     public static function schema(): array {return ['type'=>'object','properties'=>['explanation'=>['type'=>'string'],'unknowns'=>['type'=>'string'],'next_checks'=>['type'=>'string']],'required'=>['explanation','unknowns','next_checks'],'additionalProperties'=>false];}
-    public function edit(Request $r,UserAiSettings $store,ProviderEndpointPolicy $policy)
+    public function edit(Request $r,UserAiSettings $store,ProviderEndpointPolicy $policy): \Inertia\Response
     {
         $private=$store->read((int)$r->user()->id);$settings=$store->publicView((int)$r->user()->id);
         foreach ($settings['providers'] as $id=>&$p) {
@@ -24,7 +25,7 @@ final class AiModelController extends Controller
         }
         return Inertia::render('settings/ai-models',['settings'=>$settings,'providers'=>[],'catalogue'=>FreeAiCatalogue::entries(),'notice'=>$r->session()->get('ai_notice')]);
     }
-    public function save(Request $r,UserAiSettings $store,ProviderEndpointPolicy $policy)
+    public function save(Request $r,UserAiSettings $store,ProviderEndpointPolicy $policy): \Illuminate\Http\RedirectResponse
     {
         $credential=$r->input('credential')??'';$r->replace($r->except('credential'));
         if (!is_string($credential)||strlen($credential)>500) return back()->with('ai_notice','Credential tidak valid.');
@@ -36,7 +37,7 @@ final class AiModelController extends Controller
         $store->write((int)$r->user()->id,$data);
         return back()->with('ai_notice','Konfigurasi terenkripsi disimpan. Gratis untuk akun ini belum diverifikasi; tidak ada koneksi.');
     }
-    public function probe(Request $r,UserAiSettings $store,ProviderHttpTransport $http)
+    public function probe(Request $r,UserAiSettings $store,ProviderHttpTransport $http): \Illuminate\Http\RedirectResponse
     {
         $v=$r->validate(['provider'=>'required|uuid','model'=>'required|string|max:150']);$data=$store->read((int)$r->user()->id);
         abort_unless(isset($data['providers'][$v['provider']]),404);$p=&$data['providers'][$v['provider']];
@@ -71,7 +72,7 @@ final class AiModelController extends Controller
             default=>'Pengujian tidak berhasil. AI tetap nonaktif; tidak ada fallback.',
         };
     }
-    public function assign(Request $r,UserAiSettings $store,ProviderEndpointPolicy $policy)
+    public function assign(Request $r,UserAiSettings $store,ProviderEndpointPolicy $policy): \Illuminate\Http\RedirectResponse
     {
         $v=$r->validate(['provider'=>'required|uuid','model'=>'required|string|max:150']);$data=$store->read((int)$r->user()->id);$p=$data['providers'][$v['provider']]??null;
         abort_unless($p && $p['status']==='CONNECTED' && ($p['verified_models'][$v['model']]??false) && $policy->freeStatus($p,$v['model'])==='FREE VERIFIED',422);
