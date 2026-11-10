@@ -14,6 +14,7 @@ final class DeterministicResearchPlanner
         return trim(preg_replace('/\s+/u', ' ', mb_strtolower($value)) ?? '');
     }
 
+    /** @return list<string> */
     private function terms(string $value): array
     {
         return array_slice(array_values(array_unique(array_filter(
@@ -27,6 +28,9 @@ final class DeterministicResearchPlanner
         return $term !== '' && (bool) preg_match('/(?<![\p{L}\p{N}])'.preg_quote($term, '/').'(?![\p{L}\p{N}])/u', $haystack);
     }
 
+    /** @param array<string, mixed> $limits
+     * @return array<string, mixed>
+     */
     public function plan(SifiMonitoringObject $object, string $question, array $limits): array
     {
         $normalized = $this->clean($question);
@@ -66,11 +70,14 @@ final class DeterministicResearchPlanner
         ];
     }
 
+    /** @param array<string, mixed> $plan
+     * @return array<string, mixed>
+     */
     public function execute(SifiMonitoringObject $object, array $plan): array
     {
         $catalog = app(DiscoveryCatalog::class);
         $catalogHash = hash_file('sha256', resource_path('sifi/source-discovery-catalog.json'));
-        if (!hash_equals($plan['provenance']['catalog_sha256'], $catalogHash)) {
+        if ($catalogHash===false || !hash_equals($plan['provenance']['catalog_sha256'], $catalogHash)) {
             throw ValidationException::withMessages(['catalog' => 'Katalog berubah. Buat ulang rencana.']);
         }
         $started = hrtime(true);
@@ -99,7 +106,8 @@ final class DeterministicResearchPlanner
             }
         }
         if (!$results && $reason === 'PLAN_COMPLETED') $reason = 'NO_LOCAL_MATCH';
-        if (!hash_equals($catalogHash, hash_file('sha256', resource_path('sifi/source-discovery-catalog.json')))) {
+        $latestHash=hash_file('sha256', resource_path('sifi/source-discovery-catalog.json'));
+        if ($latestHash===false || !hash_equals($catalogHash, $latestHash)) {
             throw ValidationException::withMessages(['catalog' => 'Katalog berubah selama lookup.']);
         }
         return ['entries' => array_values($results), 'result_count' => count($results),
