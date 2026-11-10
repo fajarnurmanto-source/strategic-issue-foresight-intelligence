@@ -197,6 +197,14 @@ php -r '
     foreach (array_slice($hotspots, 0, 15, true) as $file => $n) {
         echo "PHPSTAN_HOTSPOT:$file=$n\n";
     }
+    foreach (array_slice(array_keys($hotspots), 0, 10) as $path) {
+        foreach (array_slice($data["files"][$path]["messages"] ?? [], 0, 5) as $problem) {
+            $msg = preg_replace("/\\s+/", " ", $problem["message"] ?? "");
+            $line = (int) ($problem["line"] ?? 0);
+            $type = $problem["identifier"] ?? "unknown";
+            echo "PHPSTAN_DETAIL:" . basename($path) . ":$line:$type:" . substr($msg, 0, 145) . "\n";
+        }
+    }
 ' "$LastReport"
 
 test "$(git -C "$Repo" rev-parse HEAD)" = "$Canonical"
