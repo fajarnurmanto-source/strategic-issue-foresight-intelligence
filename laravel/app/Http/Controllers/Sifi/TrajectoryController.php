@@ -24,6 +24,7 @@ final class TrajectoryController extends Controller {
  private function draft(SifiIssueCaseDraft $c):?SifiTrajectoryDraft {
   return SifiTrajectoryDraft::query()->where('case_id',$c->id)->first();
  }
+ /** @return array<string, mixed> */
  private function snapshot(SifiTrajectoryDraft $d):array {
   return ['id'=>$d->id,'case_id'=>$d->case_id,'revision'=>(int)$d->revision,
    'horizon'=>$d->horizon,'trajectory_hypothesis'=>$d->trajectory_hypothesis,
@@ -31,6 +32,7 @@ final class TrajectoryController extends Controller {
    'watch_condition'=>$d->watch_condition,'uncertainty_note'=>$d->uncertainty_note,
    'verification_state'=>'NOT_VERIFIED'];
  }
+ /** @return array<string, mixed> */
  private function input(SifiIssueCandidate $c,SifiIssueCaseDraft $case,SifiTrajectoryDraft $draft):array {
   return ['candidate_id'=>$c->id,'candidate_revision'=>(int)$c->revision,
    'case'=>['id'=>$case->id,'revision'=>(int)$case->revision,'lifecycle_state'=>$case->lifecycle_state,
@@ -43,7 +45,12 @@ final class TrajectoryController extends Controller {
     'possible_link_count'=>DB::table('sifi_claim_event_links')->where('candidate_id',$c->id)->count(),
     'evidence_candidate_count'=>DB::table('sifi_evidence_drafts')->where('candidate_id',$c->id)->count()]];
  }
+ /** @param array<string, mixed> $data */
  private function digest(array $data):string {return hash('sha256',json_encode($data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));}
+ /** @param array<string, mixed> $input
+  * @param array<string, mixed> $result
+  * @return array<string, mixed>
+  */
  private function freshness(array $input,string $digest,string $storedDigest,array $result):array {
   $changes=[];
   $compare=function(string $code,string $label,mixed $snapshot,mixed $current)use(&$changes):void {
