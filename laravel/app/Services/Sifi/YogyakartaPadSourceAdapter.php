@@ -21,11 +21,17 @@ class YogyakartaPadSourceAdapter
         'pad_import'=>'Open Data PAD · impor JSON simulasi sendiri',
     ];
 
+    /** @return array<string,mixed> */
     public function template(): array
     {
-        return json_decode(file_get_contents(resource_path('sifi/ae08-pad-fixture.json')),true,32,JSON_THROW_ON_ERROR);
+        $contents=file_get_contents(resource_path('sifi/ae08-pad-fixture.json'));
+        if($contents===false)throw new \RuntimeException('PAD_FIXTURE_UNAVAILABLE');
+        $packet=json_decode($contents,true,32,JSON_THROW_ON_ERROR);
+        if(!is_array($packet))throw new \RuntimeException('PAD_FIXTURE_INVALID');
+        return $packet;
     }
 
+    /** @return array<string,mixed> */
     public function preview(string $scenario, ?string $json = null): array
     {
         abort_unless(isset(self::SCENARIOS[$scenario]),422);
@@ -45,6 +51,7 @@ class YogyakartaPadSourceAdapter
         return $this->normalize($packet);
     }
 
+    /** @return array<string,mixed> */
     public function importJson(string $json): array
     {
         if (strlen($json)>65536) return $this->blocked('PAYLOAD_TOO_LARGE');
@@ -53,11 +60,16 @@ class YogyakartaPadSourceAdapter
         return is_array($packet) && !array_is_list($packet) ? $this->normalize($packet) : $this->blocked('MALFORMED_PAYLOAD');
     }
 
+    /** @param array<array-key,mixed> $data */
     private function digest(array $data): string
     {
         return hash('sha256',json_encode($data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
     }
 
+    /**
+     * @param array<array-key,mixed> $value
+     * @param list<string> $keys
+     */
     private function exactKeys(array $value,array $keys): bool
     {
         $actual=array_keys($value);sort($actual);sort($keys);return $actual===$keys;
@@ -71,6 +83,7 @@ class YogyakartaPadSourceAdapter
         return $date!==false && $date->format('Y-m-d\TH:i:s\Z')===$value;
     }
 
+    /** @return array<string,mixed> */
     public function blocked(string $reason,?int $retryAfter=null): array
     {
         return ['connector'=>'yk_pad','mode'=>'SYNTHETIC_FIXTURE_ONLY','status'=>'BLOCKED','reason'=>$reason,
@@ -83,6 +96,10 @@ class YogyakartaPadSourceAdapter
             'retry_after_seconds'=>$retryAfter,'automatic_retry'=>false,'pages_processed'=>0];
     }
 
+    /**
+     * @param array<string,mixed> $packet
+     * @return array<string,mixed>
+     */
     public function normalize(array $packet, ?int $evaluationTime = null): array
     {
         $clock=$evaluationTime??now()->getTimestamp();
@@ -102,7 +119,9 @@ class YogyakartaPadSourceAdapter
         $r['source']['source_version']=self::SCHEMA;
         $r['source']['freshness_policy']='SYNTHETIC_TEST_BUDGET_86400_SECONDS_NOT_OFFICIAL_SCHEDULE';
         if ($packet['source_updated_at']!==null) {
-            $age=$clock-strtotime($packet['source_updated_at']);
+            $updateTime=strtotime($packet['source_updated_at']);
+            if($updateTime===false)return $this->blocked('SOURCE_UPDATE_METADATA_INVALID');
+            $age=$clock-$updateTime;
             if ($age < -300) return $this->blocked('FUTURE_SOURCE_TIMESTAMP');
             if ($age>86400) return $this->blocked('STALE_SOURCE');
             $r['source']['freshness']='WITHIN_SYNTHETIC_TEST_BUDGET';
@@ -151,12 +170,14 @@ class YogyakartaPadSourceAdapter
     }
 
     /** No grant or UI setting can enable this in AE08. Specific live approval and schema/rights proof are separate. */
+    /** @return array<string,mixed> */
     public function fetchLive(int $year): array
     {
         return $this->blocked('LIVE_ACQUISITION_NOT_AUTHORIZED');
     }
 
     /** Prepared bounded transport, exercised through native HTTP fakes only; unreachable from live/UI entry point. */
+    /** @return array<string,mixed> */
     protected function readOfficialResponse(int $year): array
     {
         if($year<2000 || $year>2100) return $this->blocked('INVALID_PERIOD');
@@ -165,7 +186,7 @@ class YogyakartaPadSourceAdapter
                 ->withOptions(['proxy'=>'','stream'=>true])->get(self::ENDPOINT,['tahun'=>$year]);
             if($response->status()===429) {
                 $retry=$response->header('Retry-After');
-                return $this->blocked('RATE_LIMITED',is_string($retry)&&preg_match('/\A\d{1,6}\z/',$retry)?min((int)$retry,86400):null);
+                return $this->blocked('RATE_LIMITED',preg_match('/\A\d{1,6}\z/',$retry)?min((int)$retry,86400):null);
             }
             if(!$response->successful())return $this->blocked('HTTP_'.$response->status());
             $body=$response->toPsrResponse()->getBody();$data='';
