@@ -22,15 +22,25 @@ class WorldBankOneShotAcquisition
         Gate::forUser($user)->authorize('viewAny',SifiSourceDraft::class);
     }
     public function permitPath():string {return storage_path('app/private/sifi-worldbank-one-shot-permit.enc');}
-    private function rights():array {return json_decode(file_get_contents(resource_path('sifi/ae09-wb-rights.json')),true,16,JSON_THROW_ON_ERROR);}
+    /** @return array<string,mixed> */
+    private function rights():array {
+        $contents=file_get_contents(resource_path('sifi/ae09-wb-rights.json'));
+        if($contents===false)throw new \RuntimeException('RIGHTS_METADATA_UNAVAILABLE');
+        $rights=json_decode($contents,true,16,JSON_THROW_ON_ERROR);
+        if(!is_array($rights))throw new \RuntimeException('RIGHTS_METADATA_INVALID');
+        return $rights;
+    }
+    /** @param array<string,mixed> $rights */
     private function rightsFailure(array $rights):?string
     {
         // Reuse the closed decoder's rights gate; this local proof is not a new retrieval.
         $raw=file_get_contents(resource_path('sifi/ae09-wb-response.json'));
+        if($raw===false)throw new \RuntimeException('RIGHTS_PROOF_UNAVAILABLE');
         $meta=['url'=>WorldBankGdpSourceAdapter::ENDPOINT,'status'=>200,'content_type'=>'application/json','sha256'=>hash('sha256',$raw),'retrieved_at'=>now()->utc()->format('Y-m-d\TH:i:s\Z')];
         $p=app(WorldBankGdpSourceAdapter::class)->normalizeResponse($raw,$meta,$rights);
         return $p['status']==='READY_FOR_ANALYST_DRAFT'?null:$p['reason'];
     }
+    /** @return array<string,mixed>|null */
     protected function permit(User $user,bool $consume):?array
     {
         $path=$this->permitPath();
@@ -38,7 +48,7 @@ class WorldBankOneShotAcquisition
         $handle=fopen($path,$consume?'r+':'r');if(!$handle)return null;
         try {
             if(!flock($handle,$consume?LOCK_EX:LOCK_SH))return null;
-            $encoded=stream_get_contents($handle,16385);if(strlen($encoded)>16384)return null;
+            $encoded=stream_get_contents($handle,16385);if($encoded===false||strlen($encoded)>16384)return null;
             try {$p=json_decode(Crypt::decryptString($encoded),true,16,JSON_THROW_ON_ERROR);}catch(\Throwable){return null;}
             if(!is_array($p)||!$this->permitMatchesContext($p)||($p['version']??null)!==1||($p['owner_id']??null)!==(int)$user->id||($p['consumed']??null)!==false
                 ||($p['endpoint']??null)!==WorldBankGdpSourceAdapter::ENDPOINT||($p['max_records']??null)!==3||($p['max_bytes']??null)!==self::MAX_BYTES
@@ -55,12 +65,14 @@ class WorldBankOneShotAcquisition
             return $p;
         } finally {flock($handle,LOCK_UN);fclose($handle);}
     }
+    /** @param array<string,mixed> $permit */
     protected function permitMatchesContext(array $permit):bool{return true;}
     public function canAcquire(User $user):bool
     {
         $this->authorize($user);
         return extension_loaded('curl')&&$this->rightsFailure($this->rights())===null&&$this->permit($user,false)!==null;
     }
+    /** @return array<string,mixed> */
     public function emptyPreview(string $reason='ONE_GET_APPROVAL_REQUIRED'):array
     {
         return ['connector'=>'wb_acquisition','mode'=>'ACQUISITION_NOT_PERFORMED','status'=>'BLOCKED','reason'=>$reason,
@@ -69,10 +81,12 @@ class WorldBankOneShotAcquisition
             'packet_hash'=>hash('sha256','NO_ACQUISITION'),'observations'=>[],'duplicates'=>[],'conflicts'=>[],'changes'=>[],'candidate_reason'=>null,'pages_processed'=>0];
     }
     protected function supportsLocalMock():bool {return false;}
+    /** @param array<string,mixed> $options */
     protected function request(string $endpoint,array $options):\Illuminate\Http\Client\Response
     {
         return Http::withOptions($options)->connectTimeout(self::CONNECT_SECONDS)->timeout(self::TOTAL_SECONDS)->get($endpoint);
     }
+    /** @return array<string,mixed> */
     public function acquire(User $user,string $endpoint=WorldBankGdpSourceAdapter::ENDPOINT):array
     {
         $this->authorize($user);
@@ -83,9 +97,12 @@ class WorldBankOneShotAcquisition
         if($permit['kind']==='MOCK_TEST_ONLY'&&!$this->supportsLocalMock())return $this->emptyPreview('MOCK_TRANSPORT_REQUIRED');
         if($permit['kind']!=='MOCK_TEST_ONLY'&&$this->supportsLocalMock())return $this->emptyPreview('MOCK_ACCEPTS_MOCK_PERMISSION_ONLY');
         $started=hrtime(true);$headers=[];$attempts=1;
-        $stream=new class(Utils::streamFor(fopen('php://temp/maxmemory:65536','w+b'))) implements StreamInterface {
+        $buffer=fopen('php://temp/maxmemory:65536','w+b');
+        if($buffer===false)throw new \RuntimeException('ACQUISITION_BUFFER_UNAVAILABLE');
+        $stream=new class(Utils::streamFor($buffer)) implements StreamInterface {
             use StreamDecoratorTrait;
             private StreamInterface $stream;
+            public function __construct(StreamInterface $stream){$this->stream=$stream;}
             public int $maxBufferedBytes=0;
             public function write(string $string):int {
                 if($this->tell()+strlen($string)>WorldBankOneShotAcquisition::MAX_BYTES)throw new \LengthException('AE10_BODY_LIMIT');
@@ -139,11 +156,16 @@ class WorldBankOneShotAcquisition
             return $this->emptyPreview($code)+['transport'=>['attempts'=>1,'retry_count'=>0,'max_buffered_bytes'=>$stream->maxBufferedBytes,'elapsed_ms'=>(int)((hrtime(true)-$started)/1e6)]];
         } finally {$stream->close();}
     }
+    /**
+     * @param array<string,mixed> $record
+     * @return array<string,mixed>
+     */
     protected function decode(array $record):array
     {
         $preview=app(WorldBankGdpSourceAdapter::class)->normalizeResponse($record['raw'],$record['retrieval'],$record['rights']);
         if($preview['status']!=='READY_FOR_ANALYST_DRAFT')return array_replace($preview,['connector'=>'wb_acquisition']);
         $updated=strtotime($preview['source']['source_updated_at'].'T00:00:00Z');
+        if($updated===false)return $this->emptyPreview('SOURCE_UPDATE_REVIEW_REQUIRED');
         if(now()->timestamp-$updated>30*86400)return $this->emptyPreview('SOURCE_UPDATE_REVIEW_REQUIRED');
         $mock=$record['permit_kind']==='MOCK_TEST_ONLY';
         $preview['connector']='wb_acquisition';$preview['mode']=$mock?'MOCK_ACQUISITION_ONLY':'REAL_PUBLIC_ACQUISITION_HISTORICAL';
@@ -168,7 +190,13 @@ class WorldBankOneShotAcquisition
         return $preview;
     }
 
+    /** @param array<string,mixed> $permit */
     protected function newReceiptId(array $permit):string{return (string)Str::uuid();}
+    /**
+     * @param array<string,mixed> $record
+     * @param array<string,mixed> $permit
+     * @return array<string,mixed>
+     */
     protected function decorateRecord(array $record,array $permit):array{return $record;}
     protected function receiptPath(string $id):string{return storage_path('app/private/sifi-worldbank-acquisitions/'.$id.'.enc');}
     protected function writeReceipt(string $file,string $cipher):void
@@ -180,13 +208,17 @@ class WorldBankOneShotAcquisition
         if(!rename($tmp,$file))throw new \RuntimeException('RECEIPT_STORAGE_FAILED');
     }
 
+    /** @return array<string,mixed> */
     public function load(User $user,?string $id):array
     {
         $this->authorize($user);
         if(!is_string($id)||!Str::isUuid($id))return $this->emptyPreview('NO_OWNED_ACQUISITION');
         $path=$this->receiptPath($id);
         if(!is_file($path)||is_link($path)||filesize($path)>262144)return $this->emptyPreview('ACQUISITION_RECEIPT_UNAVAILABLE');
-        try {$r=json_decode(Crypt::decryptString(file_get_contents($path)),true,24,JSON_THROW_ON_ERROR);}catch(\Throwable){return $this->emptyPreview('ACQUISITION_RECEIPT_INVALID');}
+        $encrypted=file_get_contents($path);
+        if($encrypted===false)return $this->emptyPreview('ACQUISITION_RECEIPT_INVALID');
+        try {$r=json_decode(Crypt::decryptString($encrypted),true,24,JSON_THROW_ON_ERROR);}catch(\Throwable){return $this->emptyPreview('ACQUISITION_RECEIPT_INVALID');}
+        if(!is_array($r))return $this->emptyPreview('ACQUISITION_RECEIPT_INVALID');
         if(($r['owner_id']??null)!==(int)$user->id||($r['id']??null)!==$id)return $this->emptyPreview('NO_OWNED_ACQUISITION');
         if(($r['permit_kind']??null)==='MOCK_TEST_ONLY'&&!app()->environment('testing'))return $this->emptyPreview('MOCK_NOT_AVAILABLE');
         if(!in_array($r['permit_kind']??null,['MOCK_TEST_ONLY','OWNER_APPROVED_EXTERNAL_GET'],true))return $this->emptyPreview('ACQUISITION_RECEIPT_INVALID');
