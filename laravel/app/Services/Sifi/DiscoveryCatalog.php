@@ -120,7 +120,7 @@ final class DiscoveryCatalog {
  }
  /**
   * @param array<string,mixed> $filters
-  * @return array<string,mixed>
+  * @return array{entries:list<array<string,mixed>>,total_matches:int,catalog_size:int,provider:string,version:string,catalog_sha256:string,retrieved_at:null,rights:string,network:string,coverage:string}
   */
  public function discover(SifiMonitoringObject $o,array $filters,bool $includeSynthetic=false):array {
   $entries=$this->entries();
