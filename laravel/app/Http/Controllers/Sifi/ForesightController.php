@@ -20,6 +20,7 @@ use RuntimeException;
 final class ForesightController extends Controller {
  private const FIELDS=['baseline_scenario','alternative_scenario','stress_scenario',
    'critical_drivers','falsification_checks','decision_options','uncertainty_note'];
+ /** @return array{SifiIssueCaseDraft, SifiTrajectoryDraft} */
  private function parents(SifiIssueCandidate $c):array {
   $case=SifiIssueCaseDraft::query()->where('candidate_id',$c->id)->firstOrFail();
   $trajectory=SifiTrajectoryDraft::query()->where('case_id',$case->id)->firstOrFail();
@@ -29,12 +30,14 @@ final class ForesightController extends Controller {
  private function draft(SifiTrajectoryDraft $t):?SifiForesightDraft {
   return SifiForesightDraft::query()->where('trajectory_id',$t->id)->first();
  }
+ /** @return array<string, string|int> */
  private function snapshot(SifiForesightDraft $draft):array {
   $out=['id'=>$draft->id,'trajectory_id'=>$draft->trajectory_id,'revision'=>(int)$draft->revision,
      'verification_state'=>'NOT_VERIFIED'];
   foreach(self::FIELDS as $f)$out[$f]=$draft->$f;
   return $out;
  }
+ /** @return array<string, int> */
  private function counts(SifiIssueCandidate $c):array {
   return [
    'claim_count'=>DB::table('sifi_claim_drafts')->where('candidate_id',$c->id)->count(),
@@ -42,6 +45,7 @@ final class ForesightController extends Controller {
    'possible_link_count'=>DB::table('sifi_claim_event_links')->where('candidate_id',$c->id)->count(),
    'evidence_candidate_count'=>DB::table('sifi_evidence_drafts')->where('candidate_id',$c->id)->count()];
  }
+ /** @return array<string, mixed> */
  private function input(SifiIssueCandidate $c,SifiIssueCaseDraft $case,SifiTrajectoryDraft $t,SifiForesightDraft $d):array {
   $fields=['id'=>$d->id,'revision'=>(int)$d->revision];
   foreach(self::FIELDS as $f)$fields[$f]=$d->$f;
@@ -51,6 +55,7 @@ final class ForesightController extends Controller {
    'trajectory'=>['id'=>$t->id,'revision'=>(int)$t->revision,'horizon'=>$t->horizon,'verification_state'=>'NOT_VERIFIED'],
    'draft'=>$fields,'observed_metadata'=>$this->counts($c)];
  }
+ /** @param array<string, mixed> $input */
  private function digest(array $input):string {
   return hash('sha256',json_encode($input,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
  }
