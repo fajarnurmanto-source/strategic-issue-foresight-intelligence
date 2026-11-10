@@ -6,6 +6,7 @@ use Illuminate\Validation\ValidationException;
 final class DiscoveryCatalog {
  public const TYPES=['API','RSS','ATOM','SITEMAP','OPEN_DATA','NEWS','RESEARCH','REGULATORY','USER_SUBMITTED'];
  /** User-supplied source URL intake: classification of URL only, no network or content fetch. */
+ /** @return array<string,mixed> */
  public function submittedDescriptor(string $input):array {
   $url=$this->safeUrl(trim($input),false);
   $host=strtolower((string)parse_url($url,PHP_URL_HOST));
@@ -24,17 +25,28 @@ final class DiscoveryCatalog {
   $key='submitted-'.substr(hash('sha256',$url),0,24);
   return ['key'=>$key,'title'=>'[URL SUBMISSION] '.$host,'url'=>$url,'type'=>'USER_SUBMITTED','language'=>'unknown','geography'=>null,'origin'=>'USER_SUBMITTED_URL','snippet'=>'URL diajukan pengguna; identitas penerbit, konten, waktu publikasi dan hak akses belum diperiksa.','topics'=>[],'rights'=>'UNASSESSED','attribution'=>'URL submitted by account owner; source attribution requires review.','coverage'=>'URL sahaja; BELUM dihubungi, bukan hasil crawling atau bukti peristiwa.','published_at'=>null,'synthetic'=>false,'platform'=>$platform,'media_hint'=>$media];
  }
+ /** @return list<array<string,mixed>> */
  private function syntheticEntries():array {
-  $data=json_decode(file_get_contents(resource_path('sifi/source-discovery-catalog.json')),true,32,JSON_THROW_ON_ERROR);
-  if(($data['version']??null)!=='ae13-catalog-1'||count($data['entries']??[])>100)throw ValidationException::withMessages(['catalog'=>'Katalog tidak valid.']);
+  $contents=file_get_contents(resource_path('sifi/source-discovery-catalog.json'));
+  if($contents===false)throw ValidationException::withMessages(['catalog'=>'Katalog tidak tersedia.']);
+  $data=json_decode($contents,true,32,JSON_THROW_ON_ERROR);
+  if(!is_array($data)||($data['version']??null)!=='ae13-catalog-1'||!is_array($data['entries']??null)||!array_is_list($data['entries'])||count($data['entries'])>100)throw ValidationException::withMessages(['catalog'=>'Katalog tidak valid.']);
+  foreach($data['entries'] as $entry)if(!is_array($entry))throw ValidationException::withMessages(['catalog'=>'Katalog memuat entri tidak valid.']);
   return $data['entries'];
  }
+ /** @return list<array<string,mixed>> */
  public function entries():array {
-  $curated=json_decode(file_get_contents(resource_path('sifi/ae16-public-source-directory.json')),true,32,JSON_THROW_ON_ERROR);
-  if(($curated['version']??null)!=='ae16-curated-source-directory-1'||count($curated['entries']??[])>40)throw ValidationException::withMessages(['catalog'=>'Direktori sumber publik tidak valid.']);
-  foreach($curated['entries'] as $e)$this->assertDescriptor($e);
+  $contents=file_get_contents(resource_path('sifi/ae16-public-source-directory.json'));
+  if($contents===false)throw ValidationException::withMessages(['catalog'=>'Direktori sumber publik tidak tersedia.']);
+  $curated=json_decode($contents,true,32,JSON_THROW_ON_ERROR);
+  if(!is_array($curated)||($curated['version']??null)!=='ae16-curated-source-directory-1'||!is_array($curated['entries']??null)||!array_is_list($curated['entries'])||count($curated['entries'])>40)throw ValidationException::withMessages(['catalog'=>'Direktori sumber publik tidak valid.']);
+  foreach($curated['entries'] as $e){
+   if(!is_array($e))throw ValidationException::withMessages(['catalog'=>'Direktori memuat entri tidak valid.']);
+   $this->assertDescriptor($e);
+  }
   return array_merge($curated['entries'],$this->syntheticEntries());
  }
+ /** @return array<string,mixed> */
  public function descriptor(string $key):array {
   foreach($this->entries() as $e)if($e['key']===$key){$this->assertDescriptor($e);return $e;}
   throw ValidationException::withMessages(['candidate'=>'Kandidat tidak tersedia.']);
@@ -47,6 +59,7 @@ final class DiscoveryCatalog {
   if($bad)throw ValidationException::withMessages(['url'=>'Gunakan URL HTTPS publik tanpa kredensial, port khusus, fragment atau alamat internal. URL belum dihubungi atau diperiksa DNS.']);
   return 'https://'.$h.($p['path']??'/').(isset($p['query'])?'?'.$p['query']:'');
  }
+ /** @param array<string,mixed> $e */
  public function assertDescriptor(array $e):void {
   if(($e['rights']??null)!=='UNASSESSED'||!in_array($e['type']??null,self::TYPES,true))throw ValidationException::withMessages(['candidate'=>'Descriptor tidak memenuhi kontrak hak/kategori.']);
   if(($e['origin']??null)==='USER_SUBMITTED_URL'){
@@ -62,16 +75,26 @@ final class DiscoveryCatalog {
   }
   $this->safeUrl($e['url'],$synthetic);
  }
+ /** @return list<string> */
  private function tokens(string $s):array {
   $stop=['synthetic','fiktif','merek','perusahaan','industri','publik','tentang','untuk','dengan','yang','dan','atau','bukan','informasi','memantau','perkembangan','keterbatasan','secara','objek','pemantauan','analisis','kategori','terbuka','mengenali','mengenai','sumber','menelusuri','contoh','di','ke','ini','itu'];
   return array_slice(array_values(array_unique(array_filter(preg_split('/[^\p{L}\p{N}]+/u',mb_strtolower($s))?:[],fn($x)=>mb_strlen($x)>=2&&!in_array($x,$stop,true)))),0,80);
  }
  private function matches(string $hay,string $term):bool {return (bool)preg_match('/(?<![\p{L}\p{N}])'.preg_quote($term,'/').'(?![\p{L}\p{N}])/u',$hay);}
  /** Internal fixture lookup. Shares ranking with curated discovery and reads only the pinned fixture catalog. */
+ /**
+  * @param array<string,mixed> $filters
+  * @return list<array<string,mixed>>
+  */
  public function discoverSynthetic(SifiMonitoringObject $object,array $filters):array {
   $entries=$this->matchEntries($object,$filters,$this->syntheticEntries(),true);
   return array_slice($entries,0,(int)($filters['limit']??12));
  }
+ /**
+  * @param array<string,mixed> $filters
+  * @param list<array<string,mixed>> $entries
+  * @return list<array<string,mixed>>
+  */
  private function matchEntries(SifiMonitoringObject $o,array $filters,array $entries,bool $requireSynthetic=false):array {
   $q=$filters['q']??'';$out=[];
   foreach($entries as $e){
@@ -95,6 +118,10 @@ final class DiscoveryCatalog {
   usort($out,fn($a,$b)=>($b['match_points']<=>$a['match_points'])?:strcmp($a['key'],$b['key']));
   return $out;
  }
+ /**
+  * @param array<string,mixed> $filters
+  * @return array<string,mixed>
+  */
  public function discover(SifiMonitoringObject $o,array $filters,bool $includeSynthetic=false):array {
   $entries=$this->entries();
   $visible=$includeSynthetic?$entries:array_values(array_filter($entries,static fn ($entry)=>($entry['synthetic']??false)!==true));
