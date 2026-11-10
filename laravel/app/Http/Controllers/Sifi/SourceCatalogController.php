@@ -75,7 +75,7 @@ final class SourceCatalogController extends Controller
             'verified'=>['prohibited'],'evidence_admitted'=>['prohibited'],'collector_state'=>['prohibited'],
             'receipt_id'=>['nullable','uuid'],'source_draft_id'=>['nullable','uuid'],'source_revision'=>['nullable','integer','min:1'],'input_digest'=>['nullable','string','regex:/\A[0-9a-f]{64}\z/'],
         ]);
-        $source=isset($v['source_draft_id'])?SifiSourceDraft::findOrFail($v['source_draft_id']):null;
+        $source=isset($v['source_draft_id'])?SifiSourceDraft::query()->where('id',$v['source_draft_id'])->firstOrFail():null;
         if ($source!==null) Gate::authorize('view',$source);
         $saved=$request->session()->get('ae08_pad_preview');
         $json=is_array($saved) && ($saved['owner_id']??null)===(int)$request->user()->id ? ($saved['payload']??null) : null;
@@ -159,6 +159,9 @@ final class SourceCatalogController extends Controller
         return redirect()->route('sifi.source-catalog.index');
     }
 
+    /** @param list<string> $ids
+     * @return list<string>
+     */
     private function ownedSourceIds(int $userId,array $ids): array
     {
         $ids=array_values(array_unique($ids));
@@ -169,12 +172,14 @@ final class SourceCatalogController extends Controller
         return $ids;
     }
 
+    /** @param list<string> $ids */
     private function replaceLinks(string $profileId,array $ids): void
     {
         DB::table('sifi_coverage_source_drafts')->where('profile_id',$profileId)->delete();
         foreach ($ids as $id) DB::table('sifi_coverage_source_drafts')->insert(['profile_id'=>$profileId,'source_id'=>$id]);
     }
 
+    /** @param array<string, mixed> $snapshot */
     private function audit(string $type,string $id,int $actor,int $revision,string $action,array $snapshot): void
     {
         DB::table('sifi_catalog_audit')->insert([
