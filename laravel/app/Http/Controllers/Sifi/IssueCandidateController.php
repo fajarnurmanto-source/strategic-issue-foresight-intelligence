@@ -37,7 +37,7 @@ final class IssueCandidateController extends Controller
 
     public function store(StoreIssueCandidateRequest $request): RedirectResponse
     {
-        $investigation = SifiInvestigation::findOrFail($request->validated('investigation_id'));
+        $investigation = SifiInvestigation::query()->findOrFail((string) $request->validated('investigation_id'));
         Gate::authorize('create', [SifiIssueCandidate::class, $investigation]);
 
         $candidate = DB::transaction(function () use ($investigation, $request): SifiIssueCandidate {
@@ -128,6 +128,7 @@ final class IssueCandidateController extends Controller
         return redirect()->route('sifi.issue-candidates.show', $candidate->id);
     }
 
+    /** @param array<string, mixed> $snapshot */
     private function audit(SifiIssueCandidate $candidate, int $userId, int $revision, string $action, array $snapshot): void
     {
         DB::table('sifi_issue_candidate_audit')->insert([
