@@ -6,6 +6,9 @@ use DecisionIntelligence\IssueFilter;
 /** AE-16 F02 reusable server-side issue filter, advisory only; no DB/network operations. */
 final class Ae16UnifiedFilter
 {
+    /** @param array<string, mixed> $config
+     * @return array<string, mixed>
+     */
     public function normalize(array $config): array
     {
         $window = $config['date_window'] ?? [];
@@ -32,6 +35,10 @@ final class Ae16UnifiedFilter
     /**
      * Three-valued matching: MATCH, EXCLUDED, REVIEW_REQUIRED.
      * The input item must contain actual reviewed metadata. Missing sentiment/date/geo is never inferred.
+     */
+    /** @param array<string, mixed> $item
+     * @param array<string, mixed> $filter
+     * @return array{decision: string, reason: string}
      */
     public function classify(array $item, array $filter): array
     {
