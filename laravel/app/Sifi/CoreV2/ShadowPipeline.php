@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Gate;
 
 final class ShadowPipeline
 {
+    /**
+     * @param array<array-key, array{id: string, object_revision: int|string, results: array<string, mixed>}> $sessions
+     * @return array<string, array<string, mixed>>
+     */
     public function forSessions(User $user, SifiMonitoringObject $object, array $sessions): array
     {
         Gate::forUser($user)->authorize('view', $object);
