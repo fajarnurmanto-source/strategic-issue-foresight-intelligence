@@ -66,6 +66,17 @@ while IFS= read -r changed; do
         laravel/app/Services/Sifi/FeedResearchBridge.php|\
         laravel/app/Services/Sifi/ResearchWorldBankAcquisition.php|\
         laravel/app/Services/Sifi/TavilySearchProvider.php|\
+        laravel/app/Http/Controllers/Sifi/EvidenceIntakeController.php|\
+        laravel/app/Http/Controllers/Sifi/TrajectoryController.php|\
+        laravel/app/Services/Sifi/MultiSourceFixtureSupport.php|\
+        laravel/app/Http/Controllers/Sifi/SourceCatalogController.php|\
+        laravel/app/Services/Sifi/Ae16UnifiedFilter.php|\
+        laravel/app/Services/Sifi/BoundedSearchTransport.php|\
+        laravel/app/Services/Sifi/Integration/BlueskySearchTransport.php|\
+        laravel/app/Services/Sifi/Integration/ConnectorProfileDrafts.php|\
+        laravel/app/Services/Sifi/Integration/ReviewedCrossrefResearch.php|\
+        laravel/app/Services/Sifi/MultilingualQueryPlan.php|\
+        laravel/app/Services/Sifi/RealSearchWorkspace.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
@@ -183,9 +194,10 @@ echo 'PHPSTAN_VERIFIED_BATCH2_ERRORS=632'
 echo 'PHPSTAN_VERIFIED_BATCH3_ERRORS=561'
 echo 'PHPSTAN_VERIFIED_BATCH4_ERRORS=437'
 echo 'PHPSTAN_VERIFIED_BATCH5_ERRORS=325'
+echo 'PHPSTAN_VERIFIED_BATCH6_ERRORS=236'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 325 ]; then
+if [ "$After" -lt 236 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
