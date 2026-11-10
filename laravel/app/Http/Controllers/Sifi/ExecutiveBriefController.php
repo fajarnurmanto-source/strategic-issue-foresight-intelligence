@@ -19,6 +19,7 @@ final class ExecutiveBriefController extends Controller {
  private function brief(SifiIssueCandidate $c):?SifiExecutiveBrief {
   return SifiExecutiveBrief::query()->where('candidate_id',$c->id)->first();
  }
+ /** @return array<string, string|int> */
  private function viewBrief(SifiExecutiveBrief $b):array {
   return ['id'=>$b->id,'revision'=>(int)$b->revision,'title'=>$b->title,
    'audience'=>$b->audience,'executive_summary'=>$b->executive_summary,
