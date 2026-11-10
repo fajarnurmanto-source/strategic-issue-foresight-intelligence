@@ -41,6 +41,16 @@ while IFS= read -r changed; do
         laravel/app/Services/Sifi/FeedDiscovery.php|\
         laravel/app/Http/Controllers/Sifi/E2e01PilotController.php|\
         laravel/app/Models/SifiMonitoringObject.php|\
+        laravel/app/Services/Sifi/SourceDiscoveryWorkspace.php|\
+        laravel/app/Services/Sifi/WorldBankResearchWorkspace.php|\
+        laravel/app/Services/Sifi/YogyakartaPadSourceAdapter.php|\
+        laravel/app/Http/Controllers/Sifi/E4PeriodDiscoveryController.php|\
+        laravel/app/Services/Sifi/WorldBankAcquisitionWorkspace.php|\
+        laravel/app/Services/Sifi/WorldBankGdpSourceAdapter.php|\
+        laravel/app/Services/Sifi/SourceObservationPipeline.php|\
+        laravel/app/Services/Sifi/MultiSourceResearchWorkspace.php|\
+        laravel/app/Http/Controllers/Sifi/E2e02ReviewController.php|\
+        laravel/app/Services/Sifi/FixtureResearchProvider.php|\
         laravel/app/Models/SifiTrajectoryDraft.php|\
         laravel/app/Models/SifiForesightDraft.php|\
         laravel/app/Models/SifiExecutiveBrief.php|\
@@ -159,9 +169,10 @@ echo 'PHPSTAN_ORIGINAL_ERRORS=714'
 echo 'PHPSTAN_VERIFIED_BATCH1_ERRORS=703'
 echo 'PHPSTAN_VERIFIED_BATCH2_ERRORS=632'
 echo 'PHPSTAN_VERIFIED_BATCH3_ERRORS=561'
+echo 'PHPSTAN_VERIFIED_BATCH4_ERRORS=437'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 561 ]; then
+if [ "$After" -lt 437 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
