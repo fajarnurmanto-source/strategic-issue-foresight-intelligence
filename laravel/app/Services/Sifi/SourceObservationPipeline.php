@@ -23,10 +23,14 @@ final class SourceObservationPipeline
         'synthetic' => 'Label sintetis wajib',
     ] + YogyakartaPadSourceAdapter::SCENARIOS + WorldBankGdpSourceAdapter::SCENARIOS + WorldBankOneShotAcquisition::SCENARIOS;
 
+    /** @return array<string,mixed> */
     public function fixture(string $scenario): array
     {
         abort_unless(array_key_exists($scenario, self::SCENARIOS), 422);
-        $packet = json_decode(file_get_contents(resource_path('sifi/ae07-weather-fixture.json')), true, 32, JSON_THROW_ON_ERROR);
+        $bytes=file_get_contents(resource_path('sifi/ae07-weather-fixture.json'));
+        if($bytes===false)throw new \RuntimeException('WEATHER_FIXTURE_UNAVAILABLE');
+        $packet=json_decode($bytes,true,32,JSON_THROW_ON_ERROR);
+        if(!is_array($packet))throw new \RuntimeException('WEATHER_FIXTURE_INVALID');
         $cell = &$packet['data'][0]['cuaca'][0];
         if ($scenario === 'duplicate') $cell[] = $cell[0];
         if ($scenario === 'missing_metadata') unset($packet['source']['publisher']);
@@ -37,6 +41,7 @@ final class SourceObservationPipeline
         return $packet;
     }
 
+    /** @return array<string,mixed> */
     public function preview(string $scenario, ?string $importJson = null, ?int $ownerId = null): array
     {
         if ($scenario==='wb_research_acquisition') {abort_unless($ownerId!==null&&is_string($importJson),422);return app(WorldBankResearchWorkspace::class)->pipelinePreview(User::findOrFail($ownerId),$importJson);}
@@ -69,12 +74,17 @@ final class SourceObservationPipeline
         return $this->normalize($this->fixture($scenario)) + ['scenario' => $scenario, 'scenarios' => self::SCENARIOS];
     }
 
+    /** @param array<array-key,mixed> $data */
     private function digest(array $data): string
     {
         return hash('sha256', json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     /** A closed fixture envelope: never accepted as a remote, verified or user-uploaded record. */
+    /**
+     * @param array<string,mixed> $packet
+     * @return array<string,mixed>
+     */
     public function normalize(array $packet): array
     {
         $result = ['mode' => 'SYNTHETIC_FIXTURE_ONLY', 'status' => 'BLOCKED', 'reason' => null,
@@ -256,6 +266,10 @@ final class SourceObservationPipeline
         });
     }
 
+    /**
+     * @param array<string,mixed> $preview
+     * @return array<string,mixed>
+     */
     private function withImportHistory(array $preview,int $ownerId,string $origin='AE08_SYNTHETIC_IMPORT'): array
     {
         $rows=DB::table('sifi_issue_candidate_audit as a')->join('sifi_issue_candidates as c','c.id','=','a.candidate_id')
@@ -284,6 +298,7 @@ final class SourceObservationPipeline
         return $preview;
     }
 
+    /** @param array<string,mixed> $snapshot */
     private function audit(string $table, string $foreign, string $id, int $uid, array $snapshot,string $action='SYNTHETIC_TEMPLATE_CREATED'): void
     {
         DB::table($table)->insert([$foreign=>$id,'actor_user_id'=>$uid,'revision'=>1,'action'=>$action,
@@ -291,6 +306,7 @@ final class SourceObservationPipeline
     }
 
     /** Reconstruct immutable fixture provenance from the creation audit, not editable analyst text. */
+    /** @return array<string,mixed>|null */
     public function lineage(SifiIssueCandidate $candidate): ?array
     {
         $audit = DB::table('sifi_issue_candidate_audit')->where('candidate_id',$candidate->id)
