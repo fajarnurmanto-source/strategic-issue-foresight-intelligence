@@ -7,6 +7,7 @@ use App\Models\SifiForesightDraft;
 use Illuminate\Support\Facades\DB;
 /** Canonical, human-reviewable input for briefing; does not call external services. */
 final class ExecutiveBriefSource {
+ /** @return array{SifiIssueCaseDraft, SifiTrajectoryDraft, SifiForesightDraft} */
  public function parents(SifiIssueCandidate $candidate,int $uid,bool $lock=false):array {
   $caseQuery=SifiIssueCaseDraft::query()->where('candidate_id',$candidate->id);
   if($lock)$caseQuery->lockForUpdate();
@@ -22,6 +23,7 @@ final class ExecutiveBriefSource {
   abort_unless($case->verification_state==='NOT_VERIFIED',409);
   return [$case,$trajectory,$foresight];
  }
+ /** @return array<string, mixed> */
  public function assemble(SifiIssueCandidate $candidate,SifiIssueCaseDraft $case,
   SifiTrajectoryDraft $trajectory,SifiForesightDraft $foresight):array {
   $counts=[
@@ -72,6 +74,7 @@ final class ExecutiveBriefSource {
    'evidence_admission'=>'NOT_EVALUATED','decision_authorized'=>false,'forecast_available'=>false,
   ];
  }
+ /** @param array<string, mixed> $snapshot */
  public function digest(array $snapshot):string {
   return hash('sha256',json_encode($snapshot,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
  }
