@@ -44,11 +44,12 @@ final class E2e01PilotController extends Controller
     }
 
     private function fail(string $message):never {throw ValidationException::withMessages(['pilot'=>$message]);}
-    private function session(Request $r,SifiMonitoringObject $o,string $id):object
+    private function session(Request $r,SifiMonitoringObject $o,string $id):\stdClass
     {
         if($o->state!=='CONFIGURED')$this->fail('Objek tidak CONFIGURED.');
         return app(ResearchRetrievalWorkspace::class)->session($r->user(),$o,$id);
     }
+    /** @return array{0:string,1:string} */
     private function canonical(string $raw):array
     {
         $url=trim($raw);
@@ -57,8 +58,9 @@ final class E2e01PilotController extends Controller
         if(!is_array($p)||($p['scheme']??'')!=='https'||!in_array(strtolower($p['host']??''),self::HOSTS,true)
             ||isset($p['user'])||isset($p['pass'])||isset($p['port'])||isset($p['fragment']))$this->fail('Pilot hanya mendukung tiga domain pemerintah yang direview, HTTPS tanpa redirect.');
         if(str_contains($url,'%'))$this->fail('URL dengan encoding belum didukung pilot.');
-        return [$url,strtolower($p['host'])];
+        return [$url,strtolower((string)($p['host']??''))];
     }
+    /** @return array{0:string,1:string,2:int} */
     private function fetch(string $url,string $host):array
     {
         if(!extension_loaded('curl'))$this->fail('PHP curl belum tersedia.');
@@ -85,6 +87,7 @@ final class E2e01PilotController extends Controller
         if(strlen($bytes)<20)$this->fail('Respons terlalu kecil untuk ekstraksi.');
         return [$bytes,$ctype,$http];
     }
+    /** @return array{kind:string,text:string,images:list<array{src:string,alt:string}>,limitations:string} */
     private function extract(string $raw,string $ctype,string $url):array
     {
         $isPdf=str_starts_with(strtolower($ctype),'application/pdf')||str_starts_with($raw,'%PDF-');
@@ -109,15 +112,23 @@ final class E2e01PilotController extends Controller
         $dom=new \DOMDocument();$prior=libxml_use_internal_errors(true);
         try{$dom->loadHTML('<?xml encoding="UTF-8"?>'.$raw,LIBXML_NONET|LIBXML_NOERROR|LIBXML_NOWARNING);}finally{libxml_clear_errors();libxml_use_internal_errors($prior);}
         $xp=new \DOMXPath($dom);
-        foreach($xp->query('//script|//style|//nav|//footer|//header|//form|//noscript') as $node){$node->parentNode?->removeChild($node);}
+        $removeNodes=$xp->query('//script|//style|//nav|//footer|//header|//form|//noscript');
+        if($removeNodes===false)$this->fail('Struktur HTML tidak dapat dianalisis.');
+        foreach($removeNodes as $node){if($node instanceof \DOMNode)$node->parentNode?->removeChild($node);}
         $parts=[];
-        foreach($xp->query('//h1|//h2|//h3|//p|//li') as $node){
+        $contentNodes=$xp->query('//h1|//h2|//h3|//p|//li');
+        if($contentNodes===false)$this->fail('Struktur HTML tidak dapat dianalisis.');
+        foreach($contentNodes as $node){
+            if(!$node instanceof \DOMNode)continue;
             $s=trim(preg_replace('/\s+/u',' ',$node->textContent)??'');
             if(mb_strlen($s)>=30&&mb_strlen($s)<=1000)$parts[]=$s;
             if(count($parts)>=100)break;
         }
         $images=[];
-        foreach($xp->query('//img[@src]') as $img){
+        $imageNodes=$xp->query('//img[@src]');
+        if($imageNodes===false)$this->fail('Referensi gambar tidak dapat dianalisis.');
+        foreach($imageNodes as $img){
+            if(!$img instanceof \DOMElement)continue;
             $src=trim($img->getAttribute('src'));
             if($src===''||str_starts_with($src,'data:'))continue;
             $images[]=['src'=>mb_substr($src,0,400),'alt'=>mb_substr($img->getAttribute('alt'),0,200)];
@@ -126,7 +137,8 @@ final class E2e01PilotController extends Controller
         return ['kind'=>'HTML_TEXT_AND_IMAGE_REFERENCES','text'=>mb_substr(implode("\n",array_unique($parts)),0,16000),
             'images'=>$images,'limitations'=>'Gambar hanya direkam atribut src/alt; berkas gambar tidak diunduh atau dianalisis. Tanggal publikasi dan identitas penerbit belum diverifikasi.'];
     }
-    private function persist(Request $r,SifiMonitoringObject $object,object $session,array $packet,string $action):void
+    /** @param array<string,mixed> $packet */
+    private function persist(Request $r,SifiMonitoringObject $object,\stdClass $session,array $packet,string $action):void
     {
         DB::transaction(function()use($r,$object,$session,$packet,$action){
             $freshObject=SifiMonitoringObject::whereKey($object->id)->lockForUpdate()->firstOrFail();
