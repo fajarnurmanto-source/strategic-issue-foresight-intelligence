@@ -35,6 +35,12 @@ while IFS= read -r changed; do
         laravel/app/Http/Controllers/Sifi/IssueCandidateController.php|\
         laravel/app/Http/Controllers/Sifi/ExecutiveBriefController.php|\
         laravel/app/Services/Sifi/ExecutiveBriefSource.php|\
+        laravel/app/Services/Sifi/WorldBankOneShotAcquisition.php|\
+        laravel/app/Services/Sifi/DiscoveryCatalog.php|\
+        laravel/app/Services/Sifi/BoundedFeedParser.php|\
+        laravel/app/Services/Sifi/FeedDiscovery.php|\
+        laravel/app/Http/Controllers/Sifi/E2e01PilotController.php|\
+        laravel/app/Models/SifiMonitoringObject.php|\
         laravel/app/Models/SifiTrajectoryDraft.php|\
         laravel/app/Models/SifiForesightDraft.php|\
         laravel/app/Models/SifiExecutiveBrief.php|\
@@ -152,9 +158,10 @@ echo '=== 5. OUTCOME AND ERROR CLASSES ==='
 echo 'PHPSTAN_ORIGINAL_ERRORS=714'
 echo 'PHPSTAN_VERIFIED_BATCH1_ERRORS=703'
 echo 'PHPSTAN_VERIFIED_BATCH2_ERRORS=632'
+echo 'PHPSTAN_VERIFIED_BATCH3_ERRORS=561'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 632 ]; then
+if [ "$After" -lt 561 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
