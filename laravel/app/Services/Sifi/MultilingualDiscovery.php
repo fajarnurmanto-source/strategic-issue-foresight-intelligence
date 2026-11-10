@@ -5,17 +5,28 @@ use App\Models\SifiMonitoringObject;
 final class MultilingualDiscovery
 {
  public const PROVIDERS=['SYNTHETIC_LANGUAGE_A','SYNTHETIC_LANGUAGE_B'];
+ /** @param array<string, array<string, mixed>> $entries
+  * @param list<string> $languages
+  * @return list<array<string, mixed>>
+  */
  private function rank(array $entries,array $languages,int $limit):array
  {
   $remaining=array_values($entries);$selected=[];$origins=[];
-  $take=function(?string $language=null)use(&$remaining,&$selected,&$origins){$best=null;$bestScore=-PHP_INT_MAX;foreach($remaining as $i=>$e){if($language!==null&&$e['source_language']!==$language)continue;$score=$e['relevance']['score']-4*($origins[$e['origin']]??0);if($score>$bestScore||($score===$bestScore&&strcmp($e['id'],$remaining[$best]['id'])<0)){$best=$i;$bestScore=$score;}}if($best===null)return false;$entry=$remaining[$best];unset($remaining[$best]);$entry['relevance']['diversity_adjusted_score']=$bestScore;$entry['relevance']['rank']=count($selected)+1;$selected[]=$entry;$origins[$entry['origin']]=($origins[$entry['origin']]??0)+1;return true;};
+  $take=function(?string $language=null)use(&$remaining,&$selected,&$origins){$best=null;$bestScore=-PHP_INT_MAX;foreach($remaining as $i=>$e){if($language!==null&&$e['source_language']!==$language)continue;$score=$e['relevance']['score']-4*($origins[$e['origin']]??0);if($best===null||$score>$bestScore||($score===$bestScore&&strcmp($e['id'],$remaining[$best]['id'])<0)){$best=$i;$bestScore=$score;}}if($best===null)return false;$entry=$remaining[$best];unset($remaining[$best]);$entry['relevance']['diversity_adjusted_score']=$bestScore;$entry['relevance']['rank']=count($selected)+1;$selected[]=$entry;$origins[$entry['origin']]=($origins[$entry['origin']]??0)+1;return true;};
   foreach($languages as $language)if(count($selected)<$limit)$take($language);while(count($selected)<$limit&&$take()){}return $selected;
  }
+ /** @param array<string, mixed> $e
+  * @param array<string, mixed> $window
+  */
  public function classifyDate(array $e,array $window):string
  {
   $start=$window['start'];$end=$window['end_exclusive'];$pub=$e['published_at'];$event=$e['event_date'];if(!$start||!$end)return 'WINDOW_UNSPECIFIED';
   if($pub&&$pub>=$start&&$pub<$end)return 'PUBLISHED_IN_WINDOW';if($event&&$event>=$start&&$event<$end&&$pub&&$pub>=$end)return 'LATER_REPORTING_ABOUT_WINDOW';if($event&&$event>=$start&&$event<$end)return 'EVENT_IN_WINDOW';return $pub===null?'PUBLICATION_UNKNOWN':'OUTSIDE_WINDOW';
  }
+ /** @param array<string, mixed> $base
+  * @param array<string, mixed> $binding
+  * @return array<string, mixed>
+  */
  public function execute(SifiMonitoringObject $o,array $base,array $binding):array
  {
   $p=$base['multilingual']??throw new \RuntimeException('MULTILINGUAL_PLAN_REQUIRED');$bind=hash('sha256',json_encode($binding,JSON_THROW_ON_ERROR));if(($binding['owner_id']??null)!==$o->user_id||($binding['object_id']??null)!==$o->id||($binding['object_revision']??null)!==$o->revision||empty($binding['session_id']))throw new \RuntimeException('CONTEXT_MISMATCH');
