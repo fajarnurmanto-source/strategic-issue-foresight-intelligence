@@ -4,9 +4,15 @@ use App\Models\SifiMonitoringObject;
 
 final class FeedDiscovery
 {
+ /**
+  * @param array<string,mixed> $plan
+  * @param array<string,mixed> $binding
+  * @return array<string,mixed>
+  */
  public function execute(SifiMonitoringObject $object,array $plan,array $binding):array
  {
-  $p=$plan['feed'];$mp=$p['query_plan'];$options=$p['options'];$pack=app(FeedSourcePack::class);$w=app(MultiSourceResearchWorkspace::class);$started=hrtime(true);$entries=[];$byUrl=[];$calls=[];$raw=0;$duplicates=0;$used=0;$filtered=['object'=>0,'language'=>0,'exclusions'=>0,'region'=>0,'period'=>0];$stop='COMPLETED';
+  $p=$plan['feed'];$mp=$p['query_plan'];$options=$p['options'];$pack=app(FeedSourcePack::class);$w=app(MultiSourceResearchWorkspace::class);$started=hrtime(true);/** @var array<string,array{id:string,title:string,snippet:string,snippet_sha256:string,relevance:array{score:int},origins:list<string>,family:?string,canonical_url:string,revision_state:string}&array<string,mixed>> $entries */
+  $entries=[];$byUrl=[];$calls=[];$raw=0;$duplicates=0;$used=0;$filtered=['object'=>0,'language'=>0,'exclusions'=>0,'region'=>0,'period'=>0];$stop='COMPLETED';
   $limit=['query_limit'=>1,'provider_limit'=>3,'simulated_call_limit'=>6,'result_limit'=>12,'metadata_byte_limit'=>65536,'page_byte_limit'=>32768,'time_limit_ms'=>2000,'max_pages_per_source'=>$options['pages'],'network_request_limit'=>0,'cost_limit'=>0];
   foreach($options['sources'] as $sourceId){$source=$pack->source($sourceId);$provider=new FeedResearchProvider($sourceId);
    for($page=1;$page<=min($source['max_pages'],$options['pages']);$page++){
@@ -39,7 +45,7 @@ final class FeedDiscovery
     if($packet['next']===null)break;
    }
   }
-  foreach($byUrl as $ids)if(count($ids)>1)foreach($ids as $id)$entries[$id]['revision_state']='MULTIPLE_VERSIONS_PRESERVED_NOT_SEPARATE_EVENTS';
+  foreach($byUrl as $ids)if(count($ids)>1)foreach($ids as $id){if(isset($entries[$id]))$entries[$id]['revision_state']='MULTIPLE_VERSIONS_PRESERVED_NOT_SEPARATE_EVENTS';}
   $all=array_values($entries);usort($all,fn($a,$b)=>($b['relevance']['score']<=>$a['relevance']['score'])?:strcmp($a['id'],$b['id']));$entries=array_slice($all,0,12);$pairs=[];
   foreach($entries as $i=>$a)foreach(array_slice($entries,$i+1) as $b){$sameOrigin=(bool)array_intersect($a['origins'],$b['origins']);$family=$a['family']!==null&&$a['family']===$b['family'];$sameUrl=$a['canonical_url']===$b['canonical_url'];$fingerprint=$a['snippet']!==''&&$a['snippet_sha256']===$b['snippet_sha256'];$pairs[]=['left'=>$a['id'],'right'=>$b['id'],'shared_terms'=>[],'left_only_terms'=>[],'right_only_terms'=>[],'possible_republication'=>$sameOrigin||$family||$sameUrl||$fingerprint,'shared_declared_origin'=>$sameOrigin,'same_canonical_revision'=>$sameUrl,'same_declared_family'=>$family,'same_content_fingerprint'=>$fingerprint,'independence'=>'NOT_VERIFIED','conclusion'=>'Lineage/fingerprint hanya kandidat duplikat, revisi atau publikasi ulang; bukan jumlah peristiwa atau bukti independen.'];}
   if($stop==='COMPLETED')$stop=array_filter($calls,fn($c)=>$c['state']!=='OK')?($entries?'PARTIAL_COVERAGE':'NO_RESULTS_PROVIDER_ERRORS'):($entries?'COMPLETED':'NO_RESULTS');
