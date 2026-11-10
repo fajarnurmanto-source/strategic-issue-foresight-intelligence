@@ -136,7 +136,9 @@ final class EvidenceIntakeController extends Controller
             if ($reviewer===null) throw ValidationException::withMessages([
                 'reviewer_email'=>'Pengguna Laravel terverifikasi yang berbeda dari pemilik tidak tersedia.',
             ]);
-            $row->reviewer_user_id=$reviewer->id;$row->workflow_state='REVIEW_REQUESTED';
+            $reviewerId=(int)$reviewer->id;
+            if($reviewerId<=0) throw ValidationException::withMessages(['reviewer_email'=>'ID penelaah tidak valid.']);
+            $row->reviewer_user_id=$reviewerId;$row->workflow_state='REVIEW_REQUESTED';
             $row->revision++;$row->save();
             $previouslyReviewed=DB::table('sifi_evidence_review_notes')->where('evidence_id',$row->id)->exists();
             $this->audit($row,$uid,$previouslyReviewed ? 'REVIEW_RESUBMITTED' : 'REVIEW_REQUESTED');
@@ -191,6 +193,7 @@ final class EvidenceIntakeController extends Controller
         return $references;
     }
 
+    /** @return array{state: string, blockers: array<string, string>} */
     private function readiness(SifiEvidenceDraft $draft, bool $linked): array
     {
         $blockers = [];
@@ -211,7 +214,10 @@ final class EvidenceIntakeController extends Controller
     }
 
     /** Resolve only real signals still linked to the evidence owner's candidate. */
-    private function provenanceFor($items): array
+    /** @param \Illuminate\Database\Eloquent\Collection<int, SifiEvidenceDraft> $items
+     * @return array<string, array<string, mixed>>
+     */
+    private function provenanceFor(\Illuminate\Database\Eloquent\Collection $items): array
     {
         if ($items->isEmpty() || !Schema::hasTable('sifi_real_source_signals')) return [];
 
@@ -241,11 +247,13 @@ final class EvidenceIntakeController extends Controller
             'revision'=>'Revisi berubah; muat ulang halaman sebelum melanjutkan.',
         ]);
     }
+    /** @return array<string, mixed> */
     private function present(SifiEvidenceDraft $row): array
     {
         return $row->only(['id','candidate_id','signal_id','claim_text','rationale','known_gaps',
             'relationship','workflow_state','revision','created_at','updated_at']);
     }
+    /** @param array<string, mixed> $additional */
     private function audit(SifiEvidenceDraft $row,int $actor,string $action,array $additional=[]): void
     {
         DB::table('sifi_evidence_draft_audit')->insert([
