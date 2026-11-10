@@ -9,6 +9,9 @@ use Psr\Http\Message\StreamInterface;
 /** Wire-compatible HTTP implementation. Live dispatch remains locked in this release. */
 final class BoundedSearchTransport
 {
+ /** @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  public function get(string $provider,array $context):array
  {
   $registry=app(SearchProviderRegistry::class);$p=$registry->get($provider);
@@ -18,8 +21,9 @@ final class BoundedSearchTransport
   // No DNS, contact disclosure, socket, or native request can occur before this gate.
   if(($context['mode']??null)!=='HTTP_FAKE'||!app()->environment('testing')||config('sifi.real_search_fixture')!==true||!Http::preventingStrayRequests())throw new \RuntimeException('LIVE_SEARCH_LOCKED');
   $params=$registry->parameters($provider,$context['query'],(int)($context['limit']??5),$context);
-  $sink=new class(Utils::streamFor(fopen('php://temp/maxmemory:32768','w+b'))) implements StreamInterface {
+  $streamResource=fopen('php://temp/maxmemory:32768','w+b');if($streamResource===false)throw new \RuntimeException('SINK_OPEN_FAILED');$sink=new class(Utils::streamFor($streamResource)) implements StreamInterface {
    use StreamDecoratorTrait; private StreamInterface $stream;
+   public function __construct(StreamInterface $stream){$this->stream=$stream;}
    public function write($string):int{if($this->stream->getSize()+strlen($string)>32768)throw new \RuntimeException('RESPONSE_BYTE_LIMIT');return $this->stream->write($string);}
   };
   $base=['provider'=>$provider,'query'=>$context['query'],'query_sha256'=>$context['query_sha256'],'binding_sha256'=>hash('sha256',json_encode($binding,JSON_THROW_ON_ERROR)),'endpoint'=>$p['endpoint'],'method'=>$p['method']??'GET','mode'=>'HTTP_FAKE','network_requests'=>0,'cost'=>0,'results'=>[],'retrieved_at'=>null,'fixture_loaded_at'=>now()->toIso8601String(),'response_sha256'=>null,'response_bytes'=>0,'retry_after_seconds'=>null];
