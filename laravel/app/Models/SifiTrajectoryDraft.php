@@ -1,7 +1,17 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
-/** Analyst hypothesis container, never verified SIFI trajectory/risk/impact. */
+/**
+ * Analyst hypothesis container, never verified SIFI trajectory/risk/impact.
+ *
+ * These attributes correspond to non-nullable text columns in the trajectory migration.
+ *
+ * @property string $trajectory_hypothesis
+ * @property string $risk_hypothesis
+ * @property string $opportunity_hypothesis
+ * @property string $watch_condition
+ * @property string $uncertainty_note
+ */
 final class SifiTrajectoryDraft extends Model {
  protected $table='sifi_trajectory_drafts';
  protected $keyType='string';public $incrementing=false;
