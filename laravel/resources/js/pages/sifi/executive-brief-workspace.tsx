@@ -128,7 +128,7 @@ type Props = {
     sourceDigest: string;
     brief: Brief | null;
     sourceCurrent: boolean;
-    audit: { revision: number; action: string; created_at: string }[];
+    audit?: { revision: number; action: string; created_at: string }[];
 };
 const card = 'rounded-xl border bg-card p-5';
 const field = 'mt-2 w-full rounded-lg border bg-background px-3 py-2.5 text-sm';

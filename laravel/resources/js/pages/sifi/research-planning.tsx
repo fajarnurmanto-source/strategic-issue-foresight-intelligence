@@ -5,8 +5,8 @@ type Session = {
     parent_id: string | null;
     object_revision: number;
     question: string | null;
-    plan: any | null;
-    results: any | null;
+    plan: any;
+    results: any;
     stopping_reason: string;
     expires_at: string;
     expired: boolean;

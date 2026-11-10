@@ -45,13 +45,13 @@ type Props = {
     trajectory: { id: string; revision: number; horizon: string };
     draft: Draft | null;
     counts: Record<string, number>;
-    advisories: {
+    advisories?: {
         id: number;
         created_at: string;
         is_current: boolean;
         result: Result;
     }[];
-    audit: { revision: number; action: string; created_at: string }[];
+    audit?: { revision: number; action: string; created_at: string }[];
 };
 const urlFor = (id: string) => `/sifi/issue-candidates/${id}/foresight`;
 const fieldClass =

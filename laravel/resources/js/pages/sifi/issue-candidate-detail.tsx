@@ -50,8 +50,8 @@ type Assessment = {
 type Props = {
     candidate: Candidate;
     audit: Audit[];
-    intelligence: Assessment[];
-    attachedSignalIds: string[];
+    intelligence?: Assessment[];
+    attachedSignalIds?: string[];
     scope: string;
 };
 const labels: Record<string, string> = {

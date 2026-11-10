@@ -49,7 +49,7 @@ type Snapshot = {
 type Props = {
     candidate: { id: string; title: string; revision: number };
     drafts: Draft[];
-    diagnostics: Snapshot[];
+    diagnostics?: Snapshot[];
     scope: string;
 };
 export default function EvidenceDiagnostics({

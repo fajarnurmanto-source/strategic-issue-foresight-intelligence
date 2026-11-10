@@ -62,8 +62,8 @@ type Props = {
     events: Event[];
     links: Relation[];
     evidence: Evidence[];
-    assessments: Snapshot[];
-    audit: Audit[];
+    assessments?: Snapshot[];
+    audit?: Audit[];
     scope: string;
 };
 const base = (id: string) => `/sifi/issue-candidates/${id}/claim-events`;

@@ -54,8 +54,8 @@ type Props = {
     case: Case | null;
     profiles: Profile[];
     counts: { claims: number; events: number; links: number };
-    advisories: Advisory[];
-    audit: { revision: number; action: string; created_at: string }[];
+    advisories?: Advisory[];
+    audit?: { revision: number; action: string; created_at: string }[];
     mode: string;
 };
 const base = (id: string) => `/sifi/issue-candidates/${id}/issue-case`;

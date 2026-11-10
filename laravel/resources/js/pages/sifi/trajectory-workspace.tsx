@@ -56,14 +56,14 @@ type Props = {
     };
     draft: Draft | null;
     counts: Record<string, number>;
-    advisories: {
+    advisories?: {
         id: number;
         created_at: string;
         is_current: boolean;
         freshness: Freshness;
         result: Result;
     }[];
-    audit: { revision: number; action: string; created_at: string }[];
+    audit?: { revision: number; action: string; created_at: string }[];
 };
 const base = (id: string) => `/sifi/issue-candidates/${id}/trajectory`;
 export default function TrajectoryWorkspace({
