@@ -151,9 +151,10 @@ fi
 echo '=== 5. OUTCOME AND ERROR CLASSES ==='
 echo 'PHPSTAN_ORIGINAL_ERRORS=714'
 echo 'PHPSTAN_VERIFIED_BATCH1_ERRORS=703'
+echo 'PHPSTAN_VERIFIED_BATCH2_ERRORS=632'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 703 ]; then
+if [ "$After" -lt 632 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
@@ -162,7 +163,9 @@ fi
 php -r '
     $data = json_decode(file_get_contents($argv[1]), true);
     $count = [];
-    foreach (($data["files"] ?? []) as $file) {
+    $hotspots = [];
+    foreach (($data["files"] ?? []) as $path => $file) {
+        $hotspots[$path] = count($file["messages"] ?? []);
         foreach (($file["messages"] ?? []) as $item) {
             $id = $item["identifier"] ?? "unknown";
             $count[$id] = ($count[$id] ?? 0) + 1;
@@ -171,6 +174,10 @@ php -r '
     arsort($count);
     foreach (array_slice($count, 0, 12, true) as $id => $n) {
         echo "PHPSTAN_CLASS:$id=$n\n";
+    }
+    arsort($hotspots);
+    foreach (array_slice($hotspots, 0, 15, true) as $file => $n) {
+        echo "PHPSTAN_HOTSPOT:$file=$n\n";
     }
 ' "$LastReport"
 
