@@ -10,8 +10,33 @@ namespace App\Sifi\CoreV2;
  */
 final class PipelineReadModel
 {
+    /**
+     * @return array{
+     *     schema: string,
+     *     mode: string,
+     *     session_id: string,
+     *     object_id: string,
+     *     session_object_revision: int,
+     *     current_object_revision: int|null,
+     *     source_url: string|null,
+     *     source_sha256: string|null,
+     *     image_sha256: string|null,
+     *     brief_sha256: string|null,
+     *     stages: array<string, string>,
+     *     warnings: list<string>,
+     *     limitations: list<string>
+     * }
+     */
     public static function build(object $session, ?object $object, ?object $realSignal): array
     {
+        $identity = get_object_vars($session);
+        $sessionId = $identity['id'] ?? null;
+        $objectId = $identity['object_id'] ?? null;
+        if ((!is_string($sessionId) && !is_int($sessionId))
+            || (!is_string($objectId) && !is_int($objectId))) {
+            throw new \UnexpectedValueException('SESSION_IDENTITY_MISSING');
+        }
+
         $data = json_decode((string) ($session->results_json ?? '{}'), true, 64, JSON_THROW_ON_ERROR);
         if (!is_array($data)) {
             throw new \UnexpectedValueException('SESSION_RESULTS_NOT_AN_OBJECT');
@@ -89,14 +114,16 @@ final class PipelineReadModel
             $warnings[] = 'OBJECT_REVISION_MISMATCH';
         }
 
+        $sourceUrl = $acquisition['source_url'] ?? null;
+
         return [
             'schema' => 'sifi-core-v2-read-model-1',
             'mode' => 'SHADOW_READ_ONLY',
-            'session_id' => (string) $session->id,
-            'object_id' => (string) $session->object_id,
+            'session_id' => (string) $sessionId,
+            'object_id' => (string) $objectId,
             'session_object_revision' => $sessionRevision,
             'current_object_revision' => $objectRevision,
-            'source_url' => $acquisition['source_url'] ?? null,
+            'source_url' => is_string($sourceUrl) ? $sourceUrl : null,
             'source_sha256' => $sourceHash,
             'image_sha256' => $imageHash,
             'brief_sha256' => $briefHash,
@@ -111,6 +138,10 @@ final class PipelineReadModel
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $data
+     * @return array<array-key, mixed>
+     */
     private static function part(array $data, string $key): array
     {
         return is_array($data[$key] ?? null) ? $data[$key] : [];
