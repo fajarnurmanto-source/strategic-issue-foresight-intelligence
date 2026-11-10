@@ -44,7 +44,7 @@ final class E4PeriodDiscoveryController extends Controller
                 'end_date' => ['required', 'date_format:Y-m-d'],
             ]);
             $object = SifiMonitoringObject::query()
-                ->where('user_id', $owner->id)->findOrFail($values['object_id']);
+                ->where('user_id', $owner->id)->findOrFail((string) $values['object_id']);
             $plan = $discovery->plan($owner, $object, $values['start_date'], $values['end_date']);
         }
 
@@ -83,7 +83,7 @@ final class E4PeriodDiscoveryController extends Controller
         ]);
         $owner = $request->user();
         $object = SifiMonitoringObject::query()
-            ->where('user_id', $owner->id)->findOrFail($values['object_id']);
+            ->where('user_id', $owner->id)->findOrFail((string) $values['object_id']);
         Gate::authorize('update', $object);
         $plan = $discovery->plan($owner, $object, $values['start_date'], $values['end_date']);
         if ((int) $object->revision !== (int) $values['object_revision']) {
@@ -171,7 +171,10 @@ final class E4PeriodDiscoveryController extends Controller
         ])->with('e4_result', $report);
     }
 
-    /** @return list<array<string, string|null>> */
+    /**
+     * @param array<string,mixed> $source
+     * @return list<array<string, string|null>>
+     */
     private function entries(int $ownerId, string $objectId, string $sessionId,
         array $source, string $start, string $end): array
     {
