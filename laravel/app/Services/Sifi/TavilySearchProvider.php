@@ -5,8 +5,18 @@ use App\Contracts\SifiResearchProvider;
 /** Experimental keyless candidate. Only metadata links may persist pending snippet rights review. */
 final class TavilySearchProvider implements SifiResearchProvider
 {
+ /** @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  public function search(array $context):array{return $this->normalize(app(($context['mode']??null)==='LIVE'?OneShotSearchTransport::class:BoundedSearchTransport::class)->get('TAVILY_KEYLESS',$context),$context);}
+ /** @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  public function recover(array $context):array{return $this->normalize(app(OneShotSearchTransport::class)->recover('TAVILY_KEYLESS',$context),$context);}
+ /** @param array<string, mixed> $p
+  * @param array<string, mixed> $c
+  * @return array<string, mixed>
+  */
  private function normalize(array $p,array $c):array
  {
   $body=$p['body'];unset($p['body']);if($p['state']!=='OK')return $p;$p['results']=[];
