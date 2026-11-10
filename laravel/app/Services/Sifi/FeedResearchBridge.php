@@ -7,9 +7,10 @@ use Illuminate\Validation\ValidationException;
 final class FeedResearchBridge
 {
  private function fail(string $message):never{throw ValidationException::withMessages(['research'=>$message]);}
+ /** @return array<string, mixed> */
  public function pipelinePreview(User $u,string $sessionId):array
  {
-  $s=DB::table('sifi_research_sessions')->where('id',$sessionId)->where('user_id',$u->id)->first();abort_unless($s,404);$o=SifiMonitoringObject::findOrFail($s->object_id);Gate::forUser($u)->authorize('update',$o);$s=app(ResearchRetrievalWorkspace::class)->session($u,$o,$sessionId);
+  $s=DB::table('sifi_research_sessions')->where('id',$sessionId)->where('user_id',$u->id)->first();abort_unless($s!==null,404);$o=SifiMonitoringObject::query()->where('id',$s->object_id)->firstOrFail();Gate::forUser($u)->authorize('update',$o);$s=app(ResearchRetrievalWorkspace::class)->session($u,$o,$sessionId);
   if($o->state!=='CONFIGURED'||$o->revision!==(int)$s->object_revision)$this->fail('Objek berubah atau dijeda.');
   $m=json_decode($s->results_json,true,32,JSON_THROW_ON_ERROR)['multi_source']??null;$plan=json_decode($s->plan_json,true,32,JSON_THROW_ON_ERROR);$w=app(MultiSourceResearchWorkspace::class);
   if(!$m||$m['state']!=='SAVED'||($m['envelope']['mode']??null)!=='SYNTHETIC_FEED_ACQUISITION_ONLY'||!hash_equals($m['envelope_sha256'],$w->digest($m['envelope']))||!hash_equals($m['envelope']['plan_sha256'],$w->digest($plan)))$this->fail('Simpan hasil feed yang integritasnya valid terlebih dahulu.');
@@ -21,6 +22,7 @@ final class FeedResearchBridge
   $duplicates=[];foreach($items as $item)foreach(array_slice($item['lineage'],1) as $hit)$duplicates[]=['item_id'=>$item['id'],'duplicate_lineage'=>$hit];
   return ['mode'=>'SYNTHETIC_FIXTURE_ONLY','connector'=>'research_fixture','feed_connector'=>true,'feed_envelope'=>$m['envelope'],'status'=>'READY_FOR_ANALYST_DRAFT','reason'=>null,'packet_hash'=>$m['envelope_sha256'],'source'=>['publisher'=>'SIFI self-authored SYNTHETIC feed fixtures','documentation_url'=>'https://rss.sources.invalid/feed','attribution'=>'SIFI SYNTHETIC RSS/Atom/open-news fixtures, not external publications','limitation'=>'SYNTHETIC / NOT VERIFIED. Source rights UNASSESSED; collector OFF. Feed summary is not article text; no real event, grant, independent corroboration or evidence admission.','rights_state'=>'UNASSESSED','collector_state'=>'OFF'],'observations'=>$observations,'duplicates'=>$duplicates,'republication_candidates'=>$m['envelope']['comparisons'],'conflicts'=>[],'changes'=>array_values(array_filter($items,fn($e)=>$e['revision_state']!=='FIRST_IN_RUN')),'candidate_reason'=>'Telaah '.count($items).' item feed sintetis terpilih; bukan kondisi aktual atau jumlah peristiwa.','evidence_admission'=>'NOT_EVALUATED','claim_verified'=>false];
  }
+ /** @param array<string, mixed> $v */
  public function draft(User $u,SifiMonitoringObject $object,string $session,array $v):string
  {
   return DB::transaction(function()use($u,$object,$session,$v){User::whereKey($u->id)->lockForUpdate()->firstOrFail();$o=SifiMonitoringObject::whereKey($object->id)->lockForUpdate()->firstOrFail();Gate::forUser($u)->authorize('update',$o);$s=app(ResearchRetrievalWorkspace::class)->session($u,$o,$session);$s=DB::table('sifi_research_sessions')->where('id',$s->id)->lockForUpdate()->firstOrFail();$preview=$this->pipelinePreview($u,$s->id);$r=json_decode($s->results_json,true,32,JSON_THROW_ON_ERROR);$m=$r['multi_source'];
