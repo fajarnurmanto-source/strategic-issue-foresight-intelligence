@@ -7,6 +7,12 @@ final class RealSearchWorkspace
 {
  public const SCENARIOS=['api_fixture','api_no_result','api_quota','api_timeout','api_partial','api_web_2025'];
  public function liveCanonical(string $url):string{$p=parse_url($url);if(($p['scheme']??'')!=='https'||!in_array($p['host']??'',['id.wikipedia.org','doi.org'],true)||isset($p['port'])||isset($p['user'])||isset($p['pass'])||isset($p['query'])||isset($p['fragment'])||preg_match('/[\\x00-\\x20]/',$url))throw new \RuntimeException('RESULT_URL_POLICY');return $url;}
+ /** @param array<string, mixed> $plan
+  * @param array<string, mixed> $binding
+  * @param list<string> $providerIds
+  * @param array<string, mixed> $dateWindow
+  * @return array<string, mixed>
+  */
  public function execute(SifiMonitoringObject $o,array $plan,array $binding,string $scenario,array $providerIds=SearchProviderRegistry::IDS,string $mode='HTTP_FAKE',int $queryIndex=0,bool $recover=false,array $dateWindow=[]):array
  {
   if($mode==='HTTP_FAKE'){if(!in_array($scenario,self::SCENARIOS,true)||!app()->environment('testing')||config('sifi.real_search_fixture')!==true)throw new \RuntimeException('LIVE_SEARCH_LOCKED');}elseif($mode!=='LIVE'||$scenario!=='approved_live'||count($providerIds)!==1||array_diff($providerIds,[...SearchProviderRegistry::IDS,'TAVILY_KEYLESS','GDELT_DOC'])||config('sifi.real_search_live')!==true)throw new \RuntimeException('LIVE_SEARCH_LOCKED');
