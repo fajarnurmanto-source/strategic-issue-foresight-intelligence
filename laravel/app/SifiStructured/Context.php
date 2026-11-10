@@ -4,7 +4,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 /** Explicit fixture context only; no NLP inference or silent modality conversion. */
 final readonly class Context {
+ /** @param array<array-key, mixed> $data */
  private function __construct(public array $data) {}
+ /** @param array<array-key, mixed> $a */
  public static function from(array $a):self {
   $keys='schema_version,candidate_id,claim_id,claim_revision,event_id,subject_id,predicate_id,object_id,place_id,scope_id,time_start,time_end,modality,polarity,observed_at,fetched_at,provenance_mode,signal_ref';
   $rules=['context'=>['required','array:'.$keys]];
@@ -30,6 +32,10 @@ final readonly class Context {
   });
   $v->validate();return new self(self::sort($a));
  }
+ /**
+  * @param array<array-key, mixed> $a
+  * @return array<array-key, mixed>
+  */
  private static function sort(array $a):array {ksort($a);foreach($a as &$v)if(is_array($v))$v=self::sort($v);return $a;}
  public function json():string{return json_encode($this->data,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);}
  public function digest():string{return hash('sha256',$this->json());}
