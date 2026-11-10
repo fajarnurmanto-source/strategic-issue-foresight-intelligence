@@ -6,6 +6,7 @@ final class BoundedFeedParser
 {
  public const ATOM='http://www.w3.org/2005/Atom';
  public const META='urn:sifi:synthetic-feed:1';
+ /** @return array{version:string,format:string,publisher:string,items:list<array<string,mixed>>,next:?string,body_sha256:string} */
  public function parse(string $body,string $format):array
  {
   if(strlen($body)>32768||!mb_check_encoding($body,'UTF-8')||str_contains($body,"\0"))throw new \RuntimeException('FEED_BYTE_OR_ENCODING_LIMIT');
@@ -23,14 +24,16 @@ final class BoundedFeedParser
    if($format==='ATOM'&&($doc->documentElement?->localName!=='feed'||$doc->documentElement->namespaceURI!==self::ATOM))throw new \RuntimeException('ATOM_NAMESPACE_REQUIRED');
    $get=fn(string $q,?\DOMNode $n=null)=>trim((string)$xp->evaluate('string('.$q.')',$n));
    $feed=$format==='RSS'?'/rss/channel':'/a:feed';$publisher=$this->text($get($feed.($format==='RSS'?'/title':'/a:title')),200);$lang=$get($feed.($format==='RSS'?'/language':'/@xml:lang'));
-   $items=$xp->query($feed.($format==='RSS'?'/item':'/a:entry'));if($items->length>20)throw new \RuntimeException('FEED_ITEM_LIMIT');$out=[];
+   $items=$xp->query($feed.($format==='RSS'?'/item':'/a:entry'));if($items===false)throw new \RuntimeException('MALFORMED_XML');if($items->length>20)throw new \RuntimeException('FEED_ITEM_LIMIT');$out=[];
    foreach($items as $i=>$node){
+    if(!$node instanceof \DOMElement)throw new \RuntimeException('FEED_ITEM_SCHEMA');
+    $serialized=$doc->saveXML($node);if($serialized===false)throw new \RuntimeException('MALFORMED_XML');
     $rss=$format==='RSS';$title=$this->text($get($rss?'title':'a:title',$node),300);$description=$this->text($get($rss?'description':'a:summary',$node),1500);
     $url=$get($rss?'link':'a:link[not(@rel) or @rel="alternate"]/@href',$node);
     if($title===''||$url==='')throw new \RuntimeException('ITEM_TITLE_PERMALINK_REQUIRED');
     $origin=$get($rss?'source':'a:source/a:title',$node)?:$publisher;
     $published=$this->date($get($rss?'pubDate':'a:published',$node));$updated=$this->date($get($rss?'s:updated':'a:updated',$node));
-    $out[]=['key'=>$get($rss?'guid':'a:id',$node)?:$url,'title'=>$title,'snippet'=>$description,'url'=>$url,'publisher'=>$publisher,'origin'=>$this->text($origin,200),'origin_url'=>$get($rss?'source/@url':'a:source/a:link/@href',$node)?:null,'declared_language'=>$get('@xml:lang',$node)?:($get('dc:language',$node)?:($lang?:'UNKNOWN')),'published_at'=>$published,'updated_at'=>$updated,'event_date'=>null,'region'=>$get('s:region',$node)?:'UNKNOWN','family'=>$get('s:family',$node)?:null,'raw_record_sha256'=>hash('sha256',$doc->saveXML($node)),'pointer'=>($rss?'/rss/channel/item/':'/feed/entry/').$i,'observation_time'=>null];
+    $out[]=['key'=>$get($rss?'guid':'a:id',$node)?:$url,'title'=>$title,'snippet'=>$description,'url'=>$url,'publisher'=>$publisher,'origin'=>$this->text($origin,200),'origin_url'=>$get($rss?'source/@url':'a:source/a:link/@href',$node)?:null,'declared_language'=>$get('@xml:lang',$node)?:($get('dc:language',$node)?:($lang?:'UNKNOWN')),'published_at'=>$published,'updated_at'=>$updated,'event_date'=>null,'region'=>$get('s:region',$node)?:'UNKNOWN','family'=>$get('s:family',$node)?:null,'raw_record_sha256'=>hash('sha256',$serialized),'pointer'=>($rss?'/rss/channel/item/':'/feed/entry/').$i,'observation_time'=>null];
    }
    $next=$get($feed.'/a:link[@rel="next"]/@href');
    return ['version'=>'sifi-feed-parser-1','format'=>$format,'publisher'=>$publisher,'items'=>$out,'next'=>$next?:null,'body_sha256'=>hash('sha256',$body)];
@@ -42,6 +45,7 @@ final class BoundedFeedParser
   if($value==='')return null;
   foreach(['!Y-m-d\TH:i:sP','!Y-m-d\TH:i:s\Z','!D, d M Y H:i:s O','!D, d M Y H:i:s T'] as $f){$d=\DateTimeImmutable::createFromFormat($f,$value,new \DateTimeZone('UTC'));$err=\DateTimeImmutable::getLastErrors();if($d&&(!$err||($err['warning_count']===0&&$err['error_count']===0)))return $d->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');}return null;
  }
+ /** @return array{version:string,format:string,publisher:string,items:list<array<string,mixed>>,next:null,body_sha256:string} */
  private function news(string $body):array
  {
   $v=json_decode($body,true,16,JSON_THROW_ON_ERROR);if(!is_array($v['articles']??null)||!array_is_list($v['articles'])||count($v['articles'])>20)throw new \RuntimeException('NEWS_SCHEMA_LIMIT');$out=[];
