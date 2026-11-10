@@ -10,15 +10,21 @@ final class WorldBankGdpSourceAdapter
     public const ENDPOINT='https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.KD.ZG?format=json&date=2022:2024&source=2&per_page=3&page=1';
     public const RESPONSE_SHA='91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346';
     public const SCENARIOS=['wb_snapshot'=>'World Bank · arsip nyata PDB Indonesia 2022–2024'];
+    /** @return array<string,mixed> */
     public function snapshot():array
     {
         $raw=file_get_contents(resource_path('sifi/ae09-wb-response.json'));
-        $meta=json_decode(file_get_contents(resource_path('sifi/ae09-wb-retrieval.json')),true,32,JSON_THROW_ON_ERROR);
-        $rights=json_decode(file_get_contents(resource_path('sifi/ae09-wb-rights.json')),true,32,JSON_THROW_ON_ERROR);
+        $metaBytes=file_get_contents(resource_path('sifi/ae09-wb-retrieval.json'));
+        $rightsBytes=file_get_contents(resource_path('sifi/ae09-wb-rights.json'));
+        if($raw===false||$metaBytes===false||$rightsBytes===false)throw new \RuntimeException('WORLD_BANK_ARCHIVE_UNAVAILABLE');
+        $meta=json_decode($metaBytes,true,32,JSON_THROW_ON_ERROR);
+        $rights=json_decode($rightsBytes,true,32,JSON_THROW_ON_ERROR);
+        if(!is_array($meta)||!is_array($rights))throw new \RuntimeException('WORLD_BANK_ARCHIVE_METADATA_INVALID');
         $r=$this->normalizeResponse($raw,$meta,$rights);
         if(!hash_equals(self::RESPONSE_SHA,hash('sha256',$raw))) return array_replace($r,['status'=>'BLOCKED','reason'=>'ARCHIVE_DIGEST_MISMATCH','observations'=>[]]);
         return $r;
     }
+    /** @return array<string,mixed> */
     public function fetchLive():array {return ['status'=>'BLOCKED','reason'=>'LIVE_ACQUISITION_NOT_AUTHORIZED'];}
     private function digest(mixed $x):string {return hash('sha256',json_encode($x,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));}
     private function date(string $v,string $format):bool
@@ -27,6 +33,11 @@ final class WorldBankGdpSourceAdapter
         return $d!==false&&$d->format($format)===$v;
     }
     /** Decoder also accepts adversarial bodies in tests; application only supplies frozen archive. */
+    /**
+     * @param array<string,mixed> $retrieval
+     * @param array<string,mixed> $rights
+     * @return array<string,mixed>
+     */
     public function normalizeResponse(string $raw,array $retrieval,array $rights,?int $now=null):array
     {
         $now??=now()->getTimestamp();$wire=hash('sha256',$raw);
@@ -54,6 +65,7 @@ final class WorldBankGdpSourceAdapter
         if(($retrieval['sha256']??null)!==$wire)return $fail('CONTENT_DIGEST_MISMATCH');
         if(!is_string($retrieval['retrieved_at']??null)||!$this->date($retrieval['retrieved_at'],'Y-m-d\TH:i:s\Z'))return $fail('RETRIEVAL_TIME_MISSING');
         $t=strtotime($retrieval['retrieved_at']);
+        if($t===false)return $fail('RETRIEVAL_TIME_INVALID');
         if($t>$now+300)return $fail('FUTURE_RETRIEVAL');
         // Local archive review budget, not a claimed publisher update cadence.
         if($now-$t>30*86400)return $fail('ARCHIVE_REVIEW_REQUIRED');
