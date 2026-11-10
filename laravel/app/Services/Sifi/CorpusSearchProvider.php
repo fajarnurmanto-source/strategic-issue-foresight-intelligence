@@ -10,11 +10,21 @@ final class CorpusSearchProvider implements SifiResearchProvider
   if(!is_string($value))throw new \RuntimeException('INVALID_TEXT');
   return mb_substr(trim(preg_replace('/\s+/u',' ',strip_tags(html_entity_decode($value,ENT_QUOTES|ENT_HTML5,'UTF-8')))),0,$max);
  }
+ /** @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  public function search(array $context):array
  {
   return $this->normalize(app(($context['mode']??null)==='LIVE'?OneShotSearchTransport::class:BoundedSearchTransport::class)->get($this->id,$context),$context);
  }
+ /** @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  public function recover(array $context):array{return $this->normalize(app(OneShotSearchTransport::class)->recover($this->id,$context),$context);}
+ /** @param array<string, mixed> $packet
+  * @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  private function normalize(array $packet,array $context):array
  {
   $body=$packet['body'];unset($packet['body']);
