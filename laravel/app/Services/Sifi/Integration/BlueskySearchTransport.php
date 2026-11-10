@@ -33,21 +33,29 @@ class BlueskySearchTransport
         return app(ResearchWorldBankAcquisition::class)->publicAddress(array_values(array_unique($addresses)));
     }
 
+    /** @param array<string, mixed> $options
+     * @param array<string, mixed> $query
+     */
     protected function request(array $options, array $query): \Illuminate\Http\Client\Response
     {
         return Http::withOptions($options)->connectTimeout(8)->timeout(18)->get(self::ENDPOINT, $query);
     }
 
+    /** @return array<string, mixed> */
     public function fetch(string $query, string $contact): array
     {
         app(BlueskyLocalPermission::class)->assertAllowed();
         app(BlueskyLocalPermission::class)->assertContact($contact);
         app(BlueskyLocalPermission::class)->assertQuery($query);
 
-        $sink = new class(Utils::streamFor(fopen('php://temp/maxmemory:262144', 'w+b'))) implements StreamInterface {
+        $streamResource=fopen('php://temp/maxmemory:262144', 'w+b');
+        if ($streamResource===false) throw new \RuntimeException('SIFI_SOCIAL_SINK_OPEN_FAILED');
+        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface {
             use StreamDecoratorTrait;
 
             private StreamInterface $stream;
+
+            public function __construct(StreamInterface $stream) { $this->stream=$stream; }
 
             public function write($data): int
             {
