@@ -30,6 +30,11 @@ while IFS= read -r changed; do
         laravel/app/SifiStructured/Context.php|\
         laravel/app/Services/Sifi/ResearchRetrievalWorkspace.php|\
         laravel/app/Services/Sifi/ResearchSessionWorkspace.php|\
+        laravel/app/Http/Controllers/Sifi/InvestigationController.php|\
+        laravel/app/Http/Controllers/Sifi/ForesightController.php|\
+        laravel/app/Services/Sifi/ExecutiveBriefSource.php|\
+        laravel/app/Models/SifiTrajectoryDraft.php|\
+        laravel/app/Models/SifiForesightDraft.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
