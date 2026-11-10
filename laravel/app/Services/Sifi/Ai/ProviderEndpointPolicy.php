@@ -11,12 +11,15 @@ class ProviderEndpointPolicy
         return $endpoint;
     }
 
+    /** @param array<string, mixed> $rule
+     * @param array<string, mixed> $provider
+     */
     private function eligible(array $rule,array $provider,string $model): bool
     {
         $entry=FreeAiCatalogue::provider($provider['protocol']??'');
         return $entry && $entry['available'] && in_array($model,$entry['models'],true)
-            && ($rule['owner_id']??null)===($provider['owner_id']??-1)
-            && is_int($rule['owner_id']??null) && $rule['owner_id']>0
+            && array_key_exists('owner_id',$rule) && $rule['owner_id']===($provider['owner_id']??-1)
+            && is_int($rule['owner_id']) && $rule['owner_id']>0
             && ($rule['provider_id']??null)===($provider['id']??null)
             && ($rule['endpoint']??null)===($provider['endpoint']??null)
             && ($rule['model']??null)===$model
@@ -32,6 +35,7 @@ class ProviderEndpointPolicy
             && (($provider['protocol']??'')!=='ollama' || ($rule['local_cloud_disabled']??false)===true);
     }
 
+    /** @param array<string, mixed> $provider */
     public function freeStatus(array $provider,string $model): string
     {
         $entry=FreeAiCatalogue::provider($provider['protocol']??'');
@@ -39,12 +43,16 @@ class ProviderEndpointPolicy
         if (!$entry || !$entry['available'] || !in_array($model,$entry['models'],true)) return 'UNAVAILABLE';
         $path=storage_path('app/private/sifi-ai-free-grants.json');
         try {
-            $rules=is_file($path)?json_decode(file_get_contents($path),true,16,JSON_THROW_ON_ERROR):[];
+            $raw=is_file($path)?file_get_contents($path):null;
+            if($raw===false)throw new \RuntimeException('GRANT_READ_FAILED');
+            $rules=$raw===null?[]:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
+            if(!is_array($rules))throw new \RuntimeException('GRANT_FORMAT_INVALID');
             foreach ($rules as $rule) if ($this->eligible($rule,$provider,$model)) return 'FREE VERIFIED';
         } catch (\Throwable) { /* Missing/corrupt evidence never establishes eligibility. */ }
         return 'FREE ELIGIBILITY UNKNOWN';
     }
 
+    /** @param array<string, mixed> $provider */
     public function authorize(array $provider,string $model,string $purpose): void
     {
         if (($provider['protocol']??'')==='chat') throw new \RuntimeException('PAID_MODEL_REJECTED');
@@ -58,7 +66,7 @@ class ProviderEndpointPolicy
         if (!$handle) throw new \RuntimeException('FREE_ELIGIBILITY_UNKNOWN');
         try {
             if (!flock($handle,LOCK_EX)) throw new \RuntimeException('GRANT_LOCK_FAILED');
-            $rules=json_decode(stream_get_contents($handle),true,16,JSON_THROW_ON_ERROR);
+            $raw=stream_get_contents($handle);if($raw===false)throw new \RuntimeException('GRANT_READ_FAILED');$rules=json_decode($raw,true,16,JSON_THROW_ON_ERROR);if(!is_array($rules))throw new \RuntimeException('GRANT_FORMAT_INVALID');
             foreach ($rules as &$rule) {
                 if (!$this->eligible($rule,$provider,$model)) continue;
                 if (($rule['used']??true)!==false || ($rule['max_requests']??0)!==1) throw new \RuntimeException('GRANT_EXHAUSTED');
@@ -73,11 +81,15 @@ class ProviderEndpointPolicy
         } finally { flock($handle,LOCK_UN); fclose($handle); }
     }
 
+    /** @param array<string, mixed> $provider */
     public function probeAvailable(array $provider,string $model): bool
     {
         $path=storage_path('app/private/sifi-ai-free-grants.json');
         try {
-            $rules=is_file($path)?json_decode(file_get_contents($path),true,16,JSON_THROW_ON_ERROR):[];
+            $raw=is_file($path)?file_get_contents($path):null;
+            if($raw===false)throw new \RuntimeException('GRANT_READ_FAILED');
+            $rules=$raw===null?[]:json_decode($raw,true,16,JSON_THROW_ON_ERROR);
+            if(!is_array($rules))throw new \RuntimeException('GRANT_FORMAT_INVALID');
             foreach ($rules as $rule) if ($this->eligible($rule,$provider,$model) && ($rule['used']??true)===false && ($rule['max_requests']??0)===1) return true;
         } catch (\Throwable) { }
         return false;
