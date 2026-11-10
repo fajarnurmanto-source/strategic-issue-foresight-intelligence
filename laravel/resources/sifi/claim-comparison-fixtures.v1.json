@@ -1,0 +1,170 @@
+{
+    "schema_version": "sifi.claim.preview.fixture.catalog.v1",
+    "not_verified": true,
+    "custody": "NOT_ATTESTED",
+    "contexts": {
+        "201": {
+            "body": {
+                "schema_version": "sifi.structured.context.v1",
+                "candidate_id": "00000000-0000-4000-8000-000000000001",
+                "claim_id": "00000000-0000-4000-8000-000000000101",
+                "claim_revision": 1,
+                "event_id": "FX-EVENT-1",
+                "subject_id": "FX-SUBJECT-1",
+                "predicate_id": "FX-CLOSED",
+                "object_id": "FX-ROAD-1",
+                "place_id": "FX-CITY-1",
+                "scope_id": "FX-ROAD-SEGMENT-1",
+                "time_start": "2026-10-20T00:00:00.000000Z",
+                "time_end": "2026-10-20T01:00:00.000000Z",
+                "modality": "ASSERTED",
+                "polarity": "POSITIVE",
+                "observed_at": "2026-10-20T02:00:00.000000Z",
+                "fetched_at": "2026-10-20T02:00:00.000000Z",
+                "provenance_mode": "SYNTHETIC_EXPLICIT",
+                "signal_ref": {
+                    "authority": "AQ01",
+                    "signal_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "signal_version": 1,
+                    "metadata_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "receipt_ref": "FX-R-A"
+                }
+            },
+            "available_at_synthetic": "2026-10-21T00:00:00.000000Z"
+        },
+        "202": {
+            "body": {
+                "schema_version": "sifi.structured.context.v1",
+                "candidate_id": "00000000-0000-4000-8000-000000000001",
+                "claim_id": "00000000-0000-4000-8000-000000000102",
+                "claim_revision": 1,
+                "event_id": "FX-EVENT-1",
+                "subject_id": "FX-SUBJECT-1",
+                "predicate_id": "FX-CLOSED",
+                "object_id": "FX-ROAD-1",
+                "place_id": "FX-CITY-1",
+                "scope_id": "FX-ROAD-SEGMENT-1",
+                "time_start": "2026-10-20T00:00:00.000000Z",
+                "time_end": "2026-10-20T01:00:00.000000Z",
+                "modality": "ASSERTED",
+                "polarity": "POSITIVE",
+                "observed_at": "2026-10-20T02:00:00.000000Z",
+                "fetched_at": "2026-10-20T02:00:00.000000Z",
+                "provenance_mode": "SYNTHETIC_EXPLICIT",
+                "signal_ref": {
+                    "authority": "AQ01",
+                    "signal_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "signal_version": 1,
+                    "metadata_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "receipt_ref": "FX-R-A"
+                }
+            },
+            "available_at_synthetic": "2026-10-21T00:00:00.000000Z"
+        },
+        "203": {
+            "body": {
+                "schema_version": "sifi.structured.context.v1",
+                "candidate_id": "00000000-0000-4000-8000-000000000001",
+                "claim_id": "00000000-0000-4000-8000-000000000103",
+                "claim_revision": 1,
+                "event_id": "FX-EVENT-1",
+                "subject_id": "FX-SUBJECT-1",
+                "predicate_id": "FX-CLOSED",
+                "object_id": "FX-ROAD-1",
+                "place_id": "FX-CITY-1",
+                "scope_id": "FX-ROAD-SEGMENT-1",
+                "time_start": "2026-10-20T00:00:00.000000Z",
+                "time_end": "2026-10-20T01:00:00.000000Z",
+                "modality": "ASSERTED",
+                "polarity": "NEGATIVE",
+                "observed_at": "2026-10-20T02:00:00.000000Z",
+                "fetched_at": "2026-10-20T02:00:00.000000Z",
+                "provenance_mode": "SYNTHETIC_EXPLICIT",
+                "signal_ref": {
+                    "authority": "AQ01",
+                    "signal_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "signal_version": 1,
+                    "metadata_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "receipt_ref": "FX-R-A"
+                }
+            },
+            "available_at_synthetic": "2026-10-21T00:00:00.000000Z"
+        },
+        "204": {
+            "body": {
+                "schema_version": "sifi.structured.context.v1",
+                "candidate_id": "00000000-0000-4000-8000-000000000001",
+                "claim_id": "00000000-0000-4000-8000-000000000104",
+                "claim_revision": 1,
+                "event_id": "FX-EVENT-1",
+                "subject_id": "FX-SUBJECT-1",
+                "predicate_id": "FX-CLOSED",
+                "object_id": "FX-ROAD-1",
+                "place_id": "FX-CITY-1",
+                "scope_id": "FX-ROAD-SEGMENT-2",
+                "time_start": "2026-10-20T00:00:00.000000Z",
+                "time_end": "2026-10-20T01:00:00.000000Z",
+                "modality": "ASSERTED",
+                "polarity": "NEGATIVE",
+                "observed_at": "2026-10-20T02:00:00.000000Z",
+                "fetched_at": "2026-10-20T02:00:00.000000Z",
+                "provenance_mode": "SYNTHETIC_EXPLICIT",
+                "signal_ref": {
+                    "authority": "AQ01",
+                    "signal_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "signal_version": 1,
+                    "metadata_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "receipt_ref": "FX-R-A"
+                }
+            },
+            "available_at_synthetic": "2026-10-21T00:00:00.000000Z"
+        },
+        "205": {
+            "body": {
+                "schema_version": "sifi.structured.context.v1",
+                "candidate_id": "00000000-0000-4000-8000-000000000001",
+                "claim_id": "00000000-0000-4000-8000-000000000105",
+                "claim_revision": 1,
+                "event_id": "FX-EVENT-1",
+                "subject_id": "FX-SUBJECT-1",
+                "predicate_id": "FX-CLOSED",
+                "object_id": "FX-ROAD-1",
+                "place_id": "FX-CITY-1",
+                "scope_id": "FX-ROAD-SEGMENT-1",
+                "time_start": "2026-10-20T00:00:00.000000Z",
+                "time_end": "2026-10-20T01:00:00.000000Z",
+                "modality": "REPORTED",
+                "polarity": "NEGATIVE",
+                "observed_at": "2026-10-20T02:00:00.000000Z",
+                "fetched_at": "2026-10-20T02:00:00.000000Z",
+                "provenance_mode": "SYNTHETIC_EXPLICIT",
+                "signal_ref": {
+                    "authority": "AQ01",
+                    "signal_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "signal_version": 1,
+                    "metadata_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "receipt_ref": "FX-R-A"
+                }
+            },
+            "available_at_synthetic": "2026-10-21T00:00:00.000000Z"
+        }
+    },
+    "pairs": {
+        "match": {
+            "label": "Proposisi sama (contoh sintetis)",
+            "selection": ["201", "202"]
+        },
+        "conflict": {
+            "label": "Polaritas berlawanan (contoh sintetis)",
+            "selection": ["201", "203"]
+        },
+        "scope": {
+            "label": "Scope berbeda \u2192 ABSTAIN",
+            "selection": ["201", "204"]
+        },
+        "modality": {
+            "label": "Modality REPORTED \u2192 ABSTAIN",
+            "selection": ["201", "205"]
+        }
+    }
+}

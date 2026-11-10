@@ -1,0 +1,9 @@
+{
+  "name": "local/decision-intelligence",
+  "description": "Portable opt-in decision support module for Laravel projects",
+  "type": "library",
+  "license": "MIT",
+  "require": {"php": "^8.2", "illuminate/support": "^11.0 || ^12.0 || ^13.0", "illuminate/http": "^11.0 || ^12.0 || ^13.0"},
+  "autoload": {"psr-4": {"DecisionIntelligence\\": "src/"}},
+  "extra": {"laravel": {"providers": ["DecisionIntelligence\\DecisionIntelligenceServiceProvider"]}}
+}

@@ -1,0 +1,311 @@
+import { Head, Link, router } from '@inertiajs/react';
+import { useState, type FormEvent } from 'react';
+type Props = {
+    object: { id: string; name: string; revision: number; state: string };
+    researchSessions: {
+        id: string;
+        question: string | null;
+        expired: boolean;
+        created_at: string;
+    }[];
+    researchSessionCount: number;
+    savedResults: {
+        session_id: string;
+        question: string | null;
+        packet: {
+            state: string;
+            provider: string;
+            response_sha256: string | null;
+            retrieved_at: string | null;
+            results: {
+                title: string;
+                url: string;
+                publisher: string;
+                publication_date: string;
+                platform: string;
+                sentiment: string;
+            }[];
+        };
+    }[];
+    providers: {
+        id: string;
+        corpus: string;
+        review_expires: string;
+        review_current: boolean;
+    }[];
+    live_enabled: boolean;
+    note: string;
+};
+const cls = 'w-full rounded-md border p-2 text-sm';
+export default function Ae16UniversalSearch({
+    object: o,
+    researchSessions,
+    researchSessionCount,
+    savedResults,
+    providers,
+    live_enabled,
+    note,
+}: Props) {
+    const [session, setSession] = useState('');
+    const [provider, setProvider] = useState('CROSSREF');
+    const [query, setQuery] = useState('Yogyakarta');
+    const [start, setStart] = useState('2025-01-01');
+    const [end, setEnd] = useState('2026-01-01');
+    const [busy, setBusy] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const selected = providers.find((x) => x.id === provider);
+    const eligible =
+        live_enabled &&
+        !!selected?.review_current &&
+        o.state === 'CONFIGURED' &&
+        !!session;
+    function submit(e: FormEvent) {
+        e.preventDefault();
+        setErrors({});
+        router.post(
+            `/sifi/monitoring-objects/${o.id}/universal-search`,
+            {
+                session_id: session,
+                object_revision: o.revision,
+                provider,
+                query,
+                limit: 5,
+                start,
+                end,
+            },
+            {
+                onStart: () => setBusy(true),
+                onFinish: () => setBusy(false),
+                onError: setErrors,
+            },
+        );
+    }
+    return (
+        <>
+            <Head title="SIFI · Universal Search Gateway" />
+            <main className="mx-auto max-w-4xl space-y-5 p-6">
+                <header className="space-y-2">
+                    <p className="text-sm">SIFI / AE-16 F-04B</p>
+                    <h1 className="text-2xl font-semibold">
+                        Universal Search — Authorized Gateway
+                    </h1>
+                    <p>{o.name} · Research Session existing</p>
+                    <Link
+                        className="text-sm underline"
+                        href={`/sifi/monitoring-objects/${o.id}/discovery`}
+                    >
+                        Kembali ke Temukan Sumber
+                    </Link>{' '}
+                    <Link
+                        className="ml-3 text-sm underline"
+                        href={`/sifi/monitoring-objects/${o.id}/e2e01`}
+                    >
+                        E2E-01 Pilot
+                    </Link>
+                </header>
+                <section className="space-y-2 rounded-lg border p-4 text-sm">
+                    <p className="font-semibold">
+                        Status:{' '}
+                        {live_enabled
+                            ? 'LIVE FEATURE FLAG ON'
+                            : 'LIVE FEATURE FLAG OFF'}
+                    </p>
+                    <p>{note}</p>
+                    <p>
+                        Setiap request mensyaratkan persetujuan sekali pakai dan
+                        review hak sumber. Tidak ada auto-retry, auto-fallback,
+                        penilaian sentimen otomatis, maupun klaim bukti
+                        terverifikasi.
+                    </p>
+                    <p>
+                        GDELT, web luas dan API media sosial belum tersedia
+                        lewat gateway ini. Wikipedia/Crossref bukan sensor isu
+                        media sosial atau arsip berita komprehensif.
+                    </p>
+                </section>
+                <form
+                    onSubmit={submit}
+                    className="space-y-3 rounded-lg border p-4"
+                >
+                    <label className="block text-sm">
+                        Research Session yang sudah dibuat
+                        <select
+                            className={cls}
+                            value={session}
+                            onChange={(e) => setSession(e.target.value)}
+                        >
+                            <option value="">Pilih sesi</option>
+                            {researchSessions
+                                .filter((s) => !s.expired && !!s.question)
+                                .map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.question?.slice(0, 100)} —{' '}
+                                        {s.id.slice(0, 8)}
+                                    </option>
+                                ))}
+                        </select>
+                    </label>
+                    <p className="text-xs">
+                        Sesi diterima dari server: {researchSessionCount} ·
+                        layak dipilih:{' '}
+                        {
+                            researchSessions.filter(
+                                (s) => !s.expired && !!s.question,
+                            ).length
+                        }
+                    </p>
+                    {researchSessionCount === 0 && (
+                        <p className="text-xs">
+                            Server tidak mengembalikan sesi untuk kombinasi akun
+                            dan objek ini. Jangan buat sesi lain; periksa
+                            riwayat dan jalur data Gateway.
+                        </p>
+                    )}
+                    {researchSessionCount > 0 &&
+                        researchSessions.every(
+                            (s) => s.expired || !s.question,
+                        ) && (
+                            <p className="text-xs">
+                                Sesi ada tetapi semuanya kedaluwarsa atau
+                                pertanyaan kosong.
+                            </p>
+                        )}
+                    <Link
+                        className="text-xs underline"
+                        href={`/sifi/monitoring-objects/${o.id}/research`}
+                    >
+                        Buat Research Session melalui alur existing
+                    </Link>
+                    <label className="block text-sm">
+                        Provider
+                        <select
+                            className={cls}
+                            value={provider}
+                            onChange={(e) => setProvider(e.target.value)}
+                        >
+                            {providers.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {p.id} — {p.corpus}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    {selected && (
+                        <p className="text-xs">
+                            Review provider:{' '}
+                            {selected.review_current
+                                ? 'MASIH BERLAKU'
+                                : 'KEDALUWARSA'}{' '}
+                            · hingga {selected.review_expires}
+                        </p>
+                    )}
+                    <label className="block text-sm">
+                        Query
+                        <input
+                            className={cls}
+                            value={query}
+                            maxLength={200}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <label className="text-sm">
+                            Mulai
+                            <input
+                                type="date"
+                                className={cls}
+                                value={start}
+                                onChange={(e) => setStart(e.target.value)}
+                            />
+                        </label>
+                        <label className="text-sm">
+                            Akhir eksklusif
+                            <input
+                                type="date"
+                                className={cls}
+                                value={end}
+                                onChange={(e) => setEnd(e.target.value)}
+                            />
+                        </label>
+                    </div>
+                    <p className="text-xs">
+                        Tanggal hanya diterapkan server-side bila provider
+                        mendukung. Wikipedia tidak mendukung filter publikasi
+                        2025 dalam adapter ini.
+                    </p>
+                    <button
+                        disabled={!eligible || busy}
+                        className="rounded-lg bg-foreground p-3 text-background disabled:opacity-40"
+                    >
+                        Satu pencarian dengan grant yang telah disetujui
+                    </button>
+                    {!eligible && (
+                        <p className="text-sm">
+                            Diblokir: pilih sesi, pastikan provider direview,
+                            dan siapkan feature flag serta grant spesifik yang
+                            sah. Form tidak mengeluarkan grant.
+                        </p>
+                    )}
+                    {Object.entries(errors).map(([k, v]) => (
+                        <p key={k} className="text-sm text-red-600">
+                            {k}: {v}
+                        </p>
+                    ))}
+                </form>
+                <section className="rounded-lg border p-4 text-sm">
+                    <h2 className="font-semibold">Riwayat hasil</h2>
+                    <p>
+                        Ketika request yang diotorisasi berhasil, metadata
+                        disimpan dalam{' '}
+                        <code>results_json.ae16_live_search</code> pada Research
+                        Session yang dipilih, beserta audit. Lihat kembali
+                        melalui riwayat Research Session. Status evidence tetap
+                        NONE.
+                    </p>
+                </section>
+                <section className="space-y-3 rounded-lg border p-4 text-sm">
+                    <h2 className="font-semibold">
+                        Metadata live tersimpan ({savedResults.length})
+                    </h2>
+                    {savedResults.length === 0 && (
+                        <p>
+                            Belum ada hasil dari request eksternal yang
+                            terotorisasi.
+                        </p>
+                    )}
+                    {savedResults.map((s) => (
+                        <article
+                            key={s.session_id}
+                            className="space-y-2 border-t pt-3"
+                        >
+                            <p className="font-semibold">
+                                {s.question} · {s.packet.provider} ·{' '}
+                                {s.packet.state}
+                            </p>
+                            <p>
+                                Waktu akuisisi:{' '}
+                                {s.packet.retrieved_at ?? 'UNKNOWN'} · hash
+                                respons:{' '}
+                                {s.packet.response_sha256 ?? 'UNAVAILABLE'}
+                            </p>
+                            {s.packet.results.map((x, i) => (
+                                <p key={i}>
+                                    <a
+                                        className="break-all underline"
+                                        href={x.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {x.title}
+                                    </a>{' '}
+                                    · {x.publisher} · {x.platform} · publikasi{' '}
+                                    {x.publication_date}
+                                </p>
+                            ))}
+                        </article>
+                    ))}
+                </section>
+            </main>
+        </>
+    );
+}
