@@ -4,11 +4,15 @@ namespace App\Services\Sifi;
 /** Shared metadata-only fixture boundary. Contains no transport, credentials or DNS. */
 final class MultiSourceFixtureSupport
 {
+    /** @return list<string> */
     public static function words(string $text): array
     {
         return array_slice(array_values(array_unique(array_filter(preg_split('/[^\p{L}\p{N}]+/u',mb_strtolower($text))?:[],fn($v)=>mb_strlen($v)>=2))),0,80);
     }
 
+    /** @param array<string, mixed> $entry
+     * @param array<string, mixed> $context
+     */
     public static function matches(array $entry,array $context): bool
     {
         $text=mb_strtolower($entry['title'].' '.$entry['snippet'].' '.implode(' ',$entry['topics']).' '.($entry['geography']??''));
@@ -17,6 +21,10 @@ final class MultiSourceFixtureSupport
         return (bool)array_intersect($context['question_terms'],$words);
     }
 
+    /** @param array<string, mixed> $context
+     * @param list<array<string, mixed>> $entries
+     * @return array<string, mixed>
+     */
     public static function packet(string $provider,array $context,array $entries): array
     {
         $state=$context['fixture_state'];
