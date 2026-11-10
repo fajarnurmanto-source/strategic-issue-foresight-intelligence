@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 final class WorldBankAcquisitionWorkspace
 {
  public function __construct(private WorldBankOneShotAcquisition $acquisition) {}
+ /** @return array<string,mixed> */
  public function authorization(User $user):array {
   $ready=$this->acquisition->canAcquire($user); // Existing verification + policy + rights remain authoritative.
   $state='NOT_AVAILABLE';$expires=null;$scope=null;$mock=false;
@@ -28,14 +29,18 @@ final class WorldBankAcquisitionWorkspace
  }
  private function directory(string $kind):string {return storage_path('app/private/sifi-worldbank-'.$kind);}
  /** Bounded scan; no foreign user metadata, payload, file path or approval reference is returned. */
+ /** @return array{items:list<array<string,mixed>>,truncated:bool} */
  private function entries(string $kind,User $user):array {
   $rows=[];$count=0;$bytes=0;$truncated=false;$dir=$this->directory($kind);
   if(!is_dir($dir)||is_link($dir))return ['items'=>[],'truncated'=>false];
-  foreach(new \FilesystemIterator($dir,\FilesystemIterator::SKIP_DOTS) as $file){
+  foreach(new \FilesystemIterator($dir,\FilesystemIterator::SKIP_DOTS|\FilesystemIterator::CURRENT_AS_FILEINFO) as $file){
+   if(!$file instanceof \SplFileInfo)continue;
    if(++$count>200){$truncated=true;break;}
    if($file->isLink()||!$file->isFile()||$file->getExtension()!=='enc'||!Str::isUuid($file->getBasename('.enc')))continue;
    $size=$file->getSize();if($size>262144||($bytes+=$size)>8388608){$truncated=true;break;}
-   try{$r=json_decode(Crypt::decryptString(file_get_contents($file->getPathname())),true,24,JSON_THROW_ON_ERROR);}catch(\Throwable){continue;}
+   $encrypted=file_get_contents($file->getPathname());if($encrypted===false)continue;
+   try{$r=json_decode(Crypt::decryptString($encrypted),true,24,JSON_THROW_ON_ERROR);}catch(\Throwable){continue;}
+   if(!is_array($r))continue;
    if(($r['owner_id']??null)!==(int)$user->id||($r['id']??null)!==$file->getBasename('.enc'))continue;
    if($kind==='acquisitions'){
     if(!in_array($r['permit_kind']??null,['OWNER_APPROVED_EXTERNAL_GET','MOCK_TEST_ONLY'],true))continue;
@@ -48,7 +53,9 @@ final class WorldBankAcquisitionWorkspace
   usort($rows,fn($a,$b)=>strcmp($b['at']??'',$a['at']??''));
   return ['items'=>array_slice($rows,0,20),'truncated'=>$truncated||count($rows)>20];
  }
+ /** @return array<string,mixed> */
  public function view(User $user):array {return ['authorization'=>$this->authorization($user),'receipts'=>$this->entries('acquisitions',$user),'attempts'=>$this->entries('attempts',$user)];}
+ /** @return array<string,mixed> */
  public function run(User $user):array {
   $p=$this->acquisition->acquire($user); // One call only; existing permission is exclusively consumed before network.
   $id=(string)Str::uuid();$record=['id'=>$id,'owner_id'=>(int)$user->id,'at'=>now()->utc()->toIso8601String(),'state'=>$p['status'],'reason'=>$p['reason']??null,'receipt_id'=>$p['receipt_id']??null,'transport'=>$p['transport']??null];
