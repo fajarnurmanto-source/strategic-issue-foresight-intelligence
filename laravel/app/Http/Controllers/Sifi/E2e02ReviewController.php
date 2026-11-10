@@ -13,27 +13,30 @@ final class E2e02ReviewController extends Controller
 {
     private const HOSTS=['warta.jogjakota.go.id','lingkunganhidup.jogjakota.go.id','ppid-files.jogjakota.go.id'];
     private function fail(string $why): never {throw ValidationException::withMessages(['e2e02'=>$why]);}
-    private function session(Request $request,SifiMonitoringObject $object,string $id):object
+    private function session(Request $request,SifiMonitoringObject $object,string $id):\stdClass
     {
         Gate::authorize('update',$object);
         if($object->state!=='CONFIGURED')$this->fail('Objek tidak configured.');
         return app(ResearchRetrievalWorkspace::class)->session($request->user(),$object,$id);
     }
-    private function getPilot(object $session):array
+    /** @return array<string,mixed> */
+    private function getPilot(\stdClass $session):array
     {
         $r=json_decode($session->results_json,true,32,JSON_THROW_ON_ERROR);
         $p=$r['e2e01_pilot']??null;
         if(!is_array($p)||($p['state']??'')!=='RETRIEVED_EXTRACTED'||!isset($p['brief'],$p['quote']['text']))$this->fail('Kutipan/brief E2E-01 belum tersedia.');
         return $p;
     }
+    /** @return array{0:string,1:string} */
     private function canonical(string $url):array
     {
         if(strlen($url)>1000||preg_match('/[\x00-\x20\\\\]/',$url)||str_contains($url,'%'))$this->fail('URL gambar tidak didukung.');
         $p=parse_url($url);
         if(!is_array($p)||($p['scheme']??null)!=='https'||!in_array(strtolower($p['host']??''),self::HOSTS,true)
             ||isset($p['port'])||isset($p['user'])||isset($p['pass'])||isset($p['fragment']))$this->fail('Host/URL gambar di luar lingkup pilot.');
-        return [$url,strtolower($p['host'])];
+        return [$url,strtolower((string)($p['host']??''))];
     }
+    /** @return array{0:string,1:string,2:int,3:int} */
     private function imageFetch(string $url,string $host):array
     {
         if(!extension_loaded('curl'))$this->fail('cURL belum tersedia.');
@@ -54,7 +57,7 @@ final class E2e02ReviewController extends Controller
         if($tooLarge)$this->fail('Gambar lebih besar dari 650 KB; tidak disimpan.');
         if($ok===false)$this->fail('Permintaan gambar gagal: '.mb_substr($err,0,120));
         if($code!==200)$this->fail('Gambar HTTP '.$code.'; tidak ada retry otomatis.');
-        $info=@getimagesizefromstring($raw);$mime=is_array($info)?($info['mime']??''):'';
+        $info=@getimagesizefromstring($raw);$mime=is_array($info)?$info['mime']:'';
         if(!in_array($mime,['image/jpeg','image/png','image/webp'],true)||$info[0]<1||$info[1]<1||$info[0]>6000||$info[1]>6000)$this->fail('Gambar tidak dikenali/ukuran piksel melebihi batas.');
         return [$raw,$mime,(int)$info[0],(int)$info[1]];
     }
@@ -98,7 +101,7 @@ final class E2e02ReviewController extends Controller
         },'E2E02_IMAGE_CAPTURED');}catch(\Throwable $e){Storage::disk('local')->delete($path);throw $e;}
         return back()->with('status','Satu gambar disimpan privat untuk inspeksi manusia; belum ditafsirkan/diakui sebagai evidence.');
     }
-    public function image(Request $r,SifiMonitoringObject $object,string $sessionId)
+    public function image(Request $r,SifiMonitoringObject $object,string $sessionId):\Illuminate\Http\Response
     {
         $s=$this->session($r,$object,$sessionId);$data=json_decode($s->results_json,true,32,JSON_THROW_ON_ERROR);
         $im=$data['e2e02_image']??null;if(!$im)abort(404);
