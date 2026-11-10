@@ -12,12 +12,17 @@ final class SourceDiscoveryWorkspace {
   if($o->revision!==$revision)$this->fail('object_revision','Objek berubah. Muat ulang hasil discovery.');
   if($o->state!=='CONFIGURED')$this->fail('object_revision','Objek dijeda/diarsipkan. Aktifkan konfigurasi sebelum menyimpan kandidat.');return $o;
  }
+ /** @param array<string,mixed> $filters
+  * @return array<string,mixed>
+  */
  private function context(SifiMonitoringObject $o,array $filters):array {
   return ['object_id'=>$o->id,'object_revision'=>$o->revision,'name'=>$o->name,'aliases'=>$o->aliases_json,'keywords'=>$o->keywords_json,'exclusions'=>$o->exclusions_json,'objective'=>$o->objective,'geography'=>$o->geography,'filters'=>$filters,'provider'=>!empty($filters['candidate_url'])?'USER_SUBMITTED_URL':'CURATED_PUBLIC_DIRECTORY','catalog_sha256'=>hash('sha256',hash_file('sha256',resource_path('sifi/source-discovery-catalog.json')).hash_file('sha256',resource_path('sifi/ae16-public-source-directory.json'))),'recorded_at'=>now()->toIso8601String(),'network'=>'OFF','admission'=>'NONE'];
  }
- private function audit(object $s,User $u,string $action,array $snapshot):void {
+ /** @param array<string,mixed> $snapshot */
+ private function audit(\stdClass $s,User $u,string $action,array $snapshot):void {
   DB::table('sifi_discovery_audit')->insert(['selection_id'=>$s->id,'actor_user_id'=>$u->id,'revision'=>$s->revision,'action'=>$action,'snapshot_json'=>json_encode($snapshot,JSON_THROW_ON_ERROR),'created_at'=>now()]);
  }
+ /** @param array<string,mixed> $filters */
  public function save(User $u,string $objectId,int $objectRevision,string $key,array $filters):void {
   DB::transaction(function()use($u,$objectId,$objectRevision,$key,$filters){
    $o=$this->object($u,$objectId,$objectRevision);$catalog=app(DiscoveryCatalog::class);
@@ -34,14 +39,14 @@ final class SourceDiscoveryWorkspace {
    if($s){if(now()->gte($s->expires_at))$this->fail('candidate','Retensi konteks kedaluwarsa. Tidak diperpanjang diam-diam.');return;}
    if(DB::table('sifi_discovery_selections')->where('object_id',$o->id)->count()>=50)$this->fail('candidate','Batas 50 pilihan objek tercapai.');$context=$this->context($o,$filters)+['reasons'=>$e['reasons']];$id=(string)Str::uuid();
    DB::table('sifi_discovery_selections')->insert(['id'=>$id,'object_id'=>$o->id,'candidate_id'=>$c->id,'revision'=>1,'object_revision'=>$o->revision,'context_json'=>json_encode($context,JSON_THROW_ON_ERROR),'expires_at'=>$now->copy()->addDays(30),'created_at'=>$now,'updated_at'=>$now]);
-   $this->audit(DB::table('sifi_discovery_selections')->where('id',$id)->first(),$u,'SAVED',['candidate_id'=>$c->id,'descriptor_sha256'=>$c->descriptor_sha256,'context'=>$context,'rights'=>'UNASSESSED']);
+   $this->audit(DB::table('sifi_discovery_selections')->where('id',$id)->firstOrFail(),$u,'SAVED',['candidate_id'=>$c->id,'descriptor_sha256'=>$c->descriptor_sha256,'context'=>$context,'rights'=>'UNASSESSED']);
   });
  }
  public function change(User $u,string $objectId,int $objectRevision,string $selectionId,int $revision,bool $register):void {
   DB::transaction(function()use($u,$objectId,$objectRevision,$selectionId,$revision,$register){
    $o=$this->object($u,$objectId,$objectRevision);
-   $s=DB::table('sifi_discovery_selections')->where('id',$selectionId)->where('object_id',$o->id)->lockForUpdate()->first();abort_unless($s,404);
-   $c=DB::table('sifi_discovery_candidates')->where('id',$s->candidate_id)->where('user_id',$u->id)->lockForUpdate()->first();abort_unless($c,404);
+   $s=DB::table('sifi_discovery_selections')->where('id',$selectionId)->where('object_id',$o->id)->lockForUpdate()->first();abort_unless($s!==null,404);
+   $c=DB::table('sifi_discovery_candidates')->where('id',$s->candidate_id)->where('user_id',$u->id)->lockForUpdate()->first();abort_unless($c!==null,404);
    if((int)$s->revision!==$revision)$this->fail('revision','Revisi kandidat berubah. Muat ulang.');
    if(now()->gte($s->expires_at))$this->fail('revision','Retensi konteks telah kedaluwarsa.');
    $e=json_decode($c->descriptor_json,true,32,JSON_THROW_ON_ERROR);app(DiscoveryCatalog::class)->assertDescriptor($e);
@@ -50,7 +55,7 @@ final class SourceDiscoveryWorkspace {
    if(!$found)$this->fail('candidate','Kandidat tidak lagi relevan dengan konfigurasi objek.');
    $current=$found;unset($current['reasons'],$current['dimensions'],$current['match_points']);if($current!==$e)$this->fail('candidate','Versi metadata katalog berubah. Registrasi snapshot lama diblokir.');
    if($register&&(int)$s->object_revision!==$o->revision)$this->fail('object_revision','Simpan konteks revisi objek terbaru sebelum pendaftaran.');
-   if($register&&$s->registered_source_id){$source=SifiSourceDraft::whereKey($c->source_draft_id)->where('user_id',$u->id)->first();abort_unless($source,404);if($source->rights_state!=='UNASSESSED'||$source->collector_state!=='OFF'||$source->homepage_url!==$e['url'])$this->fail('candidate','Registrasi existing berubah. Tinjau Source & Coverage.');return;}
+   if($register&&$s->registered_source_id){$source=SifiSourceDraft::whereKey($c->source_draft_id)->where('user_id',$u->id)->first();abort_unless($source!==null,404);if($source->rights_state!=='UNASSESSED'||$source->collector_state!=='OFF'||$source->homepage_url!==$e['url'])$this->fail('candidate','Registrasi existing berubah. Tinjau Source & Coverage.');return;}
    $context=$this->context($o,$filters)+['reasons'=>$found['reasons']];
    if($register){
     $url=app(DiscoveryCatalog::class)->safeUrl($e['url'],($e['synthetic']??false)===true);
@@ -66,6 +71,7 @@ final class SourceDiscoveryWorkspace {
    $this->audit($s,$u,$register?'REGISTERED_UNASSESSED':'CONTEXT_REFRESHED',$context+['rights'=>'UNASSESSED','collector'=>'OFF']);
   });
  }
+ /** @return list<array<string,mixed>> */
  public function selections(User $u,SifiMonitoringObject $o):array {
   Gate::forUser($u)->authorize('view',$o);
   return DB::table('sifi_discovery_selections as s')->join('sifi_discovery_candidates as c','c.id','=','s.candidate_id')->where('s.object_id',$o->id)->where('c.user_id',$u->id)->orderByDesc('s.updated_at')->limit(50)->get(['s.*','c.descriptor_json'])->map(function($s){
