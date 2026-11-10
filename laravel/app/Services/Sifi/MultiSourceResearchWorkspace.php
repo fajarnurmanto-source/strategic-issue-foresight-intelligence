@@ -10,10 +10,12 @@ final class MultiSourceResearchWorkspace
 {
     public const PROVIDERS=[CatalogMultiResearchProvider::ID,BulletinMultiResearchProvider::ID];
     public const SCENARIOS=['normal','no_result','quota','timeout','partial','api_fixture','api_no_result','api_quota','api_timeout','api_partial','api_web_2025','multilingual','feed','crossref_live'];
+    /** @param array<array-key,mixed> $value */
     public function digest(array $value):string{return hash('sha256',json_encode($value,JSON_THROW_ON_ERROR));}
     private function fail(string $message):never{throw ValidationException::withMessages(['research'=>$message]);}
 
     /** Server-owned registry only. External providers are not registered or enabled. */
+    /** @return array<string,CatalogMultiResearchProvider|BulletinMultiResearchProvider> */
     public function providers():array{return [CatalogMultiResearchProvider::ID=>new CatalogMultiResearchProvider(),BulletinMultiResearchProvider::ID=>new BulletinMultiResearchProvider()];}
 
     public function canonical(string $url):string
@@ -24,6 +26,7 @@ final class MultiSourceResearchWorkspace
         return 'https://'.strtolower($p['host']).($p['path']??'/').($query?'?'.implode('&',$query):'');
     }
 
+    /** @param array<string,mixed> $v */
     public function create(User $u,SifiMonitoringObject $object,array $v):string
     {
         if($v['scenario']==='crossref_live')return app(RealCollectorWorkspace::class)->collect($u,$object,$v);
@@ -51,6 +54,11 @@ final class MultiSourceResearchWorkspace
         });
     }
 
+    /**
+     * @param array<string,mixed> $plan
+     * @param array<string,mixed> $binding
+     * @return array<string,mixed>
+     */
     public function execute(SifiMonitoringObject $object,array $plan,string $scenario,array $binding=[]):array
     {
         if($scenario==='feed')return app(FeedDiscovery::class)->execute($object,$plan,$binding);
@@ -96,6 +104,10 @@ final class MultiSourceResearchWorkspace
         return ['version'=>'sifi-multi-research-1','mode'=>'SYNTHETIC_METADATA_ONLY','entries'=>$entries,'comparisons'=>$this->compare($entries),'calls'=>$calls,'plan_sha256'=>$this->digest($plan),'provider_ids'=>self::PROVIDERS,'budget'=>$budget,'usage'=>['simulated_calls'=>count($calls),'fixture_metadata_bytes'=>$usedBytes,'network_requests'=>0,'documents_retrieved'=>0,'cost'=>0],'raw_result_count'=>$rawCount,'unique_result_count'=>count($entries),'collapsed_hits'=>max(0,$rawCount-count($seen)),'omitted_unique_count'=>count($seen)-count($entries),'stopping_reason'=>$stop,'coverage'=>'Dua provider fixture .invalid, bukan pencarian internet. Tanggal yang tidak diketahui tetap UNKNOWN; coverage tidak lengkap.','independence'=>'NOT_VERIFIED','claim_verification'=>'NOT_PERFORMED_METADATA_ONLY','ai'=>'OFF','fixture_scenario'=>$scenario];
     }
 
+    /**
+     * @param list<array<string,mixed>> $entries
+     * @return list<array<string,mixed>>
+     */
     private function compare(array $entries):array
     {
         $pairs=[];foreach($entries as $i=>$a){foreach(array_slice($entries,$i+1) as $b){
@@ -104,6 +116,7 @@ final class MultiSourceResearchWorkspace
         }}return $pairs;
     }
 
+    /** @param array<string,mixed> $v */
     public function save(User $u,SifiMonitoringObject $o,string $id,array $v):void
     {
         $v['analyst_note']=(string)($v['analyst_note']??'');
@@ -120,9 +133,11 @@ final class MultiSourceResearchWorkspace
         });
     }
 
+    /** @return list<array<string,mixed>> */
     public function history(User $u,SifiMonitoringObject $o):array
     {
         return array_values(array_filter(array_map(function($s){if($s['expired'])return $s+['multi'=>null];$m=$s['results']['multi_source']??null;if(!$m)return null;if(!hash_equals($m['envelope_sha256'],$this->digest($m['envelope'])))$this->fail('Integritas riwayat gagal.');return ['id'=>$s['id'],'question'=>$s['question'],'revision'=>$s['revision'],'created_at'=>$s['created_at'],'expires_at'=>$s['expires_at'],'expired'=>false,'multi'=>$m];},app(ResearchSessionWorkspace::class)->history($u,$o))));
     }
+    /** @param array<string,mixed> $snapshot */
     private function audit(User $u,string $id,string $action,array $snapshot):void{DB::table('sifi_research_session_audit')->insert(['session_id'=>$id,'actor_user_id'=>$u->id,'action'=>$action,'snapshot_json'=>json_encode($snapshot,JSON_THROW_ON_ERROR),'created_at'=>now()]);}
 }
