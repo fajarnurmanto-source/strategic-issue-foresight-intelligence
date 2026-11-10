@@ -2,13 +2,224 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { ClipboardCheck, ShieldAlert } from 'lucide-react';
-type SourceProvenance={session_id:string;source_url:string;source_sha256:string;image_sha256:string;brief_sha256:string;provenance_mode:string;review_state:string;rights_status:string;evidence_admission:string};
-type Evidence={id:string;candidate_id:string;signal_id:string;claim_text:string;rationale:string|null;known_gaps:string|null;relationship:string;workflow_state:string;revision:number;source_provenance:SourceProvenance|null};
-type Props={evidence:Evidence[];scope:string};
-function ReviewForm({e}:{e:Evidence}){
-  const [finding,setFinding]=useState('INSUFFICIENT');const [notes,setNotes]=useState('');const [busy,setBusy]=useState(false);const [errors,setErrors]=useState<Record<string,string>>({});
-  function submit(ev:FormEvent){ev.preventDefault();setErrors({});router.post(`/sifi/evidence/${e.id}/review`,{revision:e.revision,review_finding:finding,review_notes:notes},{preserveScroll:true,onStart:()=>setBusy(true),onFinish:()=>setBusy(false),onError:(v:Record<string,string>)=>setErrors(v)});}
-  return <form onSubmit={submit} className="mt-4 space-y-3 border-t pt-4"><label className="block text-sm font-medium">Catatan hasil telaah (tidak mengesahkan bukti)<select className="mt-1 w-full rounded-lg border bg-background p-3 text-sm" value={finding} onChange={v=>setFinding(v.target.value)}><option value="INSUFFICIENT">Bukti belum cukup</option><option value="FOLLOWUP_REQUIRED">Perlu pemeriksaan lanjutan</option><option value="INDEPENDENCE_UNRESOLVED">Independensi sumber belum jelas</option></select></label><label className="block text-sm font-medium">Alasan dan pemeriksaan lanjutan<textarea className="mt-1 w-full rounded-lg border bg-background p-3 text-sm" minLength={10} maxLength={5000} required rows={4} value={notes} onChange={v=>setNotes(v.target.value)} placeholder="Jelaskan kekurangan bukti, kontradiksi, atau verifikasi yang masih diperlukan."/></label>{Object.entries(errors).map(([k,v])=><p key={k} role="alert" className="text-xs text-destructive">{v}</p>)}<button disabled={busy} className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background">{busy?'Menyimpan…':'Catat hasil telaah'}</button></form>;
+type SourceProvenance = {
+    session_id: string;
+    source_url: string;
+    source_sha256: string;
+    image_sha256: string;
+    brief_sha256: string;
+    provenance_mode: string;
+    review_state: string;
+    rights_status: string;
+    evidence_admission: string;
+};
+type Evidence = {
+    id: string;
+    candidate_id: string;
+    signal_id: string;
+    claim_text: string;
+    rationale: string | null;
+    known_gaps: string | null;
+    relationship: string;
+    workflow_state: string;
+    revision: number;
+    source_provenance: SourceProvenance | null;
+};
+type Props = { evidence: Evidence[]; scope: string };
+function ReviewForm({ e }: { e: Evidence }) {
+    const [finding, setFinding] = useState('INSUFFICIENT');
+    const [notes, setNotes] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    function submit(ev: FormEvent) {
+        ev.preventDefault();
+        setErrors({});
+        router.post(
+            `/sifi/evidence/${e.id}/review`,
+            {
+                revision: e.revision,
+                review_finding: finding,
+                review_notes: notes,
+            },
+            {
+                preserveScroll: true,
+                onStart: () => setBusy(true),
+                onFinish: () => setBusy(false),
+                onError: (v: Record<string, string>) => setErrors(v),
+            },
+        );
+    }
+    return (
+        <form onSubmit={submit} className="mt-4 space-y-3 border-t pt-4">
+            <label className="block text-sm font-medium">
+                Catatan hasil telaah (tidak mengesahkan bukti)
+                <select
+                    className="mt-1 w-full rounded-lg border bg-background p-3 text-sm"
+                    value={finding}
+                    onChange={(v) => setFinding(v.target.value)}
+                >
+                    <option value="INSUFFICIENT">Bukti belum cukup</option>
+                    <option value="FOLLOWUP_REQUIRED">
+                        Perlu pemeriksaan lanjutan
+                    </option>
+                    <option value="INDEPENDENCE_UNRESOLVED">
+                        Independensi sumber belum jelas
+                    </option>
+                </select>
+            </label>
+            <label className="block text-sm font-medium">
+                Alasan dan pemeriksaan lanjutan
+                <textarea
+                    className="mt-1 w-full rounded-lg border bg-background p-3 text-sm"
+                    minLength={10}
+                    maxLength={5000}
+                    required
+                    rows={4}
+                    value={notes}
+                    onChange={(v) => setNotes(v.target.value)}
+                    placeholder="Jelaskan kekurangan bukti, kontradiksi, atau verifikasi yang masih diperlukan."
+                />
+            </label>
+            {Object.entries(errors).map(([k, v]) => (
+                <p key={k} role="alert" className="text-xs text-destructive">
+                    {v}
+                </p>
+            ))}
+            <button
+                disabled={busy}
+                className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background"
+            >
+                {busy ? 'Menyimpan…' : 'Catat hasil telaah'}
+            </button>
+        </form>
+    );
 }
-export default function EvidenceReviewQueue({evidence}:Props){return <AppLayout breadcrumbs={[{title:'SIFI — Evidence Reviews',href:'/sifi/evidence-reviews'}]}><Head title="SIFI · Evidence Reviews"/><main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8"><div className="mx-auto max-w-5xl space-y-5"><header><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">SIFI / Human Review</p><h1 className="mt-2 text-3xl font-semibold">Evidence Review Queue</h1><p className="mt-2 text-sm text-muted-foreground">Permintaan telaah yang secara eksplisit ditugaskan kepada akun ini.</p></header><div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"><ShieldAlert className="h-5 w-5 shrink-0"/><p><b>TIDAK ADA ADMISSION.</b> Reviewer hanya mencatat keterbatasan, kebutuhan tindak lanjut, atau independensi yang belum diuji. Ini bukan persetujuan institusional atau evidence qualified.</p></div><div className="space-y-4">{evidence.length===0?<div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Belum ada penugasan telaah yang menunggu tanggapan.</div>:evidence.map(e=><section className="min-w-0 rounded-xl border bg-card p-5 shadow-sm [overflow-wrap:anywhere]" key={e.id}><h2 className="flex gap-2 font-semibold"><ClipboardCheck className="h-5 w-5"/>{e.claim_text}</h2><p className="mt-2 text-sm text-muted-foreground">Draf yang ditugaskan · v{e.revision}</p><p className="mt-2 break-all font-mono text-xs text-muted-foreground">Signal: {e.signal_id}</p>{e.source_provenance&&<div className="mt-3 space-y-2 rounded-lg border p-3 text-sm"><p className="font-semibold">Provenance sumber nyata — perlu verifikasi independen</p><a className="break-all text-xs underline" href={e.source_provenance.source_url} target="_blank" rel="noopener noreferrer">{e.source_provenance.source_url}</a><p className="break-all font-mono text-xs">SHA-256 dokumen: {e.source_provenance.source_sha256}</p><p className="break-all font-mono text-xs">SHA-256 gambar: {e.source_provenance.image_sha256}</p><p className="text-xs">Hak: UNASSESSED · Evidence admission: NONE · Research Session: {e.source_provenance.session_id.slice(0,8)}</p></div>}
-    <p className="mt-3 text-sm"><b>Hubungan:</b> {e.relationship} (dugaan analis)</p><p className="mt-2 text-sm"><b>Kesenjangan:</b> {e.known_gaps||'Belum dijelaskan'}</p><p className="mt-2 text-sm"><b>Alasan:</b> {e.rationale||'Belum dijelaskan'}</p><ReviewForm e={e}/></section>)}</div><Link href="/sifi/issue-candidates" className="inline-block text-sm font-medium underline">Kembali ke Issue Candidates</Link></div></main></AppLayout>}
+export default function EvidenceReviewQueue({ evidence }: Props) {
+    return (
+        <AppLayout
+            breadcrumbs={[
+                {
+                    title: 'SIFI — Evidence Reviews',
+                    href: '/sifi/evidence-reviews',
+                },
+            ]}
+        >
+            <Head title="SIFI · Evidence Reviews" />
+            <main className="min-h-screen bg-muted/20 px-4 py-7 lg:px-8">
+                <div className="mx-auto max-w-5xl space-y-5">
+                    <header>
+                        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                            SIFI / Human Review
+                        </p>
+                        <h1 className="mt-2 text-3xl font-semibold">
+                            Evidence Review Queue
+                        </h1>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Permintaan telaah yang secara eksplisit ditugaskan
+                            kepada akun ini.
+                        </p>
+                    </header>
+                    <div
+                        role="alert"
+                        className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
+                    >
+                        <ShieldAlert className="h-5 w-5 shrink-0" />
+                        <p>
+                            <b>TIDAK ADA ADMISSION.</b> Reviewer hanya mencatat
+                            keterbatasan, kebutuhan tindak lanjut, atau
+                            independensi yang belum diuji. Ini bukan persetujuan
+                            institusional atau evidence qualified.
+                        </p>
+                    </div>
+                    <div className="space-y-4">
+                        {evidence.length === 0 ? (
+                            <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+                                Belum ada penugasan telaah yang menunggu
+                                tanggapan.
+                            </div>
+                        ) : (
+                            evidence.map((e) => (
+                                <section
+                                    className="min-w-0 rounded-xl border bg-card p-5 [overflow-wrap:anywhere] shadow-sm"
+                                    key={e.id}
+                                >
+                                    <h2 className="flex gap-2 font-semibold">
+                                        <ClipboardCheck className="h-5 w-5" />
+                                        {e.claim_text}
+                                    </h2>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        Draf yang ditugaskan · v{e.revision}
+                                    </p>
+                                    <p className="mt-2 font-mono text-xs break-all text-muted-foreground">
+                                        Signal: {e.signal_id}
+                                    </p>
+                                    {e.source_provenance && (
+                                        <div className="mt-3 space-y-2 rounded-lg border p-3 text-sm">
+                                            <p className="font-semibold">
+                                                Provenance sumber nyata — perlu
+                                                verifikasi independen
+                                            </p>
+                                            <a
+                                                className="text-xs break-all underline"
+                                                href={
+                                                    e.source_provenance
+                                                        .source_url
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                {e.source_provenance.source_url}
+                                            </a>
+                                            <p className="font-mono text-xs break-all">
+                                                SHA-256 dokumen:{' '}
+                                                {
+                                                    e.source_provenance
+                                                        .source_sha256
+                                                }
+                                            </p>
+                                            <p className="font-mono text-xs break-all">
+                                                SHA-256 gambar:{' '}
+                                                {
+                                                    e.source_provenance
+                                                        .image_sha256
+                                                }
+                                            </p>
+                                            <p className="text-xs">
+                                                Hak: UNASSESSED · Evidence
+                                                admission: NONE · Research
+                                                Session:{' '}
+                                                {e.source_provenance.session_id.slice(
+                                                    0,
+                                                    8,
+                                                )}
+                                            </p>
+                                        </div>
+                                    )}
+                                    <p className="mt-3 text-sm">
+                                        <b>Hubungan:</b> {e.relationship}{' '}
+                                        (dugaan analis)
+                                    </p>
+                                    <p className="mt-2 text-sm">
+                                        <b>Kesenjangan:</b>{' '}
+                                        {e.known_gaps || 'Belum dijelaskan'}
+                                    </p>
+                                    <p className="mt-2 text-sm">
+                                        <b>Alasan:</b>{' '}
+                                        {e.rationale || 'Belum dijelaskan'}
+                                    </p>
+                                    <ReviewForm e={e} />
+                                </section>
+                            ))
+                        )}
+                    </div>
+                    <Link
+                        href="/sifi/issue-candidates"
+                        className="inline-block text-sm font-medium underline"
+                    >
+                        Kembali ke Issue Candidates
+                    </Link>
+                </div>
+            </main>
+        </AppLayout>
+    );
+}

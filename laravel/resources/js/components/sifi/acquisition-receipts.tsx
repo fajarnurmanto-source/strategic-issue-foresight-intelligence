@@ -1,20 +1,186 @@
 import { Link } from '@inertiajs/react';
 export type AcquisitionWorkspace = {
- authorization:{state:string;can_acquire:boolean;expires_at:string|null;scope_sha256:string|null;mock:boolean;issuance:string;max_records:number;max_bytes:number;attempts:number;connect_seconds:number;total_seconds:number;retry:number;scheduler:boolean};
- receipts:{items:{id:string;at:string|null;retention_until:string|null;state:string;mock:boolean}[];truncated:boolean};
- attempts:{items:{id:string;at:string|null;state:string;reason:string|null;receipt_id:string|null;transport:{attempts:number;retry_count:number;bytes?:number;elapsed_ms:number}|null}[];truncated:boolean};
+    authorization: {
+        state: string;
+        can_acquire: boolean;
+        expires_at: string | null;
+        scope_sha256: string | null;
+        mock: boolean;
+        issuance: string;
+        max_records: number;
+        max_bytes: number;
+        attempts: number;
+        connect_seconds: number;
+        total_seconds: number;
+        retry: number;
+        scheduler: boolean;
+    };
+    receipts: {
+        items: {
+            id: string;
+            at: string | null;
+            retention_until: string | null;
+            state: string;
+            mock: boolean;
+        }[];
+        truncated: boolean;
+    };
+    attempts: {
+        items: {
+            id: string;
+            at: string | null;
+            state: string;
+            reason: string | null;
+            receipt_id: string | null;
+            transport: {
+                attempts: number;
+                retry_count: number;
+                bytes?: number;
+                elapsed_ms: number;
+            } | null;
+        }[];
+        truncated: boolean;
+    };
 };
-const states:Record<string,string>={MISSING:'Belum ada otorisasi',READY:'Siap untuk satu percobaan',CONSUMED:'Otorisasi sudah terpakai',EXPIRED:'Otorisasi kedaluwarsa',BLOCKED:'Prasyarat belum terpenuhi',NOT_AVAILABLE:'Otorisasi tidak tersedia'};
-export default function AcquisitionReceipts({workspace:w}:{workspace:AcquisitionWorkspace}){
- const a=w.authorization;
- return <section aria-label="Status izin dan receipt" className="min-w-0 space-y-4 rounded-xl border bg-card p-5 shadow-sm">
- <h2 className="text-xl font-semibold">Izin pengambilan & riwayat hasil</h2>
- <p role="status" className="rounded-lg bg-muted p-3 font-medium">{states[a.state]??'Otorisasi tidak tersedia'} · {a.state}{a.mock?' · MOCK/SIMULASI':''}</p>
- <p className="text-sm">Cakupan tetap: World Bank WDI, PDB Indonesia 2022–2024. Maksimum {a.max_records} record / {a.max_bytes} byte, {a.attempts} percobaan, koneksi {a.connect_seconds} detik / total {a.total_seconds} detik. Retry {a.retry}; scheduler OFF. Bukan pemantauan lokal atau data real-time.</p>
- {a.expires_at&&<p className="break-words text-sm">Batas waktu izin (UTC): {a.expires_at}</p>}{a.scope_sha256&&<details className="text-sm"><summary className="cursor-pointer">Cakupan persetujuan</summary><p className="break-all text-xs">SHA-256 {a.scope_sha256}</p></details>}
- <p className="text-sm text-muted-foreground">Izin harus sudah disahkan pemilik untuk akun dan endpoint ini. Halaman ini tidak membuat atau memperbarui izin. Checkbox menjalankan izin yang tersedia; tidak memberikan hak sumber baru. Jika terpakai atau gagal, diperlukan otorisasi baru. Membuka receipt tidak mengirim request sumber.</p>
- <div className="grid min-w-0 gap-4 lg:grid-cols-2"><div className="min-w-0 space-y-2"><h3 className="font-semibold">Receipt hasil milik saya</h3>{w.receipts.items.length===0&&<p className="text-sm">Belum ada receipt hasil untuk akun ini.</p>}{w.receipts.items.map(r=><article key={r.id} className="min-w-0 rounded-lg border p-3 text-sm"><p className="break-all font-mono text-xs">{r.id}</p><p>Diambil {r.at??'UNKNOWN'} · {r.mock?'MOCK/SIMULASI':'ARSIP NYATA HISTORIS'}</p><p>Akses receipt sampai {r.retention_until??'UNKNOWN'} · {r.state}</p>{r.state==='AVAILABLE'&&<Link href={`/sifi/source-catalog?scenario=wb_acquisition&receipt=${r.id}`} className="mt-2 inline-block underline">Buka hasil, provenance & langkah ke brief</Link>}</article>)}{w.receipts.truncated&&<p className="text-sm">Daftar dibatasi: maksimal 20 hasil dari pemindaian terbatas; bukan seluruh riwayat.</p>}</div>
- <div className="min-w-0 space-y-2"><h3 className="font-semibold">Receipt percobaan</h3>{w.attempts.items.length===0&&<p className="text-sm">Belum ada percobaan yang dicatat melalui workspace ini.</p>}{w.attempts.items.map(r=><article key={r.id} className="min-w-0 rounded-lg border p-3 text-sm"><p className="break-all font-mono text-xs">{r.id}</p><p>{r.at} · {r.state}</p>{r.reason&&<p className="break-words">Alasan: {r.reason}. Tidak diulang otomatis.</p>}<p>{r.transport?`${r.transport.attempts} percobaan jaringan · retry ${r.transport.retry_count} · ${r.transport.bytes??0} byte · ${r.transport.elapsed_ms} ms`:'Tidak ada percobaan jaringan yang dilaporkan.'}</p></article>)}{w.attempts.truncated&&<p className="text-sm">Riwayat percobaan dibatasi.</p>}</div></div>
- <p className="text-xs text-muted-foreground">Hasil validasi dan freshness ditampilkan pada paket yang dipilih di bawah. Candidate/evidence/brief tetap draft NOT VERIFIED; receipt tidak mengesahkan kebenaran.</p>
- </section>;
+const states: Record<string, string> = {
+    MISSING: 'Belum ada otorisasi',
+    READY: 'Siap untuk satu percobaan',
+    CONSUMED: 'Otorisasi sudah terpakai',
+    EXPIRED: 'Otorisasi kedaluwarsa',
+    BLOCKED: 'Prasyarat belum terpenuhi',
+    NOT_AVAILABLE: 'Otorisasi tidak tersedia',
+};
+export default function AcquisitionReceipts({
+    workspace: w,
+}: {
+    workspace: AcquisitionWorkspace;
+}) {
+    const a = w.authorization;
+    return (
+        <section
+            aria-label="Status izin dan receipt"
+            className="min-w-0 space-y-4 rounded-xl border bg-card p-5 shadow-sm"
+        >
+            <h2 className="text-xl font-semibold">
+                Izin pengambilan & riwayat hasil
+            </h2>
+            <p role="status" className="rounded-lg bg-muted p-3 font-medium">
+                {states[a.state] ?? 'Otorisasi tidak tersedia'} · {a.state}
+                {a.mock ? ' · MOCK/SIMULASI' : ''}
+            </p>
+            <p className="text-sm">
+                Cakupan tetap: World Bank WDI, PDB Indonesia 2022–2024. Maksimum{' '}
+                {a.max_records} record / {a.max_bytes} byte, {a.attempts}{' '}
+                percobaan, koneksi {a.connect_seconds} detik / total{' '}
+                {a.total_seconds} detik. Retry {a.retry}; scheduler OFF. Bukan
+                pemantauan lokal atau data real-time.
+            </p>
+            {a.expires_at && (
+                <p className="text-sm break-words">
+                    Batas waktu izin (UTC): {a.expires_at}
+                </p>
+            )}
+            {a.scope_sha256 && (
+                <details className="text-sm">
+                    <summary className="cursor-pointer">
+                        Cakupan persetujuan
+                    </summary>
+                    <p className="text-xs break-all">
+                        SHA-256 {a.scope_sha256}
+                    </p>
+                </details>
+            )}
+            <p className="text-sm text-muted-foreground">
+                Izin harus sudah disahkan pemilik untuk akun dan endpoint ini.
+                Halaman ini tidak membuat atau memperbarui izin. Checkbox
+                menjalankan izin yang tersedia; tidak memberikan hak sumber
+                baru. Jika terpakai atau gagal, diperlukan otorisasi baru.
+                Membuka receipt tidak mengirim request sumber.
+            </p>
+            <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+                <div className="min-w-0 space-y-2">
+                    <h3 className="font-semibold">Receipt hasil milik saya</h3>
+                    {w.receipts.items.length === 0 && (
+                        <p className="text-sm">
+                            Belum ada receipt hasil untuk akun ini.
+                        </p>
+                    )}
+                    {w.receipts.items.map((r) => (
+                        <article
+                            key={r.id}
+                            className="min-w-0 rounded-lg border p-3 text-sm"
+                        >
+                            <p className="font-mono text-xs break-all">
+                                {r.id}
+                            </p>
+                            <p>
+                                Diambil {r.at ?? 'UNKNOWN'} ·{' '}
+                                {r.mock
+                                    ? 'MOCK/SIMULASI'
+                                    : 'ARSIP NYATA HISTORIS'}
+                            </p>
+                            <p>
+                                Akses receipt sampai{' '}
+                                {r.retention_until ?? 'UNKNOWN'} · {r.state}
+                            </p>
+                            {r.state === 'AVAILABLE' && (
+                                <Link
+                                    href={`/sifi/source-catalog?scenario=wb_acquisition&receipt=${r.id}`}
+                                    className="mt-2 inline-block underline"
+                                >
+                                    Buka hasil, provenance & langkah ke brief
+                                </Link>
+                            )}
+                        </article>
+                    ))}
+                    {w.receipts.truncated && (
+                        <p className="text-sm">
+                            Daftar dibatasi: maksimal 20 hasil dari pemindaian
+                            terbatas; bukan seluruh riwayat.
+                        </p>
+                    )}
+                </div>
+                <div className="min-w-0 space-y-2">
+                    <h3 className="font-semibold">Receipt percobaan</h3>
+                    {w.attempts.items.length === 0 && (
+                        <p className="text-sm">
+                            Belum ada percobaan yang dicatat melalui workspace
+                            ini.
+                        </p>
+                    )}
+                    {w.attempts.items.map((r) => (
+                        <article
+                            key={r.id}
+                            className="min-w-0 rounded-lg border p-3 text-sm"
+                        >
+                            <p className="font-mono text-xs break-all">
+                                {r.id}
+                            </p>
+                            <p>
+                                {r.at} · {r.state}
+                            </p>
+                            {r.reason && (
+                                <p className="break-words">
+                                    Alasan: {r.reason}. Tidak diulang otomatis.
+                                </p>
+                            )}
+                            <p>
+                                {r.transport
+                                    ? `${r.transport.attempts} percobaan jaringan · retry ${r.transport.retry_count} · ${r.transport.bytes ?? 0} byte · ${r.transport.elapsed_ms} ms`
+                                    : 'Tidak ada percobaan jaringan yang dilaporkan.'}
+                            </p>
+                        </article>
+                    ))}
+                    {w.attempts.truncated && (
+                        <p className="text-sm">Riwayat percobaan dibatasi.</p>
+                    )}
+                </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+                Hasil validasi dan freshness ditampilkan pada paket yang dipilih
+                di bawah. Candidate/evidence/brief tetap draft NOT VERIFIED;
+                receipt tidak mengesahkan kebenaran.
+            </p>
+        </section>
+    );
 }

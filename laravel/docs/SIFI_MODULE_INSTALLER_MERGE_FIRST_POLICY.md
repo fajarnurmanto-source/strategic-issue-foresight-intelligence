@@ -1,7 +1,7 @@
 # SIFI — Merge-first local module installation (effective IH03H)
 
 For subsequent SIFI module installers, prefer an additive, scope-limited patch
-against the *current* canonical checkout. Do not require an obsolete whole-file
+against the _current_ canonical checkout. Do not require an obsolete whole-file
 checksum for files that other authorized work has legitimately modified.
 
 1. Read the current exact target bytes and record their SHA-256 at preflight.
@@ -20,5 +20,5 @@ checksum for files that other authorized work has legitimately modified.
 7. Do not mutate operational databases or relax authorization, rights, external
    provider quotas, evidence admission, or production-admission restrictions.
 
-This is a *future installer engineering policy*, not permission to bypass a
+This is a _future installer engineering policy_, not permission to bypass a
 legitimate failing test, consent gate, semantic conflict, or security check.

@@ -4,6 +4,7 @@ A self-contained Composer path package for SIFI or PI. **Not yet integrated into
 No database migrations, automatic requests, scheduler, or routes; default AI driver `off`.
 
 ## Install in a disposable branch / staging copy of the desired Laravel application
+
 1. Extract this folder to `<laravel-root>/packages/decision-intelligence`.
 2. Edit the host app `composer.json` to add an entry in `repositories`:
    `{"type":"path","url":"packages/decision-intelligence","options":{"symlink":false}}`
@@ -13,6 +14,7 @@ No database migrations, automatic requests, scheduler, or routes; default AI dri
 6. To uninstall: `composer remove local/decision-intelligence` and remove the path repository entry.
 
 ## Validate filter input
+
 ```php
 use DecisionIntelligence\IssueFilter;
 $filter = IssueFilter::validate([
@@ -27,6 +29,7 @@ $filter = IssueFilter::validate([
 Adapt `$filter` into existing Monitoring Object / Research Session contracts; it does **not** modify DB by itself.
 
 ## Advisory executive summary (explicit call)
+
 ```php
 use DecisionIntelligence\ExecutiveSummary;
 $result = app(ExecutiveSummary::class)->generate([
@@ -36,6 +39,7 @@ $result = app(ExecutiveSummary::class)->generate([
 ```
 
 ## Provider options (choose one, keep secrets out of Git)
+
 - Off (default): `DECISION_AI_DRIVER=off`
 - Local Ollama: `DECISION_AI_DRIVER=ollama`; set `DECISION_OLLAMA_MODEL` to locally installed model. URL defaults to localhost:11434. Local only.
 - Gemini: `DECISION_AI_DRIVER=gemini`; `DECISION_GEMINI_API_KEY` + `DECISION_GEMINI_MODEL`.
@@ -44,6 +48,7 @@ $result = app(ExecutiveSummary::class)->generate([
 Remote providers receive the evidence content provided to `generate()`. Exclude confidential and personal information unless its use is authorized. Local models need sufficient RAM and may be slow. No automatic fallbacks or paid usage; verify provider rates and terms first.
 
 ## Work needed for production integration
+
 - Match host Laravel/PHP versions and Composer lock before install.
 - Map canonical filtering fields into host MonitoringObjectRequest / controller and Research Session (including existing revision/audit policies); do not bypass them.
 - Add only UI controls that map to supported backend filters; indicate unsupported provider fields.

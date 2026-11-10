@@ -1,4 +1,5 @@
 # SIFI — MASTER PRODUCT ROADMAP v1.2
+
 ## Mandatory successor: registered-monitoring-object → period → multi-source acquisition, issue graph, and longitudinal trends
 
 **Owner instruction:** 9 November 2026 (Asia/Jakarta)  
@@ -6,7 +7,7 @@
 **Repository target:** `fajarnurmanto-source/strategic-issue-foresight-intelligence` (private); branch-level adoption via reviewed GitHub PR.  
 **Relationship:** This is an **additive successor** to [SIFI Master Product Roadmap v1.1 (8 Nov 2026)](https://chatgpt.com/library?file_id=libfile_415748d051548191b9e05f207004b849&account_id=personal), AE-12–AE-16 and frozen v1.0 R0–R11 gates. Do not silently rewrite the v1.0 historic baseline or count engineering work as R-gate admission.
 
-**Owner clarification (9 November 2026, same version):** The previously written *period-only, no monitoring object* entry flow was incorrect. A registered monitoring object with keyword(s) is mandatory **before** the user selects a monitoring time window. The clarification corrects that UX precondition; all cross-platform acquisition, horizontal/vertical issue grouping and longitudinal analysis obligations remain binding. This paragraph explicitly supersedes the earlier v1.2 period-only wording as corrected below.
+**Owner clarification (9 November 2026, same version):** The previously written _period-only, no monitoring object_ entry flow was incorrect. A registered monitoring object with keyword(s) is mandatory **before** the user selects a monitoring time window. The clarification corrects that UX precondition; all cross-platform acquisition, horizontal/vertical issue grouping and longitudinal analysis obligations remain binding. This paragraph explicitly supersedes the earlier v1.2 period-only wording as corrected below.
 
 ## 0. Delivery checkpoint (9 November 2026)
 
@@ -19,7 +20,7 @@
 
 SIFI is a **source-neutral intelligence acquisition and extraction system**. It must be able to discover, lawfully retrieve, classify, normalize and extract information from available sources, identify the originating platform/publication, group information into **horizontal** and **vertical** issue relationships, and analyze the development of those issues **over time**.
 
-**The first mandatory step is registration or selection of a monitoring object with at least one keyword.** The owner names the object and registers its keyword set; aliases, exclusions, geography and other constraints may refine the scope. The next mandatory step is choosing `start_date` and `end_date` for that object. SIFI then scans *all currently eligible and configured source categories* for information relevant to the registered object and within the requested period. A separate free-text research question, publisher selection or platform filter is **not** a prerequisite. The saved object can be reused for later periods without re-registering keywords each run.
+**The first mandatory step is registration or selection of a monitoring object with at least one keyword.** The owner names the object and registers its keyword set; aliases, exclusions, geography and other constraints may refine the scope. The next mandatory step is choosing `start_date` and `end_date` for that object. SIFI then scans _all currently eligible and configured source categories_ for information relevant to the registered object and within the requested period. A separate free-text research question, publisher selection or platform filter is **not** a prerequisite. The saved object can be reused for later periods without re-registering keywords each run.
 
 This is **different** from a Google Trends connector or single-keyword search. Google is one optional discovery provider/sensor under lawful access; Google Trends RSS measures search attention, not full-text news discovery, and cannot substitute for the universal acquisition pipeline.
 
@@ -106,17 +107,17 @@ SIFI must maintain **period-comparable historical snapshots** and compute trend 
 
 Minimum dimensions and analytics:
 
-| Dimension | Required metric/output | Interpretation guard |
-|---|---|---|
-| Publication activity | Publications/mentions per day/week/month by issue, platform and source | Counts are observed coverage, not total media universe. |
-| Informational independence | Independent-origin candidates, syndicated duplicates and unknown-origin count | Raw publication volume cannot inflate corroboration. |
-| Platform distribution | Share/count by source class, platform and publisher across comparable intervals | Different quotas and coverage require explicit comparability. |
-| Velocity & acceleration | Period-over-period rate of change, peak, onset, persistence and decline, with denominators | Increases can result from added sources or sampling changes. |
-| Social engagement | Platform-specific interaction rate/velocity normalized for time and available denominator | Not population prevalence or verified impact. |
-| Search interest | Google Trends or other approved sensor tracked separately from articles and posts | Search spike is attention, not incident frequency. |
-| Issue hierarchy | Parent/subissue trend, emerging branches and convergence/divergence | Parent aggregates must not double count one child observation. |
-| Narrative & claim evolution | New/repeated/contradicted claims, frame changes, source entry/exit | Unverified claims remain labeled. |
-| Foresight/watch | Trend-break signals, scenario conditions, uncertainty and counter-evidence | Forecast is probabilistic, not a fact or authorized decision. |
+| Dimension                   | Required metric/output                                                                     | Interpretation guard                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Publication activity        | Publications/mentions per day/week/month by issue, platform and source                     | Counts are observed coverage, not total media universe.        |
+| Informational independence  | Independent-origin candidates, syndicated duplicates and unknown-origin count              | Raw publication volume cannot inflate corroboration.           |
+| Platform distribution       | Share/count by source class, platform and publisher across comparable intervals            | Different quotas and coverage require explicit comparability.  |
+| Velocity & acceleration     | Period-over-period rate of change, peak, onset, persistence and decline, with denominators | Increases can result from added sources or sampling changes.   |
+| Social engagement           | Platform-specific interaction rate/velocity normalized for time and available denominator  | Not population prevalence or verified impact.                  |
+| Search interest             | Google Trends or other approved sensor tracked separately from articles and posts          | Search spike is attention, not incident frequency.             |
+| Issue hierarchy             | Parent/subissue trend, emerging branches and convergence/divergence                        | Parent aggregates must not double count one child observation. |
+| Narrative & claim evolution | New/repeated/contradicted claims, frame changes, source entry/exit                         | Unverified claims remain labeled.                              |
+| Foresight/watch             | Trend-break signals, scenario conditions, uncertainty and counter-evidence                 | Forecast is probabilistic, not a fact or authorized decision.  |
 
 Baseline comparability requires the same time grain, configured eligible source population where possible, stable identity rules, observation cutoffs and explicit handling of missing history. Maintain `first_seen`, `last_seen`, `peak_window`, `window_count`, `independent_origin_window_count`, `velocity`, `acceleration`, `coverage_change` and `confidence/unknown` for each series. Do **not** infer an origin date from the first time SIFI encountered content.
 
@@ -137,17 +138,17 @@ The **registered object and its keywords are required for scoping**, whereas loc
 
 ## 7. Milestone mapping and acceptance, integrated with existing E0–E12
 
-| Milestone | Added mandatory deliverable | Definition of Done |
-|---|---|---|
-| **E2 / P0** | Source-class/platform/publisher taxonomy, rights/health and per-source coverage state in the existing Superadmin registry | At least 3 source families visible with honest access states; source eligibility does not imply content rights. |
-| **E3 / P0** | One lawful real-data period-bound acquisition flowing into existing research/observation consumers | A dated source item has provenance and isolated receipt; no evidence admission. |
-| **E4 / P0 (promoted)** | **Registered-object → period multi-source discovery, no mandatory free-text question** | Register/select an object with keyword(s), then select a window; source plan spans all eligible families relevant to that scope; out-of-window and unsupported-history outcomes explicit. |
-| **E5 / P0 (promoted)** | Source-specific information extraction and normalized publication/claim records | Same schema from ≥2 distinct permitted source classes; metadata-only vs fulltext rights correctly distinguished. |
-| **E6 / P1** | Incremental date-window scheduler with source health/fallback/quotas and checkpoints | Repeat scan uses idempotence, bounded retries and no unauthorized endpoint; historical limitations visible. |
-| **E7 / P0 (promoted)** | Horizontal issue clusters plus vertical typed Issue Graph into Core V2 | Cross-platform mentions form one issue candidate; parent/subissue graph navigable; no unsupported causal edge. |
-| **E8 / P0 (promoted)** | Longitudinal trend-series engine and cross-platform analysis, building on credibility and propagation existing code | ≥2 comparable time buckets; per-platform/origin/issue trend, velocity and acceleration; missing data/coverage visible. |
-| **E10 / P1** | Trend-based watch/forecast and revision-safe executive snapshots | Foresight cites observed series, assumptions, alternative drivers and uncertainty. |
-| **E11 / continuous** | Period picker → source health → issue graph → timeline → investigation/brief UX | One readable end-to-end journey on desktop and mobile using existing screens. |
+| Milestone              | Added mandatory deliverable                                                                                               | Definition of Done                                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **E2 / P0**            | Source-class/platform/publisher taxonomy, rights/health and per-source coverage state in the existing Superadmin registry | At least 3 source families visible with honest access states; source eligibility does not imply content rights.                                                                           |
+| **E3 / P0**            | One lawful real-data period-bound acquisition flowing into existing research/observation consumers                        | A dated source item has provenance and isolated receipt; no evidence admission.                                                                                                           |
+| **E4 / P0 (promoted)** | **Registered-object → period multi-source discovery, no mandatory free-text question**                                    | Register/select an object with keyword(s), then select a window; source plan spans all eligible families relevant to that scope; out-of-window and unsupported-history outcomes explicit. |
+| **E5 / P0 (promoted)** | Source-specific information extraction and normalized publication/claim records                                           | Same schema from ≥2 distinct permitted source classes; metadata-only vs fulltext rights correctly distinguished.                                                                          |
+| **E6 / P1**            | Incremental date-window scheduler with source health/fallback/quotas and checkpoints                                      | Repeat scan uses idempotence, bounded retries and no unauthorized endpoint; historical limitations visible.                                                                               |
+| **E7 / P0 (promoted)** | Horizontal issue clusters plus vertical typed Issue Graph into Core V2                                                    | Cross-platform mentions form one issue candidate; parent/subissue graph navigable; no unsupported causal edge.                                                                            |
+| **E8 / P0 (promoted)** | Longitudinal trend-series engine and cross-platform analysis, building on credibility and propagation existing code       | ≥2 comparable time buckets; per-platform/origin/issue trend, velocity and acceleration; missing data/coverage visible.                                                                    |
+| **E10 / P1**           | Trend-based watch/forecast and revision-safe executive snapshots                                                          | Foresight cites observed series, assumptions, alternative drivers and uncertainty.                                                                                                        |
+| **E11 / continuous**   | Period picker → source health → issue graph → timeline → investigation/brief UX                                           | One readable end-to-end journey on desktop and mobile using existing screens.                                                                                                             |
 
 **Acceptance scenario (real-data-first):** The operator registers/selects an owned monitoring object (e.g. `Persampahan`, keywords `sampah`, `pengelolaan sampah`) and then chooses a bounded historic date range (e.g. 1–7 November 2026), with no additional mandatory free-text question. SIFI enumerates eligible news, official/open-data, research/social or other permitted sources relevant to that object, retrieves only what source/date rights permit, classifies source/platform, extracts claim/issue candidates, horizontally groups common issues, vertically links supported subissues, and shows daily/weekly changes. The object ID, revision, keyword scope and chosen time window must accompany the analysis. At least two truly independent source classes and two comparable time bins must be demonstrated **when legally accessible**. If an eligible data pack cannot provide sufficient coverage, return `PARTIAL / INSUFFICIENT_COVERAGE`, not a synthetic PASS. One integrated acceptance receipt per usable increment; reuse existing tests and engines.
 

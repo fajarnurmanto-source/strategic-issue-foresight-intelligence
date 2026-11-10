@@ -1,1 +1,20 @@
-{"articles":[{"url":"https://publisher.sources.invalid/brief?utm_source=aggregator","title":"SYNTHETIC — {{OBJECT}}: informasi publik untuk penelitian","seendate":"20250612T100000Z","domain":"publisher.sources.invalid","language":"Indonesian","sourcecountry":"Indonesia"},{"url":"https://aggregated.sources.invalid/fr","title":"SYNTHETIC — {{OBJECT}}: source pour recherche publique, contexte inconnu","seendate":"20250801T100000Z","domain":"publisher.sources.invalid","language":"French","sourcecountry":"France"}]}
+{
+    "articles": [
+        {
+            "url": "https://publisher.sources.invalid/brief?utm_source=aggregator",
+            "title": "SYNTHETIC — {{OBJECT}}: informasi publik untuk penelitian",
+            "seendate": "20250612T100000Z",
+            "domain": "publisher.sources.invalid",
+            "language": "Indonesian",
+            "sourcecountry": "Indonesia"
+        },
+        {
+            "url": "https://aggregated.sources.invalid/fr",
+            "title": "SYNTHETIC — {{OBJECT}}: source pour recherche publique, contexte inconnu",
+            "seendate": "20250801T100000Z",
+            "domain": "publisher.sources.invalid",
+            "language": "French",
+            "sourcecountry": "France"
+        }
+    ]
+}

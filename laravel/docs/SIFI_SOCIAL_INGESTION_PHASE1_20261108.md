@@ -23,11 +23,12 @@ No live request, enablement, background job, restart, migrations, paid provider 
 2. Configure `SIFI_SOCIAL_BLUESKY_PUBLIC_SEARCH=true`, `SIFI_SOCIAL_CONTACT_EMAIL=<real maintainer email>`, and `SIFI_IH03_SHADOW_INGEST=true` in the isolated local runtime. Do not commit .env.
 3. Use an already verified owner and configured monitoring object. Run once:
 
-   ```bash
-   php artisan sifi:social-bluesky --owner=<owner-id> --object=<object-uuid> --query='sampah'
-   ```
+    ```bash
+    php artisan sifi:social-bluesky --owner=<owner-id> --object=<object-uuid> --query='sampah'
+    ```
 
-   The optional query must equal that object's name, a keyword, or an alias. When omitted, SIFI uses its first configured keyword or alias. No independent per-post review is necessary.
+    The optional query must equal that object's name, a keyword, or an alias. When omitted, SIFI uses its first configured keyword or alias. No independent per-post review is necessary.
+
 4. Review the created receipt in the existing research/observations screen. Platform engagement is displayed as a **snapshot, not an event count**. If the provider returns 429 or changes access, the run fails closed without automatic retry.
 5. For safety, the isolated source authorization expires at the reviewed date in `config/sifi_social.php`; source-policy review is source-level and periodic, not per mention.
 
@@ -44,7 +45,6 @@ No live request, enablement, background job, restart, migrations, paid provider 
 This phase does not claim cross-platform completeness, Instagram/TikTok/X coverage, representative sampling of public opinion, or factual validation of allegations. It does not fetch whole feeds or arbitrary accounts, bypass authentication, or train models on user posts. Full commercial/production admission remains denied.
 
 References: Bluesky API / public AppView (https://docs.bsky.app/docs/api/app-bsky-feed-search-posts); Brand24 project setup (https://help.brand24.com/en/articles/3392669-how-do-i-create-my-first-project); Brand24 mention relevance (https://help.brand24.com/en/articles/10021500-how-to-prevent-non-relevant-mentions).
-
 
 ## Live access finding, 9 Nov 2026 — action on observed HTTP 403
 

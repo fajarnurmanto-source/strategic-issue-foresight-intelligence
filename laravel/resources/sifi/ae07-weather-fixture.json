@@ -1,22 +1,43 @@
 {
-  "fixture_id": "SIFI-AE07-WEATHER-SYNTHETIC-V1",
-  "synthetic": true,
-  "source": {
-    "id": "SRC-BMKG",
-    "publisher": "BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)",
-    "documentation_url": "https://data.bmkg.go.id/prakiraan-cuaca/",
-    "endpoint_template": "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={adm4}",
-    "rights_state": "RESEARCH_ONLY_PENDING_WRITTEN_PERMISSION",
-    "fixture_use": "SYNTHETIC_TEST_ONLY",
-    "collector_state": "OFF",
-    "update_schedule": "Dokumentasi: dua kali sehari; horizon tiga hari, interval tiga jam",
-    "limitation": "Dibuat oleh SIFI mengikuti nama field dokumentasi. Bukan respons API BMKG, bukan prakiraan aktual, bukan peristiwa atau peringatan dini. Hak koleksi live belum diberikan."
-  },
-  "data": [{
-    "lokasi": {"adm4": "00.00.00.0000", "desa": "WILAYAH SIMULASI — BUKAN LOKASI NYATA"},
-    "cuaca": [[
-      {"analysis_date": "2026-01-01T00:00:00", "utc_datetime": "2026-01-01 03:00:00", "t": 28, "hu": 80, "weather": 3, "weather_desc": "Berawan (SIMULASI)"},
-      {"analysis_date": "2026-01-01T00:00:00", "utc_datetime": "2026-01-01 06:00:00", "t": 27, "hu": 85, "weather": 61, "weather_desc": "Hujan ringan (SIMULASI)"}
-    ]]
-  }]
+    "fixture_id": "SIFI-AE07-WEATHER-SYNTHETIC-V1",
+    "synthetic": true,
+    "source": {
+        "id": "SRC-BMKG",
+        "publisher": "BMKG (Badan Meteorologi, Klimatologi, dan Geofisika)",
+        "documentation_url": "https://data.bmkg.go.id/prakiraan-cuaca/",
+        "endpoint_template": "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={adm4}",
+        "rights_state": "RESEARCH_ONLY_PENDING_WRITTEN_PERMISSION",
+        "fixture_use": "SYNTHETIC_TEST_ONLY",
+        "collector_state": "OFF",
+        "update_schedule": "Dokumentasi: dua kali sehari; horizon tiga hari, interval tiga jam",
+        "limitation": "Dibuat oleh SIFI mengikuti nama field dokumentasi. Bukan respons API BMKG, bukan prakiraan aktual, bukan peristiwa atau peringatan dini. Hak koleksi live belum diberikan."
+    },
+    "data": [
+        {
+            "lokasi": {
+                "adm4": "00.00.00.0000",
+                "desa": "WILAYAH SIMULASI — BUKAN LOKASI NYATA"
+            },
+            "cuaca": [
+                [
+                    {
+                        "analysis_date": "2026-01-01T00:00:00",
+                        "utc_datetime": "2026-01-01 03:00:00",
+                        "t": 28,
+                        "hu": 80,
+                        "weather": 3,
+                        "weather_desc": "Berawan (SIMULASI)"
+                    },
+                    {
+                        "analysis_date": "2026-01-01T00:00:00",
+                        "utc_datetime": "2026-01-01 06:00:00",
+                        "t": 27,
+                        "hu": 85,
+                        "weather": 61,
+                        "weather_desc": "Hujan ringan (SIMULASI)"
+                    }
+                ]
+            ]
+        }
+    ]
 }

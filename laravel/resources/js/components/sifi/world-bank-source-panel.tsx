@@ -1,30 +1,401 @@
 import { router } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import type { Pipeline } from './source-pipeline-panel';
-type Registration={id:string;homepage_url:string|null;source_type:string;revision:number;name:string};
-const doc='https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?locations=ID';
-export default function WorldBankSourcePanel({pipeline:p,sources}:{pipeline:Pipeline;sources:Registration[]}) {
- const acquisition=p.connector==='wb_acquisition'; const mock=p.mode==='MOCK_ACQUISITION_ONLY';
- const [fetchConfirmed,setFetchConfirmed]=useState(false);
- const registered=sources.filter(s=>s.source_type==='OPEN_DATA'&&s.homepage_url===doc);
- const [id,setId]=useState(registered[0]?.id??'');const source=registered.find(s=>s.id===id);
- const [note,setNote]=useState('');const [confirmed,setConfirmed]=useState(false);const [busy,setBusy]=useState(false);const [errors,setErrors]=useState<Record<string,string>>({});
- const opts={preserveScroll:true,onStart:()=>setBusy(true),onFinish:()=>setBusy(false),onError:setErrors};
- function create(e:FormEvent){e.preventDefault();router.post('/sifi/source-catalog/pipeline-draft',{scenario:p.scenario,receipt_id:p.receipt_id,analyst_note:note,confirm_archive:confirmed,source_draft_id:id,source_revision:source?.revision,input_digest:p.packet_hash},opts);}
- function register(){router.post('/sifi/source-catalog/sources',{name:'World Bank WDI — pertumbuhan PDB Indonesia',source_type:'OPEN_DATA',homepage_url:doc,source_geography:'Indonesia — nasional',notes:'Arsip audit publik 2022–2024; CC BY 4.0 dengan atribusi dan ketentuan dataset. Tidak mengaktifkan collector atau memberikan authority.'},{...opts,onSuccess:()=>router.get('/sifi/source-catalog',{scenario:p.scenario})});}
- return <section className="min-w-0 space-y-5 rounded-xl border bg-card p-5 shadow-sm" aria-label={acquisition?'World Bank pengambilan terkontrol':'World Bank arsip nyata'}>
-  <header className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Sumber → Ringkasan intelligence</p><h2 className="mt-2 text-xl font-semibold">{acquisition?'Pengambilan sumber terkontrol':'Konteks ekonomi dari data resmi'}</h2></div><b className="rounded-lg border border-teal-500/40 bg-teal-500/10 p-3 text-xs">{mock?'MOCK/SIMULASI':p.mode==='ACQUISITION_NOT_PERFORMED'?'BELUM MENGAMBIL':'ARSIP NYATA'} · TANPA AI · COLLECTOR OFF</b></header>
-  <p className="rounded-lg bg-muted p-3 text-sm">{acquisition?'Satu GET memerlukan izin pemilik yang terpisah, berlaku sekali dan terikat akun. Membuka halaman tidak mengirim request. Tidak ada pengambilan berkala atau retry.':'Tiga record publik World Bank, Indonesia 2022–2024. Ini arsip pemeriksaan manual 25 Oktober 2026, bukan data real-time. Tidak ada pengambilan jaringan saat membuka halaman.'}</p>
-  {acquisition&&<div className="space-y-3 rounded-lg border p-4 text-sm"><h3 className="font-semibold">Ambil satu paket · maksimum 3 record / 64 KiB</h3><p>HTTPS tetap · timeout koneksi 2 detik / total 5 detik · tanpa redirect, retry atau scheduler.</p><p>{p.acquisition_allowed?'Izin server untuk satu pengambilan tersedia. Pada mock staging, hanya server lokal yang dipanggil.':(p.transport?'Izin satu percobaan sudah terpakai/tidak tersedia. Membuka ulang halaman tidak mengulangi permintaan.':'Belum ada izin satu GET yang berlaku. Tidak ada request yang dijalankan.')}</p><label className="flex items-start gap-2"><input type="checkbox" checked={fetchConfirmed} onChange={e=>setFetchConfirmed(e.target.checked)} className="mt-1 shrink-0"/><span>Saya memahami izin ini terpakai untuk satu percobaan, termasuk jika jaringan gagal. Jangan mencoba ulang otomatis.</span></label><button type="button" disabled={!p.acquisition_allowed||!fetchConfirmed||busy} onClick={()=>router.post('/sifi/source-catalog/acquisition-preview',{confirm_one_shot:true},opts)} className="rounded-lg border px-4 py-2 font-semibold disabled:opacity-40">Ambil satu paket</button>{p.transport&&<p>Diterima {p.transport.bytes} byte · {p.transport.attempts} percobaan · retry {p.transport.retry_count} · {p.transport.elapsed_ms} ms.</p>}{mock&&<p className="font-semibold">MOCK/SYNTHETIC PERMANEN. Payload berasal dari server uji lokal, bukan World Bank atau statistik aktual.</p>}</div>}
-  <label className="block text-sm font-medium">Sumber / skenario<select aria-label="Skenario pengujian" value={p.scenario} onChange={e=>router.get('/sifi/source-catalog',{scenario:e.target.value})} className="mt-2 w-full rounded-lg border bg-background p-3">{Object.entries(p.scenarios).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
-  <div className="min-w-0 space-y-2 rounded-lg border p-4 text-sm"><p className="font-semibold">World Development Indicators · NY.GDP.MKTP.KD.ZG</p><p>Periode: 2022–2024 · Cakupan: Indonesia nasional · Satuan: pertumbuhan tahunan (%)</p><p>Pembaruan dataset: {p.source.source_updated_at??'UNKNOWN'} · Bukan waktu publikasi tiap record.</p><p>Diambil: {p.source.fetched_at??'BELUM ADA'} · Status: {p.source.freshness??'BELUM ADA DATA'}</p><p>{mock?'Hak payload: SIMULASI SIFI; CC BY 4.0 hanya rujukan metadata/sumber':'Lisensi: CC BY 4.0'} · Review hak sampai {p.source.rights_review_until??'BELUM ADA RECEIPT — cek hak sebelum pengambilan'}. Batas review lokal, bukan jadwal rilis penerbit.</p><p className="break-words">Atribusi: {p.source.attribution??'Belum ada payload yang diperoleh'}</p><p className="break-all"><a href={doc} className="underline">Metadata indikator</a> · <a href="https://creativecommons.org/licenses/by/4.0/" className="underline">Lisensi</a> · <a href="https://www.worldbank.org/ext/en/legal/terms-conditions/datasets" className="underline">Ketentuan dataset dan reuse</a></p><p className="break-all text-xs">Source ID: {p.source.id??'SRC-WB-WDI-IDN-GDP'}<br/>{acquisition?'Endpoint schema yang dikunci':'Endpoint arsip'}: {p.source.endpoint}</p></div>
-  {acquisition&&p.receipt_id&&<p className="break-all rounded-lg border p-3 text-sm">Receipt hasil dipilih: {p.receipt_id} · Validasi {p.status}. Periode historis; publikasi record UNKNOWN. Lanjutkan melalui telaah analis di bawah.</p>}
-  <p role="status" className="rounded-lg border p-3 text-sm">{p.status==='READY_FOR_ANALYST_DRAFT'?'Paket tersedia untuk telaah dan pembuatan draft. Klaim tetap NOT VERIFIED; evidence NOT_EVALUATED.':`Diblokir: ${p.reason}. Tidak membuat draft.`}</p>
-  <div className="grid min-w-0 gap-5 lg:grid-cols-2"><div className="min-w-0 space-y-3"><h3 className="font-semibold">Record dan provenance</h3>{p.observations.map(o=><details key={o.id} className="min-w-0 rounded-lg border p-3 text-sm"><summary className="cursor-pointer break-words">{o.description}</summary><div className="mt-3 space-y-2 break-all text-xs"><p>Periode {o.period_label} · Waktu publikasi record UNKNOWN.</p><p>Record {o.id}</p><p>Raw record hash {o.provenance.raw_hash}</p><p>Pointer {o.provenance.pointer}</p></div></details>)}<p className="text-sm">{p.observations.length} record · {p.duplicates.length} duplikat · {p.changes.length} perbandingan antarperiode. Perbedaan percentage points bukan revisi record atau bukti sebab akibat.</p>{p.history&&<p className="text-sm">Riwayat akun: {p.history.new} baru · {p.history.already_seen} sudah ada · {p.history.updated} revisi. Maksimal {p.history.audit_window_limit} audit; bukan sumber independen.</p>}<p className="break-all text-xs">Packet SHA-256 {p.packet_hash}<br/>Raw response SHA-256 {p.source.wire_sha256}</p></div>
-  <form onSubmit={create} className="min-w-0 space-y-3 rounded-lg border p-4"><h3 className="font-semibold">Telaah analis → draft brief</h3><p className="text-sm">{p.candidate_reason}</p>{registered.length===0?<button type="button" disabled={busy} onClick={register} className="rounded-lg border px-3 py-2 text-sm font-semibold">Daftarkan usulan sumber World Bank</button>:<label className="block text-sm">Usulan sumber milik Anda<select aria-label="Usulan sumber World Bank" value={id} onChange={e=>setId(e.target.value)} className="mt-2 w-full rounded-lg border bg-background p-3"><option value="">Pilih sumber</option>{registered.map(s=><option key={s.id} value={s.id}>{s.name} · revisi {s.revision}</option>)}</select></label>}
-   <label className="block text-sm font-medium">Catatan telaah Anda<textarea aria-label="Catatan telaah Anda" value={note} onChange={e=>setNote(e.target.value)} required minLength={15} maxLength={2000} rows={4} className="mt-2 w-full rounded-lg border bg-background p-3"/></label>
-   <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)} className="mt-1 shrink-0"/><span>{mock?'Saya memahami ini MOCK/SIMULASI permanen, bukan angka resmi.':'Saya memahami ini arsip nyata historis, bukan simulasi atau data terkini.'} Buat draft lokal; jangan mengesahkan claim, evidence atau keputusan.</span></label>
-   <p className="text-xs text-muted-foreground">Tidak mengubah hak registry atau collector. Replay membuka draft yang sama tanpa menimpa suntingan. Brief memerlukan telaah dan simpan manual.</p>{Object.entries(errors).map(([k,v])=><p key={k} role="alert" className="text-sm text-destructive">{v}</p>)}<button disabled={busy||!source||!confirmed||note.trim().length<15||p.status!=='READY_FOR_ANALYST_DRAFT'} className="rounded-lg bg-foreground px-4 py-3 text-sm font-semibold text-background disabled:opacity-40">{mock?'Buat / buka draft mock':'Buat / buka draft arsip nyata'}</button></form></div>
-  <p className="text-sm text-muted-foreground">{p.source.limitation} Atribusi dan tautan lisensi/ketentuan harus menyertai pembagian ulang. World Bank tidak mendukung atau mengesahkan interpretasi SIFI.</p>
- </section>;
+type Registration = {
+    id: string;
+    homepage_url: string | null;
+    source_type: string;
+    revision: number;
+    name: string;
+};
+const doc =
+    'https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?locations=ID';
+export default function WorldBankSourcePanel({
+    pipeline: p,
+    sources,
+}: {
+    pipeline: Pipeline;
+    sources: Registration[];
+}) {
+    const acquisition = p.connector === 'wb_acquisition';
+    const mock = p.mode === 'MOCK_ACQUISITION_ONLY';
+    const [fetchConfirmed, setFetchConfirmed] = useState(false);
+    const registered = sources.filter(
+        (s) => s.source_type === 'OPEN_DATA' && s.homepage_url === doc,
+    );
+    const [id, setId] = useState(registered[0]?.id ?? '');
+    const source = registered.find((s) => s.id === id);
+    const [note, setNote] = useState('');
+    const [confirmed, setConfirmed] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const opts = {
+        preserveScroll: true,
+        onStart: () => setBusy(true),
+        onFinish: () => setBusy(false),
+        onError: setErrors,
+    };
+    function create(e: FormEvent) {
+        e.preventDefault();
+        router.post(
+            '/sifi/source-catalog/pipeline-draft',
+            {
+                scenario: p.scenario,
+                receipt_id: p.receipt_id,
+                analyst_note: note,
+                confirm_archive: confirmed,
+                source_draft_id: id,
+                source_revision: source?.revision,
+                input_digest: p.packet_hash,
+            },
+            opts,
+        );
+    }
+    function register() {
+        router.post(
+            '/sifi/source-catalog/sources',
+            {
+                name: 'World Bank WDI — pertumbuhan PDB Indonesia',
+                source_type: 'OPEN_DATA',
+                homepage_url: doc,
+                source_geography: 'Indonesia — nasional',
+                notes: 'Arsip audit publik 2022–2024; CC BY 4.0 dengan atribusi dan ketentuan dataset. Tidak mengaktifkan collector atau memberikan authority.',
+            },
+            {
+                ...opts,
+                onSuccess: () =>
+                    router.get('/sifi/source-catalog', {
+                        scenario: p.scenario,
+                    }),
+            },
+        );
+    }
+    return (
+        <section
+            className="min-w-0 space-y-5 rounded-xl border bg-card p-5 shadow-sm"
+            aria-label={
+                acquisition
+                    ? 'World Bank pengambilan terkontrol'
+                    : 'World Bank arsip nyata'
+            }
+        >
+            <header className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                        Sumber → Ringkasan intelligence
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold">
+                        {acquisition
+                            ? 'Pengambilan sumber terkontrol'
+                            : 'Konteks ekonomi dari data resmi'}
+                    </h2>
+                </div>
+                <b className="rounded-lg border border-teal-500/40 bg-teal-500/10 p-3 text-xs">
+                    {mock
+                        ? 'MOCK/SIMULASI'
+                        : p.mode === 'ACQUISITION_NOT_PERFORMED'
+                          ? 'BELUM MENGAMBIL'
+                          : 'ARSIP NYATA'}{' '}
+                    · TANPA AI · COLLECTOR OFF
+                </b>
+            </header>
+            <p className="rounded-lg bg-muted p-3 text-sm">
+                {acquisition
+                    ? 'Satu GET memerlukan izin pemilik yang terpisah, berlaku sekali dan terikat akun. Membuka halaman tidak mengirim request. Tidak ada pengambilan berkala atau retry.'
+                    : 'Tiga record publik World Bank, Indonesia 2022–2024. Ini arsip pemeriksaan manual 25 Oktober 2026, bukan data real-time. Tidak ada pengambilan jaringan saat membuka halaman.'}
+            </p>
+            {acquisition && (
+                <div className="space-y-3 rounded-lg border p-4 text-sm">
+                    <h3 className="font-semibold">
+                        Ambil satu paket · maksimum 3 record / 64 KiB
+                    </h3>
+                    <p>
+                        HTTPS tetap · timeout koneksi 2 detik / total 5 detik ·
+                        tanpa redirect, retry atau scheduler.
+                    </p>
+                    <p>
+                        {p.acquisition_allowed
+                            ? 'Izin server untuk satu pengambilan tersedia. Pada mock staging, hanya server lokal yang dipanggil.'
+                            : p.transport
+                              ? 'Izin satu percobaan sudah terpakai/tidak tersedia. Membuka ulang halaman tidak mengulangi permintaan.'
+                              : 'Belum ada izin satu GET yang berlaku. Tidak ada request yang dijalankan.'}
+                    </p>
+                    <label className="flex items-start gap-2">
+                        <input
+                            type="checkbox"
+                            checked={fetchConfirmed}
+                            onChange={(e) =>
+                                setFetchConfirmed(e.target.checked)
+                            }
+                            className="mt-1 shrink-0"
+                        />
+                        <span>
+                            Saya memahami izin ini terpakai untuk satu
+                            percobaan, termasuk jika jaringan gagal. Jangan
+                            mencoba ulang otomatis.
+                        </span>
+                    </label>
+                    <button
+                        type="button"
+                        disabled={
+                            !p.acquisition_allowed || !fetchConfirmed || busy
+                        }
+                        onClick={() =>
+                            router.post(
+                                '/sifi/source-catalog/acquisition-preview',
+                                { confirm_one_shot: true },
+                                opts,
+                            )
+                        }
+                        className="rounded-lg border px-4 py-2 font-semibold disabled:opacity-40"
+                    >
+                        Ambil satu paket
+                    </button>
+                    {p.transport && (
+                        <p>
+                            Diterima {p.transport.bytes} byte ·{' '}
+                            {p.transport.attempts} percobaan · retry{' '}
+                            {p.transport.retry_count} · {p.transport.elapsed_ms}{' '}
+                            ms.
+                        </p>
+                    )}
+                    {mock && (
+                        <p className="font-semibold">
+                            MOCK/SYNTHETIC PERMANEN. Payload berasal dari server
+                            uji lokal, bukan World Bank atau statistik aktual.
+                        </p>
+                    )}
+                </div>
+            )}
+            <label className="block text-sm font-medium">
+                Sumber / skenario
+                <select
+                    aria-label="Skenario pengujian"
+                    value={p.scenario}
+                    onChange={(e) =>
+                        router.get('/sifi/source-catalog', {
+                            scenario: e.target.value,
+                        })
+                    }
+                    className="mt-2 w-full rounded-lg border bg-background p-3"
+                >
+                    {Object.entries(p.scenarios).map(([k, v]) => (
+                        <option key={k} value={k}>
+                            {v}
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <div className="min-w-0 space-y-2 rounded-lg border p-4 text-sm">
+                <p className="font-semibold">
+                    World Development Indicators · NY.GDP.MKTP.KD.ZG
+                </p>
+                <p>
+                    Periode: 2022–2024 · Cakupan: Indonesia nasional · Satuan:
+                    pertumbuhan tahunan (%)
+                </p>
+                <p>
+                    Pembaruan dataset: {p.source.source_updated_at ?? 'UNKNOWN'}{' '}
+                    · Bukan waktu publikasi tiap record.
+                </p>
+                <p>
+                    Diambil: {p.source.fetched_at ?? 'BELUM ADA'} · Status:{' '}
+                    {p.source.freshness ?? 'BELUM ADA DATA'}
+                </p>
+                <p>
+                    {mock
+                        ? 'Hak payload: SIMULASI SIFI; CC BY 4.0 hanya rujukan metadata/sumber'
+                        : 'Lisensi: CC BY 4.0'}{' '}
+                    · Review hak sampai{' '}
+                    {p.source.rights_review_until ??
+                        'BELUM ADA RECEIPT — cek hak sebelum pengambilan'}
+                    . Batas review lokal, bukan jadwal rilis penerbit.
+                </p>
+                <p className="break-words">
+                    Atribusi:{' '}
+                    {p.source.attribution ?? 'Belum ada payload yang diperoleh'}
+                </p>
+                <p className="break-all">
+                    <a href={doc} className="underline">
+                        Metadata indikator
+                    </a>{' '}
+                    ·{' '}
+                    <a
+                        href="https://creativecommons.org/licenses/by/4.0/"
+                        className="underline"
+                    >
+                        Lisensi
+                    </a>{' '}
+                    ·{' '}
+                    <a
+                        href="https://www.worldbank.org/ext/en/legal/terms-conditions/datasets"
+                        className="underline"
+                    >
+                        Ketentuan dataset dan reuse
+                    </a>
+                </p>
+                <p className="text-xs break-all">
+                    Source ID: {p.source.id ?? 'SRC-WB-WDI-IDN-GDP'}
+                    <br />
+                    {acquisition
+                        ? 'Endpoint schema yang dikunci'
+                        : 'Endpoint arsip'}
+                    : {p.source.endpoint}
+                </p>
+            </div>
+            {acquisition && p.receipt_id && (
+                <p className="rounded-lg border p-3 text-sm break-all">
+                    Receipt hasil dipilih: {p.receipt_id} · Validasi {p.status}.
+                    Periode historis; publikasi record UNKNOWN. Lanjutkan
+                    melalui telaah analis di bawah.
+                </p>
+            )}
+            <p role="status" className="rounded-lg border p-3 text-sm">
+                {p.status === 'READY_FOR_ANALYST_DRAFT'
+                    ? 'Paket tersedia untuk telaah dan pembuatan draft. Klaim tetap NOT VERIFIED; evidence NOT_EVALUATED.'
+                    : `Diblokir: ${p.reason}. Tidak membuat draft.`}
+            </p>
+            <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+                <div className="min-w-0 space-y-3">
+                    <h3 className="font-semibold">Record dan provenance</h3>
+                    {p.observations.map((o) => (
+                        <details
+                            key={o.id}
+                            className="min-w-0 rounded-lg border p-3 text-sm"
+                        >
+                            <summary className="cursor-pointer break-words">
+                                {o.description}
+                            </summary>
+                            <div className="mt-3 space-y-2 text-xs break-all">
+                                <p>
+                                    Periode {o.period_label} · Waktu publikasi
+                                    record UNKNOWN.
+                                </p>
+                                <p>Record {o.id}</p>
+                                <p>Raw record hash {o.provenance.raw_hash}</p>
+                                <p>Pointer {o.provenance.pointer}</p>
+                            </div>
+                        </details>
+                    ))}
+                    <p className="text-sm">
+                        {p.observations.length} record · {p.duplicates.length}{' '}
+                        duplikat · {p.changes.length} perbandingan antarperiode.
+                        Perbedaan percentage points bukan revisi record atau
+                        bukti sebab akibat.
+                    </p>
+                    {p.history && (
+                        <p className="text-sm">
+                            Riwayat akun: {p.history.new} baru ·{' '}
+                            {p.history.already_seen} sudah ada ·{' '}
+                            {p.history.updated} revisi. Maksimal{' '}
+                            {p.history.audit_window_limit} audit; bukan sumber
+                            independen.
+                        </p>
+                    )}
+                    <p className="text-xs break-all">
+                        Packet SHA-256 {p.packet_hash}
+                        <br />
+                        Raw response SHA-256 {p.source.wire_sha256}
+                    </p>
+                </div>
+                <form
+                    onSubmit={create}
+                    className="min-w-0 space-y-3 rounded-lg border p-4"
+                >
+                    <h3 className="font-semibold">
+                        Telaah analis → draft brief
+                    </h3>
+                    <p className="text-sm">{p.candidate_reason}</p>
+                    {registered.length === 0 ? (
+                        <button
+                            type="button"
+                            disabled={busy}
+                            onClick={register}
+                            className="rounded-lg border px-3 py-2 text-sm font-semibold"
+                        >
+                            Daftarkan usulan sumber World Bank
+                        </button>
+                    ) : (
+                        <label className="block text-sm">
+                            Usulan sumber milik Anda
+                            <select
+                                aria-label="Usulan sumber World Bank"
+                                value={id}
+                                onChange={(e) => setId(e.target.value)}
+                                className="mt-2 w-full rounded-lg border bg-background p-3"
+                            >
+                                <option value="">Pilih sumber</option>
+                                {registered.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.name} · revisi {s.revision}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
+                    <label className="block text-sm font-medium">
+                        Catatan telaah Anda
+                        <textarea
+                            aria-label="Catatan telaah Anda"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            required
+                            minLength={15}
+                            maxLength={2000}
+                            rows={4}
+                            className="mt-2 w-full rounded-lg border bg-background p-3"
+                        />
+                    </label>
+                    <label className="flex items-start gap-2 text-sm">
+                        <input
+                            type="checkbox"
+                            checked={confirmed}
+                            onChange={(e) => setConfirmed(e.target.checked)}
+                            className="mt-1 shrink-0"
+                        />
+                        <span>
+                            {mock
+                                ? 'Saya memahami ini MOCK/SIMULASI permanen, bukan angka resmi.'
+                                : 'Saya memahami ini arsip nyata historis, bukan simulasi atau data terkini.'}{' '}
+                            Buat draft lokal; jangan mengesahkan claim, evidence
+                            atau keputusan.
+                        </span>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                        Tidak mengubah hak registry atau collector. Replay
+                        membuka draft yang sama tanpa menimpa suntingan. Brief
+                        memerlukan telaah dan simpan manual.
+                    </p>
+                    {Object.entries(errors).map(([k, v]) => (
+                        <p
+                            key={k}
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
+                            {v}
+                        </p>
+                    ))}
+                    <button
+                        disabled={
+                            busy ||
+                            !source ||
+                            !confirmed ||
+                            note.trim().length < 15 ||
+                            p.status !== 'READY_FOR_ANALYST_DRAFT'
+                        }
+                        className="rounded-lg bg-foreground px-4 py-3 text-sm font-semibold text-background disabled:opacity-40"
+                    >
+                        {mock
+                            ? 'Buat / buka draft mock'
+                            : 'Buat / buka draft arsip nyata'}
+                    </button>
+                </form>
+            </div>
+            <p className="text-sm text-muted-foreground">
+                {p.source.limitation} Atribusi dan tautan lisensi/ketentuan
+                harus menyertai pembagian ulang. World Bank tidak mendukung atau
+                mengesahkan interpretasi SIFI.
+            </p>
+        </section>
+    );
 }

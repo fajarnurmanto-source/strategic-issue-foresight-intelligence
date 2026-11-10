@@ -1,13 +1,13 @@
 {
-  "source_id": "SRC-WB-WDI-IDN-GDP",
-  "state": "REVIEWED_CC_BY_4_0",
-  "commercial_reuse": true,
-  "license": "https://creativecommons.org/licenses/by/4.0/",
-  "indicator_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?locations=ID",
-  "terms_url": "https://data.worldbank.org/summary-terms-of-use",
-  "attribution": "The World Bank: World Development Indicators: GDP growth (annual %), Indonesia. Country official statistics, National Statistical Organizations and/or Central Banks; OECD National Accounts data files; World Bank staff estimates.",
-  "reviewed_on": "2026-10-25",
-  "review_until": "2026-11-24",
-  "note": "Dataset-specific CC BY-4.0 displayed; full Dataset Terms located at new URL. Dataset Terms prevail on conflict with general site terms. Attribution, licence/terms links, no endorsement and downstream reuse obligations apply. Review before live/commercial release.",
-  "dataset_terms_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets"
+    "source_id": "SRC-WB-WDI-IDN-GDP",
+    "state": "REVIEWED_CC_BY_4_0",
+    "commercial_reuse": true,
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "indicator_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?locations=ID",
+    "terms_url": "https://data.worldbank.org/summary-terms-of-use",
+    "attribution": "The World Bank: World Development Indicators: GDP growth (annual %), Indonesia. Country official statistics, National Statistical Organizations and/or Central Banks; OECD National Accounts data files; World Bank staff estimates.",
+    "reviewed_on": "2026-10-25",
+    "review_until": "2026-11-24",
+    "note": "Dataset-specific CC BY-4.0 displayed; full Dataset Terms located at new URL. Dataset Terms prevail on conflict with general site terms. Attribution, licence/terms links, no endorsement and downstream reuse obligations apply. Review before live/commercial release.",
+    "dataset_terms_url": "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets"
 }

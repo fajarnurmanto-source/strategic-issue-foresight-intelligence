@@ -13,27 +13,29 @@ void createInertiaApp({
     layout: (name) => {
         // SIFI_SINGLE_APP_SHELL_V1: local page AppLayout takes precedence over the global default.
         // Auth and settings keep their existing global layout behavior.
-        if (new Set([
-            'dashboard',
-            'sifi/claim-event-workspace',
-            'sifi/e4-period-discovery',
-            'sifi/evidence-diagnostics',
-            'sifi/evidence-intake',
-            'sifi/evidence-review-queue',
-            'sifi/executive-brief-workspace',
-            'sifi/foresight-workspace',
-            'sifi/investigation-detail',
-            'sifi/investigations-index',
-            'sifi/issue-candidate-detail',
-            'sifi/issue-candidates-index',
-            'sifi/issue-case-workspace',
-            'sifi/product-roadmap',
-            'sifi/signal-inbox',
-            'sifi/signal-relations',
-            'sifi/source-catalog',
-            'sifi/trajectory-workspace',
-            'sifi/workbench'
-        ]).has(name)) {
+        if (
+            new Set([
+                'dashboard',
+                'sifi/claim-event-workspace',
+                'sifi/e4-period-discovery',
+                'sifi/evidence-diagnostics',
+                'sifi/evidence-intake',
+                'sifi/evidence-review-queue',
+                'sifi/executive-brief-workspace',
+                'sifi/foresight-workspace',
+                'sifi/investigation-detail',
+                'sifi/investigations-index',
+                'sifi/issue-candidate-detail',
+                'sifi/issue-candidates-index',
+                'sifi/issue-case-workspace',
+                'sifi/product-roadmap',
+                'sifi/signal-inbox',
+                'sifi/signal-relations',
+                'sifi/source-catalog',
+                'sifi/trajectory-workspace',
+                'sifi/workbench',
+            ]).has(name)
+        ) {
             return null;
         }
 

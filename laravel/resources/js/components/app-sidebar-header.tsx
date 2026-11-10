@@ -14,7 +14,10 @@ export function AppSidebarHeader({
                 <SidebarTrigger className="-ml-1" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
-            <AppearanceToggleTab className="sifi-appearance ml-auto" aria-label="Tampilan aplikasi" />
+            <AppearanceToggleTab
+                className="sifi-appearance ml-auto"
+                aria-label="Tampilan aplikasi"
+            />
         </header>
     );
 }

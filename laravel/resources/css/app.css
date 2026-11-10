@@ -212,50 +212,101 @@
 }
 /* Expand-width label stability; retain shadcn icon collapse behavior and mobile drawer. */
 @media (min-width: 768px) {
-    [data-slot="sidebar"][data-state="expanded"] .sifi-main-nav [data-sidebar="menu-button"] {
+    [data-slot='sidebar'][data-state='expanded']
+        .sifi-main-nav
+        [data-sidebar='menu-button'] {
         overflow: visible;
     }
-    [data-slot="sidebar"][data-state="expanded"] .sifi-main-nav .sifi-nav-label {
+    [data-slot='sidebar'][data-state='expanded']
+        .sifi-main-nav
+        .sifi-nav-label {
         white-space: nowrap;
         text-overflow: clip;
         overflow: visible;
         width: auto;
     }
-    [data-slot="sidebar"][data-state="expanded"] [data-sidebar="content"] {
+    [data-slot='sidebar'][data-state='expanded'] [data-sidebar='content'] {
         overflow-x: clip;
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    .sifi-main-nav [data-sidebar="menu-button"] { transition: none; }
+    .sifi-main-nav [data-sidebar='menu-button'] {
+        transition: none;
+    }
 }
 
 /* Presentation only: preserve native sidebar, keyboard controls and responsive drawer. */
-.sifi-app-header { background: var(--card); }
-.sifi-main-nav [data-sidebar="menu-button"] { min-height: 2.5rem; border-radius: .625rem; }
-.sifi-main-nav [data-sidebar="menu-button"][data-active="true"] {
-    color: var(--sidebar-accent-foreground); background: var(--sidebar-accent);
-    box-shadow: inset 3px 0 var(--sidebar-primary); font-weight: 600;
+.sifi-app-header {
+    background: var(--card);
 }
-[data-slot="sidebar-inset"] { background: var(--background); }
-.bg-card { box-shadow: 0 2px 8px rgb(15 23 42 / .035); }
-section[aria-label="Akses modul"] a {
-    border-color: var(--border); box-shadow: 0 2px 8px rgb(15 23 42 / .035);
+.sifi-main-nav [data-sidebar='menu-button'] {
+    min-height: 2.5rem;
+    border-radius: 0.625rem;
 }
-section[aria-label="Akses modul"] a:hover { border-color: var(--ring); background: var(--accent); }
-section[aria-label="Akses modul"] a > div > svg:first-child { color: var(--primary); }
-button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
-    outline: 2px solid var(--ring); outline-offset: 3px;
+.sifi-main-nav [data-sidebar='menu-button'][data-active='true'] {
+    color: var(--sidebar-accent-foreground);
+    background: var(--sidebar-accent);
+    box-shadow: inset 3px 0 var(--sidebar-primary);
+    font-weight: 600;
 }
-.sifi-appearance button { min-height: 2rem; }
+[data-slot='sidebar-inset'] {
+    background: var(--background);
+}
+.bg-card {
+    box-shadow: 0 2px 8px rgb(15 23 42 / 0.035);
+}
+section[aria-label='Akses modul'] a {
+    border-color: var(--border);
+    box-shadow: 0 2px 8px rgb(15 23 42 / 0.035);
+}
+section[aria-label='Akses modul'] a:hover {
+    border-color: var(--ring);
+    background: var(--accent);
+}
+section[aria-label='Akses modul'] a > div > svg:first-child {
+    color: var(--primary);
+}
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+}
+.sifi-appearance button {
+    min-height: 2rem;
+}
 @media (max-width: 639px) {
-    .sifi-app-header { gap: .25rem; padding-inline: .75rem; }
-    .sifi-app-header > div:first-child { min-width: 0; }
-    .sifi-app-header nav { min-width: 0; overflow: hidden; }
-    .sifi-appearance { flex-shrink: 0; }
-    .sifi-appearance button { padding-inline: .5rem; }
-    .sifi-appearance button > svg { margin-left: 0; }
+    .sifi-app-header {
+        gap: 0.25rem;
+        padding-inline: 0.75rem;
+    }
+    .sifi-app-header > div:first-child {
+        min-width: 0;
+    }
+    .sifi-app-header nav {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .sifi-appearance {
+        flex-shrink: 0;
+    }
+    .sifi-appearance button {
+        padding-inline: 0.5rem;
+    }
+    .sifi-appearance button > svg {
+        margin-left: 0;
+    }
     .sifi-appearance button > span {
-        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-        overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
 }
