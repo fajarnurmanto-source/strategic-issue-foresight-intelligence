@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Schema;
 /** A one-way, read-only bridge. R2 may replace the backend without changing reports. */
 final class LegacySessionReadGateway
 {
+    /**
+     * @return array{status: 'SESSION_TABLE_MISSING'|'NO_MATCHING_SESSION'}|array{status: 'SESSION_PROJECTION_AVAILABLE', timeline: array<string, mixed>}
+     */
     public function inspect(?string $sessionId = null): array
     {
         if (!Schema::hasTable('sifi_research_sessions')) {
