@@ -98,7 +98,9 @@ echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 
 echo '=== 4. ISOLATED RECTOR TYPE-INFERENCE ==='
 RectorBin=
-if [ -x "$Runtime/vendor/bin/rector" ]; then
+if [ "${SIFI_USE_RECTOR:-0}" != '1' ]; then
+    echo 'RECTOR_TOOL=SKIPPED_PREVIOUS_ZERO_CHANGES'
+elif [ -x "$Runtime/vendor/bin/rector" ]; then
     RectorBin="$Runtime/vendor/bin/rector"
     echo 'RECTOR_TOOL=EXISTING_READ_ONLY'
 elif command -v composer >/dev/null 2>&1; then
