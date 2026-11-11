@@ -5,7 +5,7 @@ namespace App\Services\Sifi\Integration;
 /** Google access matrix; public RSS availability is not commercial licensing. */
 final class GoogleSourceCoverage
 {
-    /** @return array<string, mixed> */
+    /** @return list<array<string, string>> */
     public function snapshot(string $asOf): array
     {
         $reviewed = $asOf < (string) config('sifi_google.review_expires');
