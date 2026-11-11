@@ -7,6 +7,7 @@ final class SaveExecutiveBriefRequest extends FormRequest {
  public function authorize():bool {
   $c=$this->route('candidate');return $c instanceof SifiIssueCandidate && $this->user()?->can('update',$c)===true;
  }
+ /** @return array<string, list<mixed>> */
  public function rules():array {return [
   'candidate_revision'=>['required','integer','between:1,1000000'],
   'case_revision'=>['required','integer','between:1,1000000'],
