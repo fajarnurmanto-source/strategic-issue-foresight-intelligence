@@ -19,10 +19,12 @@ final class MultiSourceResearchController extends Controller
             'history'=>$o?app(MultiSourceResearchWorkspace::class)->history($r->user(),$o):[],
             'collector'=>app(\App\Services\Sifi\RealCollectorWorkspace::class)->status($r->user(),$o),'providerIds'=>MultiSourceResearchWorkspace::PROVIDERS,'scenarios'=>($this->scenarios($r,$o)),'selectedSessionId'=>$r->query('research')]);
     }
+    /** @return list<string> */
     private function scenarios(Request $r,?SifiMonitoringObject $o):array
     {
         return array_values(array_filter(MultiSourceResearchWorkspace::SCENARIOS,fn($s)=>($s!=='crossref_live'||app(\App\Services\Sifi\RealCollectorWorkspace::class)->eligible($r->user(),$o))&&(!str_starts_with($s,'api_')||(app()->environment('testing')&&config('sifi.real_search_fixture')===true))));
     }
+    /** @param list<string> $keys */
     private function only(Request $r,array $keys):void
     {
         if(array_diff(array_keys($r->all()),[...$keys,'_token']))throw ValidationException::withMessages(['research'=>'Field tambahan tidak diizinkan; URL, provider, rights dan grant ditentukan server.']);
