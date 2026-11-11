@@ -8,6 +8,7 @@ use App\Services\Sifi\TavilySearchProvider;
 /** Parse only bounded RSS titles, canonical links and publisher-declared dates. */
 final class AntaraRssMetadataParser
 {
+    /** @return list<array<string, mixed>> */
     public function parse(string $xml): array
     {
         if (strlen($xml) > 131072 || ! mb_check_encoding($xml, 'UTF-8')
@@ -48,6 +49,7 @@ final class AntaraRssMetadataParser
             $entries = [];
             $seen = [];
             foreach ($nodes as $node) {
+                if (!$node instanceof \DOMElement) continue;
                 $title = trim(strip_tags($xp->evaluate('string(title)', $node)));
                 $url = trim($xp->evaluate('string(link)', $node));
                 if ($title === '' || mb_strlen($title) > 300) {
