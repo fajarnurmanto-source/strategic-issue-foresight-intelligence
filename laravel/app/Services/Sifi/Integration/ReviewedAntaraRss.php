@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Gate;
 /** Publisher-provided RSS as independent news metadata source, not GDELT fallback endpoint. */
 final class ReviewedAntaraRss
 {
+    /**
+     * @param array<string, mixed> $dateWindow
+     * @param array<array-key, mixed> $keywords
+     * @return array<string, mixed>
+     */
     public function collect(User $owner, SifiMonitoringObject $object, string $contact, array $dateWindow = [], array $keywords = []): array
     {
         app(AntaraLocalPermission::class)->assertAllowed();
