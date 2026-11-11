@@ -17,6 +17,7 @@ use RuntimeException;
 /** Snapshot-only readiness diagnostic, never qualifies/adopts an Evidence Item. */
 final class EvidenceDiagnosticsController extends Controller
 {
+    /** @return array<int, array<string, mixed>> */
     private function drafts(SifiIssueCandidate $candidate): array
     {
         return DB::table('sifi_evidence_drafts')->where('candidate_id', $candidate->id)
@@ -105,6 +106,7 @@ final class EvidenceDiagnosticsController extends Controller
         return redirect()->route('sifi.evidence-diagnostics.show',$candidate->id);
     }
 
+    /** @param array<int, array<string, mixed>> $drafts */
     private function digest(SifiIssueCandidate $candidate,array $drafts):string
     {
         return hash('sha256',json_encode([
