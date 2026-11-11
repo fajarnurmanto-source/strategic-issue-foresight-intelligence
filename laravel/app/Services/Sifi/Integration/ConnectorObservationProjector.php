@@ -31,7 +31,10 @@ final class ConnectorObservationProjector
             && preg_match('#\A/mnt/d/Research/SIFI/05_VALIDATION/[^\r\n]+\.sqlite\z#D', $database) === 1;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * @param array<string, mixed> $envelope
+     * @return list<array<string, mixed>>
+     */
     public function normalize(string $sessionId, int $ownerId, SifiMonitoringObject $object, array $envelope): array
     {
         if ((int) $object->user_id !== $ownerId
