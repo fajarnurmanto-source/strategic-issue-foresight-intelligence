@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Gate;
 /** Bounded public social search; no login, fulltext retention or per-post approvals. */
 final class ReviewedBlueskySearch
 {
+    /** @return array<string, mixed> */
     public function collect(User $owner, SifiMonitoringObject $object, string $query, string $contact): array
     {
         $permission = app(BlueskyLocalPermission::class);
