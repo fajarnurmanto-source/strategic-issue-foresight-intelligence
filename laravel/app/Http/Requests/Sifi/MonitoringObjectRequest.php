@@ -4,6 +4,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 final class MonitoringObjectRequest extends FormRequest {
  public function authorize():bool{return $this->user()?->hasVerifiedEmail()===true;}
+ /** @return array<string, list<mixed>> */
  public function rules():array {
   $r=['name'=>['required','string','min:3','max:180'],'description'=>['required','string','min:10','max:2000'],
    'category'=>['required','string','min:2','max:100'],'geography'=>['nullable','string','min:2','max:180'],
