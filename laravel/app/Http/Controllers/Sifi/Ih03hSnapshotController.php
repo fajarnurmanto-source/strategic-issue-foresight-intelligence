@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller;
 /** Authenticated local view of the previously rendered public-metadata snapshot. */
 final class Ih03hSnapshotController extends Controller
 {
-    public function show(Request $request)
+    public function show(Request $request): \Illuminate\Http\Response
     {
         if (! app()->environment(['local', 'testing'])
             || ! in_array(strtolower($request->getHost()), ['localhost', '127.0.0.1', '::1'], true)
