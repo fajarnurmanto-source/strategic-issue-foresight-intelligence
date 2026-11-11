@@ -11,6 +11,7 @@ final class SubmitEvidenceReviewRequest extends FormRequest
         return $evidence instanceof SifiEvidenceDraft
             && $this->user()?->can('review', $evidence) === true;
     }
+    /** @return array<string, list<mixed>> */
     public function rules(): array { return [
         'revision'=>['required','integer','min:1'],
         'review_finding'=>['required',Rule::in(['INSUFFICIENT','FOLLOWUP_REQUIRED','INDEPENDENCE_UNRESOLVED'])],
