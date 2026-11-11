@@ -63,7 +63,7 @@ final class DiscoveryCatalog {
  public function assertDescriptor(array $e):void {
   if(($e['rights']??null)!=='UNASSESSED'||!in_array($e['type']??null,self::TYPES,true))throw ValidationException::withMessages(['candidate'=>'Descriptor tidak memenuhi kontrak hak/kategori.']);
   if(($e['origin']??null)==='USER_SUBMITTED_URL'){
-   if(($e['synthetic']??null)!==false||($e['type']??null)!=='USER_SUBMITTED')throw ValidationException::withMessages(['candidate'=>'Descriptor URL pengguna tidak valid.']);
+   if(($e['synthetic']??null)!==false||$e['type']!=='USER_SUBMITTED')throw ValidationException::withMessages(['candidate'=>'Descriptor URL pengguna tidak valid.']);
    if($this->submittedDescriptor((string)($e['url']??''))!==$e)throw ValidationException::withMessages(['candidate'=>'Descriptor URL pengguna berubah.']);
    return;
   }
