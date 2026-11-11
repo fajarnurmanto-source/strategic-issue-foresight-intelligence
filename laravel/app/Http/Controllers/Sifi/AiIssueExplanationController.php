@@ -7,15 +7,18 @@ use App\Models\SifiIssueCandidate;
 use App\Services\Sifi\Ai\{UserAiSettings,ProviderHttpTransport,ConfiguredHttpAiAdapter,SecureAiRuntime,AiTaskCapabilityRegistry};
 use App\Data\Sifi\AiInferenceRequest;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 final class AiIssueExplanationController extends Controller
 {
+    /** @return array{title: string, hypothesis: string, gaps: string, next_checks: string} */
     private function notes(SifiIssueCandidate $c): array {return ['title'=>mb_substr($c->title??'',0,300),'hypothesis'=>mb_substr($c->issue_hypothesis??'',0,3000),'gaps'=>mb_substr($c->evidence_gaps??'',0,2000),'next_checks'=>mb_substr($c->next_checks??'',0,2000)];}
-    public function show(SifiIssueCandidate $candidate){Gate::authorize('view',$candidate);return Inertia::render('sifi/ai-issue-explanation',['candidate'=>['id'=>$candidate->id,'revision'=>$candidate->revision],'notes'=>$this->notes($candidate),'outcome'=>session('ai_explanation')]);}
-    public function run(Request $r,SifiIssueCandidate $candidate,UserAiSettings $store,ProviderHttpTransport $http){
+    public function show(SifiIssueCandidate $candidate): Response{Gate::authorize('view',$candidate);return Inertia::render('sifi/ai-issue-explanation',['candidate'=>['id'=>$candidate->id,'revision'=>$candidate->revision],'notes'=>$this->notes($candidate),'outcome'=>session('ai_explanation')]);}
+    public function run(Request $r,SifiIssueCandidate $candidate,UserAiSettings $store,ProviderHttpTransport $http): RedirectResponse{
         Gate::authorize('view',$candidate);$r->validate(['rights_confirmed'=>'accepted','revision'=>'required|integer']);abort_unless((int)$candidate->revision===(int)$r->input('revision'),409);
         $notes=$this->notes($candidate);if(trim($notes['hypothesis'])==='')return back()->with('ai_explanation',['status'=>'ABSTAIN','reason'=>'Hipotesis belum cukup.']);
         $data=$store->read((int)$r->user()->id);$selection=$data['assignments']['summary_draft']??[];$provider=$data['providers'][$selection['provider']??'']??null;
