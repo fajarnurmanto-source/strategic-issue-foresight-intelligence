@@ -8,6 +8,7 @@ use DOMElement;
 /** Convert Google's Trending Now RSS into bounded, non-evidentiary attention metadata. */
 final class GoogleTrendsRssParser
 {
+    /** @return array<string, mixed> */
     public function parse(string $xml): array
     {
         if ($xml === '' || strlen($xml) > 524288 || ! mb_check_encoding($xml, 'UTF-8')
