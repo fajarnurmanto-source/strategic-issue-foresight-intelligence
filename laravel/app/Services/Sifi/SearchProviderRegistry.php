@@ -5,6 +5,7 @@ namespace App\Services\Sifi;
 final class SearchProviderRegistry
 {
  public const IDS=['WIKIPEDIA_ID','CROSSREF'];
+ /** @return array<string, mixed> */
  public function get(string $id):array
  {
   $entry=match($id){
@@ -29,6 +30,10 @@ final class SearchProviderRegistry
   }
   return $entry;
  }
+ /**
+  * @param array<string, mixed> $context
+  * @return array<string, mixed>
+  */
  public function parameters(string $id,string $query,int $limit,array $context=[]):array
  {
   $this->get($id);if($query===''||mb_strlen($query)>600||$limit<1||$limit>5)throw new \RuntimeException('QUERY_BOUND');
