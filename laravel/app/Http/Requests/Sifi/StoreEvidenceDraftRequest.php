@@ -12,6 +12,7 @@ final class StoreEvidenceDraftRequest extends FormRequest
         return $candidate instanceof SifiIssueCandidate
             && $this->user()?->can('create', [SifiEvidenceDraft::class, $candidate]) === true;
     }
+    /** @return array<string, list<mixed>> */
     public function rules(): array { return [
         'signal_id'=>['required','regex:/\A[a-fA-F0-9]{64}\z/'],
         'claim_text'=>['required','string','min:5','max:3000'],
