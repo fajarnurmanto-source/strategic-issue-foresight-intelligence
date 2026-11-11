@@ -10,6 +10,7 @@ final class AssignEvidenceReviewerRequest extends FormRequest
         return $evidence instanceof SifiEvidenceDraft
             && $this->user()?->can('assign', $evidence) === true;
     }
+    /** @return array<string, list<string>> */
     public function rules(): array { return [
         'revision'=>['required','integer','min:1'],
         'reviewer_email'=>['required','email','max:255'],
