@@ -16,5 +16,6 @@ final class SifiEvidenceDraft extends Model
         'claim_text', 'rationale', 'known_gaps', 'relationship', 'workflow_state', 'revision',
     ];
     protected function casts(): array { return ['revision'=>'integer']; }
+    /** @return BelongsTo<SifiIssueCandidate, $this> */
     public function candidate(): BelongsTo { return $this->belongsTo(SifiIssueCandidate::class, 'candidate_id'); }
 }
