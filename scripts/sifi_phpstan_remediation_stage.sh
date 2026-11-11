@@ -120,6 +120,21 @@ while IFS= read -r changed; do
         laravel/app/Services/Sifi/Integration/ReviewedGoogleTrends.php|\
         laravel/app/Services/Sifi/Integration/SocialWatchHistory.php|\
         laravel/app/Services/Sifi/ResearchSignalInsights.php|\
+        laravel/app/Console/Commands/SifiIh03dGdelt.php|\
+        laravel/app/Console/Commands/SifiIh03eAntara.php|\
+        laravel/app/Data/Sifi/AiInferenceRequest.php|\
+        laravel/app/Data/Sifi/AiInferenceResult.php|\
+        laravel/app/Filament/Superadmin/Pages/ConnectorProfiles.php|\
+        laravel/app/Filament/Superadmin/Pages/IntegrationHub.php|\
+        laravel/app/Http/Controllers/Sifi/E2e01PilotController.php|\
+        laravel/app/Http/Controllers/Sifi/Ih03hSnapshotController.php|\
+        laravel/app/Http/Controllers/Sifi/ResearchBridgeController.php|\
+        laravel/app/Http/Controllers/Sifi/ResearchPlanningController.php|\
+        laravel/app/Http/Controllers/Sifi/WorldBankResearchController.php|\
+        laravel/app/Http/Requests/Sifi/AssignEvidenceReviewerRequest.php|\
+        laravel/app/Http/Requests/Sifi/CoverageDraftRequest.php|\
+        laravel/app/Http/Requests/Sifi/MonitoringObjectRequest.php|\
+        laravel/app/Http/Requests/Sifi/RunEvidenceDiagnosticsRequest.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
@@ -242,9 +257,10 @@ echo 'PHPSTAN_VERIFIED_BATCH7_ERRORS=180'
 echo 'PHPSTAN_VERIFIED_BATCH8_ERRORS=137'
 echo 'PHPSTAN_VERIFIED_BATCH9_ERRORS=104'
 echo 'PHPSTAN_VERIFIED_BATCH10_ERRORS=68'
+echo 'PHPSTAN_VERIFIED_BATCH11_ERRORS=50'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 68 ]; then
+if [ "$After" -lt 50 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
@@ -269,12 +285,12 @@ php -r '
     foreach (array_slice($hotspots, 0, 15, true) as $file => $n) {
         echo "PHPSTAN_HOTSPOT:$file=$n\n";
     }
-    foreach (array_slice(array_keys($hotspots), 0, 10) as $path) {
-        foreach (array_slice($data["files"][$path]["messages"] ?? [], 0, 5) as $problem) {
+    foreach (array_keys($hotspots) as $path) {
+        foreach (($data["files"][$path]["messages"] ?? []) as $problem) {
             $msg = preg_replace("/\\s+/", " ", $problem["message"] ?? "");
             $line = (int) ($problem["line"] ?? 0);
             $type = $problem["identifier"] ?? "unknown";
-            echo "PHPSTAN_DETAIL:" . basename($path) . ":$line:$type:" . substr($msg, 0, 145) . "\n";
+            echo "PHPSTAN_DETAIL:" . basename($path) . ":$line:$type:" . substr($msg, 0, 240) . "\n";
         }
     }
 ' "$LastReport"
