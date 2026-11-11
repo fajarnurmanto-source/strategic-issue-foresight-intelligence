@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class E4PeriodDiscovery
 {
+    /** @return array<string, mixed> */
     public function plan(User $owner, SifiMonitoringObject $object, string $start, string $end): array
     {
         Gate::forUser($owner)->authorize('view', $object);
