@@ -5,6 +5,7 @@ final class FreeAiCatalogue
 {
     public const SYNTHETIC = ['probe'=>true,'text'=>'SYNTHETIC CONNECTION TEST ONLY'];
 
+    /** @return list<array<string, mixed>> */
     public static function entries(): array
     {
         return [
@@ -16,6 +17,7 @@ final class FreeAiCatalogue
         ];
     }
 
+    /** @return array<string, mixed>|null */
     public static function provider(string $protocol): ?array
     {
         foreach (self::entries() as $entry) if ($entry['protocol']===$protocol) return $entry;
