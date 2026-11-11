@@ -35,7 +35,7 @@ final readonly class AiInferenceResult
             throw new InvalidArgumentException('Unavailable or abstaining AI results cannot carry structured output.');
         }
 
-        if (array_filter($warnings, fn ($value) => ! is_string($value) || preg_match('/\A[A-Z][A-Z0-9_]{0,63}\z/', $value) !== 1) !== []) {
+        if (array_filter($warnings, fn ($value) => preg_match('/\A[A-Z][A-Z0-9_]{0,63}\z/', $value) !== 1) !== []) {
             throw new InvalidArgumentException('AI warnings must be bounded machine-readable codes.');
         }
     }
