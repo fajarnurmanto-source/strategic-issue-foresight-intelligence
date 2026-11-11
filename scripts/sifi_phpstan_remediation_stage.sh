@@ -111,6 +111,15 @@ while IFS= read -r changed; do
         laravel/app/Services/Sifi/Aq01ClaimEventBridge.php|\
         laravel/app/Services/Sifi/Aq01EvidenceDiagnosticsBridge.php|\
         laravel/app/Services/Sifi/Aq01ForesightBridge.php|\
+        laravel/app/Services/Sifi/Aq01IntelligenceBridge.php|\
+        laravel/app/Services/Sifi/Aq01IssueScopeBridge.php|\
+        laravel/app/Services/Sifi/Aq01TrajectoryBridge.php|\
+        laravel/app/Services/Sifi/ClaimComparisonInputDiagnostics.php|\
+        laravel/app/Services/Sifi/E4PeriodDiscovery.php|\
+        laravel/app/Services/Sifi/Integration/ConnectorObservationProjector.php|\
+        laravel/app/Services/Sifi/Integration/ReviewedGoogleTrends.php|\
+        laravel/app/Services/Sifi/Integration/SocialWatchHistory.php|\
+        laravel/app/Services/Sifi/ResearchSignalInsights.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
@@ -232,9 +241,10 @@ echo 'PHPSTAN_VERIFIED_BATCH6_ERRORS=236'
 echo 'PHPSTAN_VERIFIED_BATCH7_ERRORS=180'
 echo 'PHPSTAN_VERIFIED_BATCH8_ERRORS=137'
 echo 'PHPSTAN_VERIFIED_BATCH9_ERRORS=104'
+echo 'PHPSTAN_VERIFIED_BATCH10_ERRORS=68'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 104 ]; then
+if [ "$After" -lt 68 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
