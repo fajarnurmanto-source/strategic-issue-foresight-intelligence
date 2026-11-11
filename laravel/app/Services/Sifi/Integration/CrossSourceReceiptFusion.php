@@ -17,6 +17,7 @@ final class CrossSourceReceiptFusion
         'dan', 'dari', 'di', 'dengan', 'ke', 'pada', 'tentang', 'untuk', 'yang',
     ];
 
+    /** @return array<string, mixed> */
     public function analyze(User $owner, string $crossrefId, string $antaraId): array
     {
         if (! app()->environment(['local', 'testing']) || config('database.default') !== 'sqlite') {
@@ -99,6 +100,7 @@ final class CrossSourceReceiptFusion
         ];
     }
 
+    /** @return array{object_id: string, object_revision: int, entries: list<array<string, mixed>>} */
     private function receipt(User $owner, string $id, string $provider): array
     {
         $row = DB::table('sifi_research_sessions')->where('id', $id)
@@ -141,12 +143,13 @@ final class CrossSourceReceiptFusion
             $entries[] = $entry;
         }
         return [
-            'object_id' => $object->id,
+            'object_id' => (string) $object->id,
             'object_revision' => (int) $object->revision,
             'entries' => $entries,
         ];
     }
 
+    /** @return list<string> */
     private function terms(string $title): array
     {
         $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($title)) ?: [];
