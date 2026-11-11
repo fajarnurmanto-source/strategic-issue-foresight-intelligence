@@ -4,6 +4,7 @@ use App\Models\SifiIssueCandidate;
 use Illuminate\Support\Facades\DB;
 /** Server-owned projection, never client snapshots or file paths. */
 class ClaimComparisonPreviewInput {
+ /** @return array<string, mixed> */
  public function read(SifiIssueCandidate $candidate):array {
   $claims=DB::table('sifi_claim_drafts as c')->join('sifi_evidence_drafts as e','e.id','=','c.evidence_id')
    ->where('c.candidate_id',$candidate->id)->where('e.candidate_id',$candidate->id)->orderBy('c.id')
