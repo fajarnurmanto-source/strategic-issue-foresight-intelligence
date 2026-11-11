@@ -32,18 +32,23 @@ class AntaraRssTransport
         return app(ResearchWorldBankAcquisition::class)->publicAddress(array_values(array_unique($ips)));
     }
 
+    /** @param array<string, mixed> $options */
     protected function request(array $options): \Illuminate\Http\Client\Response
     {
         return Http::withOptions($options)->connectTimeout(8)->timeout(18)->get(self::ENDPOINT);
     }
 
+    /** @return array<string, mixed> */
     public function fetch(string $contact): array
     {
         app(AntaraLocalPermission::class)->assertAllowed();
         app(AntaraLocalPermission::class)->assertContact($contact);
-        $sink = new class(Utils::streamFor(fopen('php://temp/maxmemory:131072', 'w+b'))) implements StreamInterface {
+        $streamResource=fopen('php://temp/maxmemory:131072', 'w+b');
+        if ($streamResource===false) throw new \RuntimeException('IH03E_RSS_SINK_OPEN_FAILED');
+        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface {
             use StreamDecoratorTrait;
             private StreamInterface $stream;
+            public function __construct(StreamInterface $stream) { $this->stream=$stream; }
             public function write($data): int
             {
                 if ($this->tell() + strlen($data) > 131072) {
