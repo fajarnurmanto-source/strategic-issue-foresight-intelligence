@@ -74,9 +74,9 @@ final class SourceDiscoveryWorkspace {
  /** @return list<array<string,mixed>> */
  public function selections(User $u,SifiMonitoringObject $o):array {
   Gate::forUser($u)->authorize('view',$o);
-  return DB::table('sifi_discovery_selections as s')->join('sifi_discovery_candidates as c','c.id','=','s.candidate_id')->where('s.object_id',$o->id)->where('c.user_id',$u->id)->orderByDesc('s.updated_at')->limit(50)->get(['s.*','c.descriptor_json'])->map(function($s){
+  return array_values(DB::table('sifi_discovery_selections as s')->join('sifi_discovery_candidates as c','c.id','=','s.candidate_id')->where('s.object_id',$o->id)->where('c.user_id',$u->id)->orderByDesc('s.updated_at')->limit(50)->get(['s.*','c.descriptor_json'])->map(function($s){
    $expired=now()->gte($s->expires_at);
    return ['id'=>$s->id,'candidate_id'=>$s->candidate_id,'revision'=>(int)$s->revision,'object_revision'=>(int)$s->object_revision,'expires_at'=>$s->expires_at,'expired'=>$expired,'descriptor'=>$expired?null:json_decode($s->descriptor_json,true,32,JSON_THROW_ON_ERROR),'context'=>$expired?null:json_decode($s->context_json,true,32,JSON_THROW_ON_ERROR),'source_draft_id'=>$s->registered_source_id,'state'=>$expired?'EXPIRED':($s->registered_source_id?'REGISTERED_UNASSESSED':'SAVED_CANDIDATE'),'audit'=>DB::table('sifi_discovery_audit')->where('selection_id',$s->id)->orderByDesc('revision')->limit(10)->get(['revision','action','created_at'])->all()];
-  })->all();
+  })->all());
  }
 }
