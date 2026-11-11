@@ -7,12 +7,17 @@ use Illuminate\Validation\ValidationException;
 /** Server-only one-request entry point; no public issuance/activation endpoint. */
 final class ApprovedCorpusSearch
 {
+ /**
+  * @param array<string, mixed> $dateWindow
+  * @return array<string, mixed>
+  */
  public function context(User $u,SifiMonitoringObject $o,string $sessionId,string $provider,int $queryIndex,array $dateWindow=[]):array
  {
   Gate::forUser($u)->authorize('update',$o);if($o->state!=='CONFIGURED')throw ValidationException::withMessages(['research'=>'Objek dijeda.']);app(SearchProviderRegistry::class)->get($provider);
   $row=app(ResearchRetrievalWorkspace::class)->session($u,$o,$sessionId);$plan=json_decode($row->plan_json,true,32,JSON_THROW_ON_ERROR);$query=$plan['queries'][$queryIndex]['query']??null;if(!is_string($query))throw ValidationException::withMessages(['research'=>'Query bukan bagian rencana sesi.']);
   $context=['mode'=>'LIVE','query'=>$query,'query_sha256'=>hash('sha256',$query),'binding'=>['owner_id'=>$u->id,'object_id'=>$o->id,'session_id'=>$row->id,'object_revision'=>$o->revision,'session_revision'=>(int)$row->revision,'plan_sha256'=>hash('sha256',json_encode($plan,JSON_THROW_ON_ERROR))],'limit'=>5];if($provider==='TAVILY_KEYLESS'){$context['date_window']=$dateWindow;app(SearchProviderRegistry::class)->parameters($provider,$query,5,$context);}return $context;
  }
+ /** @param array<string, mixed> $dateWindow */
  public function run(User $u,SifiMonitoringObject $o,string $sessionId,string $provider,int $queryIndex,bool $recover=false,array $dateWindow=[]):string
  {
   $context=$this->context($u,$o,$sessionId,$provider,$queryIndex,$dateWindow);
