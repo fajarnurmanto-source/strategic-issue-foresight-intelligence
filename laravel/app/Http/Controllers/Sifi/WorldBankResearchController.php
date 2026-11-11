@@ -9,6 +9,7 @@ use Inertia\{Inertia,Response};
 
 final class WorldBankResearchController extends Controller
 {
+ /** @return array<string, list<string>> */
  private function forbidden():array{return array_fill_keys(['user_id','endpoint','url','grant','permit','receipt','provider','body','rights','verified','evidence_admitted','cost','retry','scheduler'],['prohibited']);}
  public function index(Request $r,SifiMonitoringObject $object,WorldBankResearchWorkspace $w):Response{
   Gate::authorize('view',$object);$v=$r->validate(['session'=>['nullable','uuid']]);$sessions=array_values(array_filter(app(ResearchSessionWorkspace::class)->history($r->user(),$object),fn($s)=>!$s['expired']&&$s['object_revision']===$object->revision));$selected=$v['session']??($sessions[0]['id']??null);
