@@ -5,6 +5,7 @@ namespace App\Services\Sifi\Integration;
 /** Interpret public AppView search as social-attention observations, never verified events. */
 final class BlueskyPublicSearchParser
 {
+    /** @return array<string, mixed> */
     public function parse(string $json, string $query): array
     {
         if (strlen($json) > 262144 || ! mb_check_encoding($json, 'UTF-8')) {
