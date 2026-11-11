@@ -126,7 +126,7 @@ final class ForesightController extends Controller {
   try{$out=$bridge->assess($input);}catch(RuntimeException $e){
     throw ValidationException::withMessages(['analysis'=>'Python tidak tersedia atau melanggar kontrak. Tidak ada hasil yang disimpan.']);
   }
-  DB::transaction(function()use($request,$candidate,$case,$trajectory,$draft,$input,$digest,$out):void {
+  DB::transaction(function()use($request,$candidate,$case,$trajectory,$draft,$digest,$out):void {
    $c=SifiIssueCandidate::query()->whereKey($candidate->id)->lockForUpdate()->firstOrFail();
    abort_unless((int)$c->user_id===(int)$request->user()->id,403);
    $liveCase=SifiIssueCaseDraft::query()->whereKey($case->id)->lockForUpdate()->firstOrFail();
