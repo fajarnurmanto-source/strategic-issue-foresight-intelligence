@@ -12,6 +12,7 @@ use App\Models\User;
  */
 final class CollectorObservations
 {
+    /** @return list<array<string, mixed>> */
     public function forObject(User $user, SifiMonitoringObject $object): array
     {
         $out = [];
@@ -105,6 +106,7 @@ final class CollectorObservations
         return $out;
     }
 
+    /** @param list<string> $ids */
     private function sourceKind(array $ids): string
     {
         if (count($ids) !== 1) {
@@ -119,6 +121,9 @@ final class CollectorObservations
         };
     }
 
+    /** @param array<string, mixed> $envelope
+     * @return array<string, mixed>
+     */
     private function receipt(array $envelope): array
     {
         $legacy = is_array($envelope['collector'] ?? null) ? $envelope['collector'] : [];
