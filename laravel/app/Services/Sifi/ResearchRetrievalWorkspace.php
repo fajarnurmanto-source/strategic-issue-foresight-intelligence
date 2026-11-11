@@ -42,7 +42,16 @@ final class ResearchRetrievalWorkspace
             if($o->state!=='CONFIGURED'||$o->revision!==(int)$v['object_revision'])$this->fail('Objek berubah atau dijeda.');
             $session=$this->session($u,$o,$v['session_id']);$envelope=$this->search($u,$o,$session->id);
             if(!hash_equals($envelope['query_sha256'],$v['query_sha256']))$this->fail('Digest rencana berubah.');
-            $entry=collect($envelope['results'])->firstWhere('key',$v['result_key']);if(!$entry)$this->fail('Hasil tidak ada pada sesi ini.');
+            $results = $envelope['results'] ?? null;
+            if (!is_array($results)) $this->fail('Daftar hasil sesi tidak valid.');
+            $entry = null;
+            foreach ($results as $candidate) {
+                if (is_array($candidate) && ($candidate['key'] ?? null) === $v['result_key']) {
+                    $entry = $candidate;
+                    break;
+                }
+            }
+            if($entry===null)$this->fail('Hasil tidak ada pada sesi ini.');
             $existing=DB::table('sifi_research_retrievals')->where('session_id',$session->id)->where('result_key',$entry['key'])->first();if($existing)return;
             if(DB::table('sifi_research_retrievals')->where('user_id',$u->id)->count()>=100)$this->fail('Batas 100 keputusan akun tercapai.');
             $id=(string)Str::uuid();$result=$entry+['session_id'=>$session->id,'query_sha256'=>$envelope['query_sha256'],'provider'=>$envelope['provider'],'object_revision'=>$o->revision];
@@ -104,6 +113,6 @@ final class ResearchRetrievalWorkspace
     /** @return list<array<string, mixed>> */
     public function history(User $u,SifiMonitoringObject $o):array
     {
-        Gate::forUser($u)->authorize('view',$o);return DB::table('sifi_research_retrievals')->where('user_id',$u->id)->where('object_id',$o->id)->orderByDesc('created_at')->limit(30)->get()->map(function($r){$expired=now()->gte($r->expires_at);return ['id'=>$r->id,'revision'=>(int)$r->revision,'state'=>$r->state,'candidate_id'=>$r->candidate_id,'expired'=>$expired,'result'=>$expired?null:json_decode($r->result_json,true),'document'=>$expired?null:json_decode($r->document_json??'null',true)];})->all();
+        Gate::forUser($u)->authorize('view',$o);return DB::table('sifi_research_retrievals')->where('user_id',$u->id)->where('object_id',$o->id)->orderByDesc('created_at')->limit(30)->get()->map(function($r){$expired=now()->gte($r->expires_at);return ['id'=>$r->id,'revision'=>(int)$r->revision,'state'=>$r->state,'candidate_id'=>$r->candidate_id,'expired'=>$expired,'result'=>$expired?null:json_decode($r->result_json,true),'document'=>$expired?null:json_decode($r->document_json??'null',true)];})->values()->all();
     }
 }
