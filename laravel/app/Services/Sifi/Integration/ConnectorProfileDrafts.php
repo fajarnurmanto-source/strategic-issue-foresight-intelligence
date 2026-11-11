@@ -154,7 +154,7 @@ final class ConnectorProfileDrafts
 
         $readiness = new ConnectorReadiness;
 
-        return SifiConnectorProfile::query()->orderBy('label')->get()
+        return array_values(SifiConnectorProfile::query()->orderBy('label')->get()
             ->map(fn (SifiConnectorProfile $p): array => [
                 'id' => $p->id,
                 'provider_key' => $p->provider_key,
@@ -170,7 +170,7 @@ final class ConnectorProfileDrafts
                 'rights_status' => $p->rights_status,
                 'connection_status' => $p->connection_status,
                 'readiness' => $readiness->describe($p),
-            ])->all();
+            ])->all());
     }
 
     private function authorize(User $actor): void
