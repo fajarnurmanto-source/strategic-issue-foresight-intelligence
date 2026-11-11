@@ -100,7 +100,7 @@ final class DiscoveryCatalog {
   foreach($entries as $e){
    $this->assertDescriptor($e);
    if($requireSynthetic&&($e['synthetic']??null)!==true)throw ValidationException::withMessages(['catalog'=>'Katalog fixture memuat descriptor non-synthetic.']);
-   if($filters['type']!==''&&$e['type']!==$filters['type'])continue;
+   if(isset($filters['type'])&&$filters['type']!==''&&$e['type']!==$filters['type'])continue;
    if(($filters['language']??'')!==''&&$e['language']!==$filters['language'])continue;
    if(($filters['geography']??'')!==''&&!str_contains(mb_strtolower($e['geography']??''),mb_strtolower($filters['geography'])))continue;
    $hay=mb_strtolower(implode(' ',[$e['title'],implode(' ',$e['topics']),$e['geography']??'']));
