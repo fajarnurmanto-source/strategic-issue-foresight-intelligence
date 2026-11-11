@@ -87,7 +87,11 @@ final class SifiIh03dGdelt extends Command
                 continue;
             }
             try {
-                $packet = json_decode(Crypt::decryptString(file_get_contents($path)), true, 32, JSON_THROW_ON_ERROR);
+                $encrypted = file_get_contents($path);
+                if ($encrypted === false) {
+                    continue;
+                }
+                $packet = json_decode(Crypt::decryptString($encrypted), true, 32, JSON_THROW_ON_ERROR);
             } catch (\Throwable) {
                 continue;
             }
