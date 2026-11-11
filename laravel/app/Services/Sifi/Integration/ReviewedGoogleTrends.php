@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Gate;
 /** One explicit owner-bound Google Trends receipt, with automatic relevance triage. */
 final class ReviewedGoogleTrends
 {
+    /** @return array<string, mixed> */
     public function collect(User $owner, SifiMonitoringObject $object): array
     {
         app(GoogleTrendsLocalPermission::class)->assertAllowed();
