@@ -94,6 +94,15 @@ jobs:
           touch database/database.sqlite
       - name: Setup isolated application
         run: composer setup
+      - name: Isolate dependency-setup lockfile drift
+        run: |
+          set -euo pipefail
+          git -C .. diff --binary -- laravel/package-lock.json > ../setup-package-lock.diff
+          if [ -s ../setup-package-lock.diff ]; then
+            echo 'DEPENDENCY_SETUP_PACKAGE_LOCK_DRIFT=RECORDED_NOT_ADMITTED'
+            sha256sum ../setup-package-lock.diff
+            git -C .. restore -- laravel/package-lock.json
+          fi
       - name: Generate Pint-only formatting candidate
         run: |
           set -euo pipefail
@@ -118,5 +127,6 @@ jobs:
           path: |
             pint-normalization.patch
             pint-changed-files.txt
+            setup-package-lock.diff
           if-no-files-found: warn
           retention-days: 7
