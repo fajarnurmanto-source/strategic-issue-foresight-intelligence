@@ -9,6 +9,10 @@ use RuntimeException;
 /** Trusted loopback server-side adapter. No remote URLs from browser input. */
 final class Aq01IntelligenceBridge
 {
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function assess(array $input): array
     {
         $base = (string) config('sifi_aq01.base_url');
