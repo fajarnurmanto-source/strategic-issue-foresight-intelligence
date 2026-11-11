@@ -37,7 +37,10 @@ final class ConnectorProfiles extends Page
             && Schema::hasTable('sifi_connector_audits');
     }
 
-    /** Safe presentation data only; secrets never leave the service boundary. */
+    /**
+     * Safe presentation data only; secrets never leave the service boundary.
+     * @return list<array<string, mixed>>
+     */
     public function profiles(): array
     {
         if (! static::canAccess() || ! $this->databaseReady()) {
