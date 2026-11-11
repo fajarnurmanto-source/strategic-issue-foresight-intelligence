@@ -5,6 +5,10 @@ use Illuminate\Support\Str;
 use RuntimeException;
 /** Strictly validated loopback-only Python advisory; never an authority to decide. */
 final class Aq01ForesightBridge {
+ /**
+  * @param array<string, mixed> $input
+  * @return array<string, mixed>
+  */
  public function assess(array $input):array {
   $base=(string)config('sifi_aq01.base_url');$token=(string)config('sifi_aq01.token');
   if(strlen($token)<32 || preg_match('#^http://127\.0\.0\.1:[0-9]{2,5}$#D',$base)!==1)
