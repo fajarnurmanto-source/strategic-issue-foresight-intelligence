@@ -9,6 +9,7 @@ final class StoreClaimEventRequest extends FormRequest {
         $candidate=$this->route('candidate');
         return $candidate instanceof SifiIssueCandidate && $this->user()?->can('update',$candidate)===true;
     }
+    /** @return array<string, list<mixed>> */
     public function rules():array {
         $common=['candidate_revision'=>['required','integer','between:1,1000000'],
             'verified'=>['prohibited'],'evidence_admission'=>['prohibited'],
