@@ -15,6 +15,7 @@ final class UpdateIssueCandidateRequest extends FormRequest
         return $candidate instanceof SifiIssueCandidate && $this->user()?->can('update', $candidate) === true;
     }
 
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [
@@ -28,6 +29,7 @@ final class UpdateIssueCandidateRequest extends FormRequest
         ];
     }
 
+    /** @return list<\Closure> */
     public function after(): array
     {
         return [function (Validator $validator): void {
