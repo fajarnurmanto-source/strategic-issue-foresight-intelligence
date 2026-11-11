@@ -130,6 +130,7 @@ final class ConnectorObservationProjector
         return $rows;
     }
 
+    /** @param array<string, mixed> $envelope */
     public function record(User $owner, SifiMonitoringObject $object, string $sessionId, array $envelope): int
     {
         if (! $this->eligible()) {
