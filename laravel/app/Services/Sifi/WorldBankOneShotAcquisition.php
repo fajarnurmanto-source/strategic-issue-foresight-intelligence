@@ -166,13 +166,13 @@ class WorldBankOneShotAcquisition
         if($preview['status']!=='READY_FOR_ANALYST_DRAFT')return array_replace($preview,['connector'=>'wb_acquisition']);
         $updated=strtotime($preview['source']['source_updated_at'].'T00:00:00Z');
         if($updated===false)return $this->emptyPreview('SOURCE_UPDATE_REVIEW_REQUIRED');
-        if(now()->timestamp-$updated>30*86400)return $this->emptyPreview('SOURCE_UPDATE_REVIEW_REQUIRED');
+        if((int) now()->timestamp-$updated>30*86400)return $this->emptyPreview('SOURCE_UPDATE_REVIEW_REQUIRED');
         $mock=$record['permit_kind']==='MOCK_TEST_ONLY';
         $preview['connector']='wb_acquisition';$preview['mode']=$mock?'MOCK_ACQUISITION_ONLY':'REAL_PUBLIC_ACQUISITION_HISTORICAL';
         $preview['source']['retrieval_kind']=$mock?'LOCAL_MOCK_HTTP_TEST_ONLY':'OWNER_APPROVED_ONE_SHOT';
         $preview['source']['freshness_policy']='LOCAL_30_DAY_REVIEW_NOT_PUBLISHER_RELEASE_SCHEDULE';
         $preview['source']['record_publication_at']=null;$preview['source']['record_publication_state']='UNKNOWN';$preview['source']['current_observation']=false;$preview['source']['observation_currency']='HISTORICAL_PERIOD_NOT_CURRENT';
-        $preview['source']['source_review_age_days']=(int)floor((now()->timestamp-$updated)/86400);
+        $preview['source']['source_review_age_days']=(int)floor(((int) now()->timestamp-$updated)/86400);
         $preview['source']['limitation'].=' Perolehan bukan penerbitan; pembaruan dataset bukan waktu publikasi record. Tidak menyatakan CURRENT_OBSERVATION.';
         if($mock){
             $preview['source']['id']='SRC-SIFI-WB-MOCK';$preview['source']['publisher']='SIMULASI SIFI — local HTTP mock, World Bank schema reference only';
