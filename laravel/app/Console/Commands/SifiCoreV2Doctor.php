@@ -21,7 +21,8 @@ final class SifiCoreV2Doctor extends Command
             $lock = json_decode((string) file_get_contents($lockFile), true);
             if (is_array($lock)) {
                 foreach (array_merge($lock['packages'] ?? [], $lock['packages-dev'] ?? []) as $package) {
-                    if (isset($package['name'], $package['version'])) {
+                    if (is_array($package) && isset($package['name'], $package['version'])
+                        && is_string($package['name']) && is_string($package['version'])) {
                         $versions[$package['name']] = $package['version'];
                     }
                 }
@@ -29,7 +30,7 @@ final class SifiCoreV2Doctor extends Command
         }
         $secureSymfony = [];
         foreach (['symfony/http-foundation', 'symfony/http-kernel', 'symfony/routing', 'symfony/serializer', 'symfony/yaml'] as $name) {
-            $v = ltrim((string) ($versions[$name] ?? ''), 'v');
+            $v = ltrim($versions[$name] ?? '', 'v');
             $secureSymfony[$name] = [
                 'locked_version' => $v !== '' ? $v : null,
                 'meets_7_4_23_floor' => $v !== '' && preg_match('/\A7\.4\.\d+\z/', $v) === 1
@@ -37,12 +38,13 @@ final class SifiCoreV2Doctor extends Command
             ];
         }
         $session = $this->option('session');
-        if ($session !== null && $session !== '' && !preg_match('/\A[0-9a-fA-F-]{36}\z/D', (string) $session)) {
+        if (($session !== null && !is_string($session))
+            || (is_string($session) && $session !== '' && !preg_match('/\A[0-9a-fA-F-]{36}\z/D', $session))) {
             $this->error('INVALID_UUID_OPTION');
             return self::INVALID;
         }
         try {
-            $projection = $gateway->inspect($session !== '' ? $session : null);
+            $projection = $gateway->inspect(is_string($session) && $session !== '' ? $session : null);
         } catch (\Throwable $e) {
             $projection = ['status' => 'READ_MODEL_UNAVAILABLE', 'error_class' => get_class($e)];
         }
@@ -68,7 +70,7 @@ final class SifiCoreV2Doctor extends Command
         } else {
             $this->info('SIFI_CORE_V2_R1_DOCTOR_PASS');
             $this->line('V2_MODE='.$report['mode']);
-            $this->line('SESSION_STATUS='.($projection['status'] ?? 'UNKNOWN'));
+            $this->line('SESSION_STATUS='.($projection['status']));
             $this->line('NO_NETWORK_OR_DATABASE_CHANGES=TRUE');
             $this->line('SECURITY_AUDIT=RUN_COMPOSER_AUDIT_SEPARATELY');
         }
