@@ -27,9 +27,9 @@ final class E2e01PilotController extends Controller
         $shadowSessions = [];
         foreach ($sessions as $session) {
             $sessionId = $session['id'] ?? null;
-            $revision = $session['object_revision'] ?? null;
+            $revision = $session['object_revision'];
             $results = $session['results'] ?? null;
-            if (! is_string($sessionId) || ! is_int($revision) || ! is_array($results)) {
+            if (! is_string($sessionId) || ! is_array($results)) {
                 continue;
             }
             // A JSON result object, not an arbitrary list, is required by Core V2.
