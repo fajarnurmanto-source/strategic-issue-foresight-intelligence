@@ -55,7 +55,7 @@ class WorldBankOneShotAcquisition
                 ||($p['connect_seconds']??null)!==2||($p['total_seconds']??null)!==5||($p['retries']??null)!==0||($p['scheduler']??null)!==false
                 ||!is_string($p['scope_sha256']??null)||!preg_match('/\A[0-9a-f]{64}\z/',$p['scope_sha256'])
                 ||!is_string($p['approval_ref']??null)||!str_starts_with($p['approval_ref'],($p['kind']??null)==='MOCK_TEST_ONLY'?'AUTOMATED_MOCK_TEST:':'HUMAN_EXACT_ONE_GET:')
-                ||!is_int($p['expires_at']??null)||$p['expires_at']<now()->timestamp||$p['expires_at']>now()->timestamp+600
+                ||!is_int($p['expires_at']??null)||$p['expires_at']<now()->timestamp||$p['expires_at']>(int)now()->timestamp+600
                 ||!in_array($p['kind']??null,['OWNER_APPROVED_EXTERNAL_GET','MOCK_TEST_ONLY'],true))return null;
             if($p['kind']==='MOCK_TEST_ONLY'&&!app()->environment('testing'))return null;
             if($consume){$p['consumed']=true;$p['consumed_at']=now()->utc()->toIso8601String();$cipher=Crypt::encryptString(json_encode($p,JSON_THROW_ON_ERROR));
@@ -96,7 +96,7 @@ class WorldBankOneShotAcquisition
         $permit=$this->permit($user,true);if(!$permit)return $this->emptyPreview();
         if($permit['kind']==='MOCK_TEST_ONLY'&&!$this->supportsLocalMock())return $this->emptyPreview('MOCK_TRANSPORT_REQUIRED');
         if($permit['kind']!=='MOCK_TEST_ONLY'&&$this->supportsLocalMock())return $this->emptyPreview('MOCK_ACCEPTS_MOCK_PERMISSION_ONLY');
-        $started=hrtime(true);$headers=[];$attempts=1;
+        $started=(int) hrtime(true);$headers=[];$attempts=1;
         $buffer=fopen('php://temp/maxmemory:65536','w+b');
         if($buffer===false)throw new \RuntimeException('ACQUISITION_BUFFER_UNAVAILABLE');
         $stream=new class(Utils::streamFor($buffer)) implements StreamInterface {
@@ -126,7 +126,7 @@ class WorldBankOneShotAcquisition
             }];
         try {
             $response=$this->request($endpoint,$options);
-            if((hrtime(true)-$started)/1e9>self::TOTAL_SECONDS)throw new \RuntimeException('AE10_TIMEOUT');
+            if(((int) hrtime(true)-$started)/1e9>self::TOTAL_SECONDS)throw new \RuntimeException('AE10_TIMEOUT');
             if($response->status()!==200||$headers===[])throw new \RuntimeException('AE10_HTTP_FAILURE');
             $stream->rewind();$raw=$stream->getContents();
             $meta=['url'=>$endpoint,'status'=>200,'content_type'=>$headers['content_type'],'retrieved_at'=>now()->utc()->format('Y-m-d\TH:i:s\Z'),'sha256'=>hash('sha256',$raw)];
@@ -134,7 +134,7 @@ class WorldBankOneShotAcquisition
             $record=['id'=>$id,'owner_id'=>(int)$user->id,'permit_kind'=>$permit['kind'],'approval_scope_sha256'=>$permit['scope_sha256'],
                 'raw'=>$raw,'retrieval'=>$meta,'rights'=>$rights,'retention_until'=>now()->utc()->addDays(30)->toIso8601String(),
                 'transport'=>['attempts'=>$attempts,'retry_count'=>0,'scheduler'=>false,'bytes'=>strlen($raw),'max_buffered_bytes'=>$stream->maxBufferedBytes,
-                    'elapsed_ms'=>(int)((hrtime(true)-$started)/1e6),'connect_timeout_seconds'=>2,'total_timeout_seconds'=>5,'redirects_followed'=>0,
+                    'elapsed_ms'=>(int)(((int) hrtime(true)-$started)/1e6),'connect_timeout_seconds'=>2,'total_timeout_seconds'=>5,'redirects_followed'=>0,
                     'tls_verification'=>$permit['kind']==='MOCK_TEST_ONLY'?'NOT_APPLICABLE_LOOPBACK_HTTP':'ENABLED_REQUIRED','network'=>$permit['kind']==='MOCK_TEST_ONLY'?'LOCAL_TEST_HARNESS_ONLY':'FIXED_HTTPS_WORLD_BANK']];
             $record=$this->decorateRecord($record,$permit);
             $preview=$this->decode($record);if($preview['status']!=='READY_FOR_ANALYST_DRAFT')return $preview+['transport'=>$record['transport']];
@@ -153,7 +153,7 @@ class WorldBankOneShotAcquisition
                 if(method_exists($cause,'getHandlerContext')&&($cause->getHandlerContext()['errno']??null)===28){$code='TIMEOUT_NO_RETRY';break;}
             }
             Log::info('sifi_source_acquisition',['status'=>'BLOCKED','code'=>$code,'attempts'=>1]);
-            return $this->emptyPreview($code)+['transport'=>['attempts'=>1,'retry_count'=>0,'max_buffered_bytes'=>$stream->maxBufferedBytes,'elapsed_ms'=>(int)((hrtime(true)-$started)/1e6)]];
+            return $this->emptyPreview($code)+['transport'=>['attempts'=>1,'retry_count'=>0,'max_buffered_bytes'=>$stream->maxBufferedBytes,'elapsed_ms'=>(int)(((int) hrtime(true)-$started)/1e6)]];
         } finally {$stream->close();}
     }
     /**
