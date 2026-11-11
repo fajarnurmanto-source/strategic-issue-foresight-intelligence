@@ -15,7 +15,10 @@ final class ResearchReceiptSignalIntelligence
         'dan', 'dari', 'dalam', 'di', 'ini', 'itu', 'pada', 'yang',
     ];
 
-    /** @return array<string, mixed> */
+    /**
+     * @param array<string, mixed> $receipt
+     * @return array<string, mixed>
+     */
     public function project(array $receipt, int $limit = 10): array
     {
         if (($receipt['mode'] ?? null) !== 'APPROVED_LIVE_CORPUS_METADATA') {
