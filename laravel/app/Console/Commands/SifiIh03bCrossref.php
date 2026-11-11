@@ -43,7 +43,7 @@ final class SifiIh03bCrossref extends Command
                             'updated_at' => now(),
                         ]);
                     }
-                    $owner = User::query()->findOrFail($ownerId);
+                    $owner = User::query()->whereKey($ownerId)->firstOrFail();
                     if (! $owner->hasVerifiedEmail()) {
                         throw new \RuntimeException('IH03B_SYNTHETIC_OWNER_NOT_VERIFIED');
                     }
@@ -59,7 +59,7 @@ final class SifiIh03bCrossref extends Command
             if (! is_string($id) || ! ctype_digit($id) || (int) $id < 1) {
                 throw new \RuntimeException('IH03B_OWNER_ID_REQUIRED');
             }
-            $owner = User::query()->findOrFail((int) $id);
+            $owner = User::query()->whereKey((int) $id)->firstOrFail();
             $objects = SifiMonitoringObject::query()
                 ->where('user_id', $owner->id)->where('state', 'CONFIGURED');
 
