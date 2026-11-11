@@ -15,6 +15,7 @@ final class ProviderInventory
     /** Presentation-only list; deliberately separate from dispatchable SearchProviderRegistry::IDS. */
     public const VISIBLE_RESEARCH_IDS = ['WIKIPEDIA_ID', 'CROSSREF', 'GDELT_DOC', 'TAVILY_KEYLESS'];
 
+    /** @return array<string, mixed> */
     public function snapshot(?string $asOf = null): array
     {
         $asOf ??= now('Asia/Jakarta')->toDateString();
