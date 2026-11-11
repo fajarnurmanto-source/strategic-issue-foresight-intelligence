@@ -5,7 +5,11 @@ use Illuminate\Support\Str;
 use RuntimeException;
 /** Strict loopback-only Python advisory; output is not an Issue Object or evidence admission. */
 final class Aq01ClaimEventBridge {
-    public function assess(array $input):array {
+    /**
+  * @param array<string, mixed> $input
+  * @return array<string, mixed>
+  */
+ public function assess(array $input):array {
         $base=(string)config('sifi_aq01.base_url');$token=(string)config('sifi_aq01.token');
         if (strlen($token)<32 || preg_match('#^http://127\.0\.0\.1:[0-9]{2,5}$#D',$base)!==1)
             throw new RuntimeException('loopback unavailable');
