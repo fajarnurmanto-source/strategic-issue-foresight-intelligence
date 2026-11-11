@@ -16,7 +16,10 @@ final class SecureAiRuntime
 {
     public function __construct(private AiProviderAdapter $adapter, private AiTaskCapabilityRegistry $tasks) {}
 
-    /** Selection must come from server-owned session/config, never an arbitrary request owner. */
+    /**
+     * Selection must come from server-owned session/config, never an arbitrary request owner.
+     * @param array<string, mixed> $selection
+     */
     public function invoke(User $actor, int $ownerId, array $selection, AiInferenceRequest $request): AiInferenceResult
     {
         if (! $actor->exists || ! $actor->hasVerifiedEmail() || (int) $actor->id !== $ownerId) {
