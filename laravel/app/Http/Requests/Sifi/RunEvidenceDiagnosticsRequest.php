@@ -11,6 +11,7 @@ final class RunEvidenceDiagnosticsRequest extends FormRequest
         $candidate = $this->route('candidate');
         return $candidate instanceof SifiIssueCandidate && $this->user()?->can('view', $candidate) === true;
     }
+    /** @return array<string, list<string>> */
     public function rules(): array
     {
         return [
