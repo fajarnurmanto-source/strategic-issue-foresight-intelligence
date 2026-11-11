@@ -59,3 +59,64 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+  pint-normalization-candidate:
+    # Diagnostic only: Pint edits this ephemeral runner checkout, never pushes code.
+    # Preserve the original ci job and its full lint gate unchanged.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ${{ github.workspace }}/laravel/database/database.sqlite
+    defaults:
+      run:
+        working-directory: laravel
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Prepare writable directories
+        run: |
+          mkdir -p bootstrap/cache storage/app/public storage/framework/cache/data
+          mkdir -p storage/framework/sessions storage/framework/testing storage/framework/views storage/logs
+          touch database/database.sqlite
+      - name: Setup isolated application
+        run: composer setup
+      - name: Generate Pint-only formatting candidate
+        run: |
+          set -euo pipefail
+          vendor/bin/pint --parallel
+          git -C .. diff --check
+          git -C .. diff --name-only > ../pint-changed-files.txt
+          if grep -Ev '^laravel/.*\.php$' ../pint-changed-files.txt; then
+            echo 'PINT_UNEXPECTED_PATH' >&2
+            exit 1
+          fi
+          git -C .. diff --binary -- laravel > ../pint-normalization.patch
+          echo "PINT_CHANGED_FILE_COUNT=$(wc -l < ../pint-changed-files.txt)"
+          sha256sum ../pint-normalization.patch
+          vendor/bin/pint --parallel --test
+      - name: Full regression against normalized candidate
+        run: composer ci:check
+      - name: Export reviewable patch and manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sifi-pint-candidate-${{ github.sha }}
+          path: |
+            pint-normalization.patch
+            pint-changed-files.txt
+          if-no-files-found: warn
+          retention-days: 7
