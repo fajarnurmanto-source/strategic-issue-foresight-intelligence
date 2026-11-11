@@ -5,6 +5,7 @@ namespace App\Services\Sifi\Integration;
 /** Operator-facing platform access map. Labels are not claims of connected coverage. */
 final class SocialSourceCoverage
 {
+    /** @return array<string, mixed> */
     public function snapshot(string $asOf): array
     {
         $enabled = config('sifi_social.bluesky_public_search_enabled') === true;
