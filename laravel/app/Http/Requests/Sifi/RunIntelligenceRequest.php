@@ -13,6 +13,8 @@ final class RunIntelligenceRequest extends FormRequest
         return $candidate instanceof SifiIssueCandidate && $this->user()?->can('update', $candidate) === true;
     }
 
+    /** @return array<string, list<mixed>> */
+
     public function rules(): array
     {
         return ['revision' => ['required', 'integer', 'min:1', 'max:1000000']];
