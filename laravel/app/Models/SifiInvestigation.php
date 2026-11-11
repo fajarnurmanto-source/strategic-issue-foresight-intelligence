@@ -13,6 +13,7 @@ final class SifiInvestigation extends Model
     public $incrementing = false;
     protected $guarded = ['*'];
 
+    /** @return HasOne<SifiIssueCandidate, $this> */
     public function issueCandidate(): HasOne
     {
         return $this->hasOne(SifiIssueCandidate::class, 'investigation_id');
