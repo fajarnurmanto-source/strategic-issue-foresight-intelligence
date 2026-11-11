@@ -20,7 +20,7 @@ final class WorkbenchController extends Controller
         $selection = $request->validate(['candidate' => ['nullable', 'uuid'],'object'=>['nullable','uuid']]);
         $ownerId = $request->user()->getAuthIdentifier();
         if(isset($selection['object'])) {
-            $object=\App\Models\SifiMonitoringObject::findOrFail($selection['object']);Gate::authorize('view',$object);
+            $object=\App\Models\SifiMonitoringObject::query()->whereKey($selection['object'])->firstOrFail();Gate::authorize('view',$object);
             abort_if(isset($selection['candidate']),422,'Candidate is not linked to this monitoring object.');
             $objectSourceIds=DB::table('sifi_monitoring_object_sources')->where('object_id',$object->id)->pluck('source_id')->all();
             return Inertia::render('sifi/workbench',['focus'=>null,'cases'=>[],'total'=>0,'showing'=>0,'mode'=>'OFFLINE_FIXTURE_ONLY','evidence_state'=>'NOT_EVALUATED','production_authorized'=>false,
@@ -72,7 +72,10 @@ final class WorkbenchController extends Controller
         ]);
     }
 
-    /** One owner-authorized, transaction-consistent projection; no remote calls or writes. */
+    /**
+     * One owner-authorized, transaction-consistent projection; no remote calls or writes.
+     * @return array<string, mixed>
+     */
     private function context(string $id, ClaimComparisonPreviewInput $source, ClaimComparisonInputDiagnostics $diagnostics): array
     {
         return DB::transaction(function () use ($id, $source, $diagnostics): array {
