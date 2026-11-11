@@ -7,6 +7,11 @@ use Psr\Http\Message\ResponseInterface;
 final class ProviderHttpTransport
 {
     public function __construct(private ProviderEndpointPolicy $policy){}
+    /**
+     * @param array<string, mixed> $provider
+     * @param array<string, mixed>|null $body
+     * @return array<string, mixed>
+     */
     public function request(array $provider,string $path,?array $body,string $model,string $purpose,int $timeoutMs=10000): array
     {
         $protocol=$provider['protocol'];
