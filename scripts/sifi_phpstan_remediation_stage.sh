@@ -99,6 +99,18 @@ while IFS= read -r changed; do
         laravel/app/Services/Sifi/Integration/CrossSourceReceiptFusion.php|\
         laravel/app/Services/Sifi/Integration/ReviewedAntaraRss.php|\
         laravel/app/Services/Sifi/SearchProviderRegistry.php|\
+        laravel/app/Contracts/SifiResearchProvider.php|\
+        laravel/app/Http/Controllers/Sifi/EvidenceDiagnosticsController.php|\
+        laravel/app/Http/Controllers/Sifi/MultiSourceResearchController.php|\
+        laravel/app/Http/Controllers/Sifi/SignalInboxController.php|\
+        laravel/app/Http/Controllers/Sifi/SourceDiscoveryController.php|\
+        laravel/app/Http/Requests/Sifi/ClaimComparisonPreviewRequest.php|\
+        laravel/app/Http/Requests/Sifi/UpdateIssueCandidateRequest.php|\
+        laravel/app/Services/Sifi/Ai/FreeAiCatalogue.php|\
+        laravel/app/Services/Sifi/Ai/SecureAiRuntime.php|\
+        laravel/app/Services/Sifi/Aq01ClaimEventBridge.php|\
+        laravel/app/Services/Sifi/Aq01EvidenceDiagnosticsBridge.php|\
+        laravel/app/Services/Sifi/Aq01ForesightBridge.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
@@ -219,9 +231,10 @@ echo 'PHPSTAN_VERIFIED_BATCH5_ERRORS=325'
 echo 'PHPSTAN_VERIFIED_BATCH6_ERRORS=236'
 echo 'PHPSTAN_VERIFIED_BATCH7_ERRORS=180'
 echo 'PHPSTAN_VERIFIED_BATCH8_ERRORS=137'
+echo 'PHPSTAN_VERIFIED_BATCH9_ERRORS=104'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 137 ]; then
+if [ "$After" -lt 104 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
