@@ -12,7 +12,7 @@ final class MonitoringObjectSources {
  }
  /** @return list<array<string, mixed>> */
  public function choices(User $u):array {
-  return SifiSourceDraft::where('user_id',$u->id)->orderBy('name')->limit(150)->get()->map(fn($s)=>['id'=>$s->id,'name'=>$s->name,'rights'=>$this->eligibility($s),'collector'=>'OFF'])->all();
+  return array_values(SifiSourceDraft::where('user_id',$u->id)->orderBy('name')->limit(150)->get()->map(fn($s)=>['id'=>$s->id,'name'=>$s->name,'rights'=>$this->eligibility($s),'collector'=>'OFF'])->all());
  }
  /** @param list<string> $ids
   * @return list<string>
