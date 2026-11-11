@@ -19,6 +19,7 @@ final class SifiIssueCandidate extends Model
     {
         return ['revision' => 'integer'];
     }
+    /** @return BelongsTo<SifiInvestigation, $this> */
     public function investigation(): BelongsTo
     {
         return $this->belongsTo(SifiInvestigation::class, 'investigation_id');
