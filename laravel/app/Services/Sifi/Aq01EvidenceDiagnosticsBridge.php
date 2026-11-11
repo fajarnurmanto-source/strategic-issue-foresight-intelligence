@@ -8,6 +8,10 @@ use RuntimeException;
 /** Loopback-only, strictly checked advisory. Never grants evidence authority. */
 final class Aq01EvidenceDiagnosticsBridge
 {
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function diagnose(array $input): array
     {
         $base = (string) config('sifi_aq01.base_url');
