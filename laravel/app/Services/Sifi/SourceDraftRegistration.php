@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\{DB,Gate,Validator};
 use Illuminate\Support\Str;
 /** Shared existing candidate registry write, always UNASSESSED / OFF. No rights transition. */
 final class SourceDraftRegistration {
+ /** @param array<string, mixed> $data */
  public function create(User $user,array $data):SifiSourceDraft {
   Gate::forUser($user)->authorize('create',SifiSourceDraft::class);
   $rules=(new SourceDraftRequest)->rules();$v=Validator::make($data,$rules)->validate();
