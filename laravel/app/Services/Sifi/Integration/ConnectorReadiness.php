@@ -10,6 +10,7 @@ use App\Models\SifiConnectorProfile;
  */
 final class ConnectorReadiness
 {
+    /** @return array<string, mixed> */
     public function describe(SifiConnectorProfile $profile): array
     {
         $reasons = [
