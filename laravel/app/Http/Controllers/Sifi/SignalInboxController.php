@@ -46,13 +46,23 @@ final class SignalInboxController extends Controller
                     && $srcResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY'
                     && $sigResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY'
                     && $synResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY') {
-                    $sources = $srcResponse->json('sources') ?: [];
-                    $signals = $sigResponse->json('signals') ?: [];
+                    $rawSources = $srcResponse->json('sources');
+                    $rawSignals = $sigResponse->json('signals');
+                    $sources = is_array($rawSources) ? $rawSources : [];
+                    $signals = is_array($rawSignals) ? $rawSignals : [];
                     $signalCount = (int) ($sigResponse->json('count') ?: 0);
-                    $syndication = $synResponse->json('possible_syndication') ?: [];
+                    $rawSyndication = $synResponse->json('possible_syndication');
+                    $syndication = is_array($rawSyndication) ? $rawSyndication : [];
                     $status = 'OFFLINE_FIXTURE_ONLY';
                     // Only permit history lookup for an item in the current page.
-                    if ($selectedId !== null && collect($signals)->contains('signal_id', $selectedId)) {
+                    $present = false;
+                    foreach ($signals as $signal) {
+                        if (is_array($signal) && ($signal['signal_id'] ?? null) === $selectedId) {
+                            $present = true;
+                            break;
+                        }
+                    }
+                    if ($selectedId !== null && $present) {
                         $detailResponse = $client->get($base . '/v1/signals/' . $selectedId . '/history');
                         if ($detailResponse->successful() && $detailResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY') {
                             $selectedHistory = $detailResponse->json('versions') ?: [];
