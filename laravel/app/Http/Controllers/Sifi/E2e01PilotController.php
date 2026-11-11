@@ -24,8 +24,34 @@ final class E2e01PilotController extends Controller
         $sessions=app(ResearchSessionWorkspace::class)->history($request->user(),$object);
         $sessions = array_values(array_filter($sessions, static fn ($session) =>
             !$session['expired'] && $session['object_revision'] === $object->revision));
+        $shadowSessions = [];
+        foreach ($sessions as $session) {
+            $sessionId = $session['id'] ?? null;
+            $revision = $session['object_revision'] ?? null;
+            $results = $session['results'] ?? null;
+            if (! is_string($sessionId) || ! is_int($revision) || ! is_array($results)) {
+                continue;
+            }
+            // A JSON result object, not an arbitrary list, is required by Core V2.
+            $validResults = true;
+            foreach (array_keys($results) as $key) {
+                if (! is_string($key)) {
+                    $validResults = false;
+                    break;
+                }
+            }
+            if (! $validResults) {
+                continue;
+            }
+            /** @var array<string, mixed> $results */
+            $shadowSessions[] = [
+                'id' => $sessionId,
+                'object_revision' => $revision,
+                'results' => $results,
+            ];
+        }
         $timeline = config('sifi_core_v2.shadow_workbench') === true
-            ? app(\App\Sifi\CoreV2\ShadowPipeline::class)->forSessions($request->user(), $object, $sessions)
+            ? app(\App\Sifi\CoreV2\ShadowPipeline::class)->forSessions($request->user(), $object, $shadowSessions)
             : [];
         $sessions = array_map(static function ($s) use ($timeline) {
             $p=$s['results']['e2e01_pilot']??null;
