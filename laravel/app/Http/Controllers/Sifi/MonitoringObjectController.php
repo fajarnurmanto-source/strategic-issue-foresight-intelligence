@@ -38,18 +38,23 @@ final class MonitoringObjectController extends Controller {
    DB::table('sifi_monitoring_object_audit')->insert(['object_id'=>$o->id,'actor_user_id'=>$r->user()->id,'revision'=>$o->revision,'action'=>$existing?'UPDATED':'CREATED','snapshot_json'=>json_encode($o->toArray()+['source_ids'=>$ids,'collector'=>'OFF','ae16_filter'=>$incomingFilter,'ae16_filter_normalized'=>$normalizedFilter],JSON_THROW_ON_ERROR),'created_at'=>now()]);
   });return redirect()->route('sifi.monitoring-objects.index');
  }
+ /** @return array<string, mixed> */
  private function view(SifiMonitoringObject $o):array {
   return $o->only(['id','name','description','category','geography','objective','horizon','state','revision','aliases_json','keywords_json','exclusions_json'])+[
    'ae16_filter'=>$this->savedFilter($o),
   'source_ids'=>DB::table('sifi_monitoring_object_sources')->where('object_id',$o->id)->pluck('source_id')->all(),
    'audit'=>DB::table('sifi_monitoring_object_audit')->where('object_id',$o->id)->orderByDesc('revision')->limit(15)->get(['revision','action','created_at'])->toArray()];
  }
+ /** @return array<string, mixed>|null */
  private function savedFilter(SifiMonitoringObject $o):?array {
   $record=DB::table('sifi_monitoring_object_audit')->where('object_id',$o->id)->orderByDesc('revision')->first(['snapshot_json']);
   if(!$record)return null;
   $snapshot=json_decode((string)$record->snapshot_json,true);
   return is_array($snapshot['ae16_filter']??null)?$snapshot['ae16_filter']:null;
  }
+ /** @param array<string, mixed>|null $filter
+  * @return array<string, mixed>|null
+  */
  private function normalizeExisting(?array $filter):?array {
   if($filter===null)return null;
   try{return app(\App\Services\Sifi\Ae16UnifiedFilter::class)->normalize($filter);}
