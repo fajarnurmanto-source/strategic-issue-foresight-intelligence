@@ -22,12 +22,14 @@ final class IssueCaseController extends Controller {
   abort_if($case!==null && (int)$case->owner_user_id!==(int)$candidate->user_id,403);
   return $case;
  }
+ /** @return array<string, mixed> */
  private function snapshot(SifiIssueCaseDraft $case):array {
   return ['id'=>$case->id,'candidate_id'=>$case->candidate_id,'revision'=>(int)$case->revision,
     'title'=>$case->title,'issue_domain'=>$case->issue_domain,'geography_label'=>$case->geography_label,
     'scope_note'=>$case->scope_note,'lifecycle_state'=>$case->lifecycle_state,
     'coverage_profile_id'=>$case->coverage_profile_id,'verification_state'=>'NOT_VERIFIED'];
  }
+ /** @return array<string, mixed>|null */
  private function profile(?string $id,int $userId):?array {
   if(!$id) return null;
   $row=DB::table('sifi_coverage_profiles')->where('id',$id)->where('user_id',$userId)->first();
@@ -38,6 +40,7 @@ final class IssueCaseController extends Controller {
   return ['id'=>$row->id,'name'=>$row->name,'region_name'=>$row->region_name,
     'domains'=>$domains,'revision'=>(int)$row->revision];
  }
+ /** @return array<string, mixed> */
  private function input(SifiIssueCandidate $candidate,SifiIssueCaseDraft $case,int $userId):array {
   return ['candidate_id'=>$candidate->id,'candidate_revision'=>(int)$candidate->revision,
     'case'=>['id'=>$case->id,'revision'=>(int)$case->revision,'title'=>$case->title,
@@ -48,6 +51,7 @@ final class IssueCaseController extends Controller {
     'event_count'=>DB::table('sifi_event_hypotheses')->where('candidate_id',$candidate->id)->count(),
     'link_count'=>DB::table('sifi_claim_event_links')->where('candidate_id',$candidate->id)->count()];
  }
+ /** @param array<string, mixed> $input */
  private function digest(array $input):string {
   return hash('sha256',json_encode($input,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
  }
