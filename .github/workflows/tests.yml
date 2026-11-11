@@ -52,5 +52,10 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      # Report PHPStan independently even when the existing lint gate fails.
+      # This does not replace or relax the full composer ci:check gate.
+      - name: Run PHPStan static analysis
+        run: composer types:check
+
       - name: Run CI Checks
         run: composer ci:check
