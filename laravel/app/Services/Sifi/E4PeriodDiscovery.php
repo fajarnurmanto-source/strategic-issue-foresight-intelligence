@@ -25,7 +25,7 @@ final class E4PeriodDiscovery
         }
 
         $keywords = array_values(array_filter($object->keywords_json ?? [],
-            static fn (string $keyword): bool => trim($keyword) !== ''));
+            static fn (mixed $keyword): bool => is_string($keyword) && trim($keyword) !== ''));
         if ($keywords === []) {
             throw ValidationException::withMessages(['object_id' => 'Daftarkan sedikitnya satu keyword pada objek sebelum memilih periode.']);
         }
