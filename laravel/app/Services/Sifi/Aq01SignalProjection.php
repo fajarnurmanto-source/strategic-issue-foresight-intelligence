@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\{DB,Http};
  */
 final class Aq01SignalProjection
 {
+    /** @return array<string, mixed>|null */
     public function find(string $signalId, ?int $ownerUserId = null): ?array
     {
         if (preg_match('/^[0-9a-f]{64}$/D', $signalId) !== 1) {
