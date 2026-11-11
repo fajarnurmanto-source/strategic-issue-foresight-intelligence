@@ -11,6 +11,7 @@ final class UpdateEvidenceDraftRequest extends FormRequest
         return $evidence instanceof SifiEvidenceDraft
             && $this->user()?->can('update', $evidence) === true;
     }
+    /** @return array<string, list<mixed>> */
     public function rules(): array { return [
         'revision'=>['required','integer','min:1'],
         'claim_text'=>['required','string','min:5','max:3000'],
