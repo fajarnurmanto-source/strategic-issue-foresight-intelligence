@@ -18,6 +18,7 @@ use RuntimeException;
 
 /** Local structural hypotheses only. No real events or verified claim/evidence objects. */
 final class ClaimEventController extends Controller {
+    /** @return array<string, mixed> */
     private function input(SifiIssueCandidate $candidate):array {
         $claims=DB::table('sifi_claim_drafts as c')
           ->join('sifi_evidence_drafts as e','e.id','=','c.evidence_id')
@@ -36,6 +37,7 @@ final class ClaimEventController extends Controller {
         return ['candidate_id'=>$candidate->id,'candidate_revision'=>(int)$candidate->revision,
             'claims'=>$claims,'events'=>$events,'links'=>$links];
     }
+    /** @param array<string, mixed> $input */
     private function digest(array $input):string {
         return hash('sha256',json_encode($input,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE));
     }
@@ -43,6 +45,7 @@ final class ClaimEventController extends Controller {
         if((int)$candidate->revision!==$revision)
             throw ValidationException::withMessages(['candidate_revision'=>'Revisi kandidat berubah. Muat ulang halaman.']);
     }
+    /** @param array<string, mixed> $snapshot */
     private function audit(SifiIssueCandidate $c,int $actor,string $action,string $obj,array $snapshot):void {
         DB::table('sifi_claim_event_audit')->insert(['candidate_id'=>$c->id,'actor_user_id'=>$actor,
             'action'=>$action,'object_id'=>$obj,
