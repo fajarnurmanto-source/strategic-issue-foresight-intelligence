@@ -88,6 +88,17 @@ while IFS= read -r changed; do
         laravel/app/Services/Sifi/Integration/ReviewedGdeltNews.php|\
         laravel/app/Services/Sifi/MonitoringObjectSources.php|\
         laravel/app/Services/Sifi/OneShotSearchAuthority.php|\
+        laravel/app/Console/Commands/SifiCoreV2Doctor.php|\
+        laravel/app/Console/Commands/SifiIh03bCrossref.php|\
+        laravel/app/Http/Controllers/Sifi/AiIssueExplanationController.php|\
+        laravel/app/Http/Controllers/Sifi/ClaimEventController.php|\
+        laravel/app/Http/Controllers/Sifi/WorkbenchController.php|\
+        laravel/app/Services/Sifi/Ai/ProviderHttpTransport.php|\
+        laravel/app/Services/Sifi/Ai/UserAiSettings.php|\
+        laravel/app/Services/Sifi/ApprovedCorpusSearch.php|\
+        laravel/app/Services/Sifi/Integration/CrossSourceReceiptFusion.php|\
+        laravel/app/Services/Sifi/Integration/ReviewedAntaraRss.php|\
+        laravel/app/Services/Sifi/SearchProviderRegistry.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
@@ -207,9 +218,10 @@ echo 'PHPSTAN_VERIFIED_BATCH4_ERRORS=437'
 echo 'PHPSTAN_VERIFIED_BATCH5_ERRORS=325'
 echo 'PHPSTAN_VERIFIED_BATCH6_ERRORS=236'
 echo 'PHPSTAN_VERIFIED_BATCH7_ERRORS=180'
+echo 'PHPSTAN_VERIFIED_BATCH8_ERRORS=137'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 180 ]; then
+if [ "$After" -lt 137 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
