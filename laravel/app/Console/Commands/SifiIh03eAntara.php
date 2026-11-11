@@ -32,7 +32,11 @@ final class SifiIh03eAntara extends Command
             $owner = User::query()->findOrFail((int) $id);
             $object = SifiMonitoringObject::query()->where('user_id', $owner->id)
                 ->where('state', 'CONFIGURED')->whereKey($objectId)->firstOrFail();
-            $result = $reader->collect($owner, $object, (string) $this->option('contact'));
+            $contact = $this->option('contact');
+            if (! is_string($contact)) {
+                throw new \RuntimeException('IH03E_CONTACT_INVALID');
+            }
+            $result = $reader->collect($owner, $object, $contact);
             $this->info('IH03E_ANTARA_RECEIPT_SAVED='.$result['session_id']);
             $this->line('ANTARA_PROVIDER_STATE='.$result['state']);
             $this->line('ANTARA_NETWORK_REQUESTS='.$result['network_requests']);
