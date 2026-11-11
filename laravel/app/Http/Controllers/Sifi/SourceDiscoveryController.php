@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\{Inertia,Response};
 final class SourceDiscoveryController extends Controller {
+ /** @return array<string, list<mixed>> */
  private function filterRules():array {return ['q'=>['nullable','string','max:200'],'type'=>['nullable',Rule::in(DiscoveryCatalog::TYPES)],'language'=>['nullable',Rule::in(['id','en'])],'geography'=>['nullable','string','max:180'],'limit'=>['sometimes','integer','min:1','max:20'],'candidate_url'=>['nullable','string','max:500']];}
+ /** @return array<string, list<string>> */
  private function forbidden():array {return array_fill_keys(['user_id','rights','rights_state','collector_state','grant','permit','receipt','source_draft_id','descriptor','url','evidence_admitted','verified','schedule'],['prohibited']);}
  public function index(Request $r,SifiMonitoringObject $object,DiscoveryCatalog $catalog,SourceDiscoveryWorkspace $workspace):Response {
   Gate::authorize('view',$object);$v=$r->validate($this->filterRules()+$this->forbidden());
