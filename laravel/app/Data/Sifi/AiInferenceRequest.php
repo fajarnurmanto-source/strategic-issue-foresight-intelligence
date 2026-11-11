@@ -30,7 +30,7 @@ final readonly class AiInferenceRequest
             throw new InvalidArgumentException('Unsupported AI privacy class.');
         }
 
-        if (count($inputReferences) > 50 || array_filter($inputReferences, fn ($value) => ! is_string($value) || $value === '') !== []) {
+        if (count($inputReferences) > 50 || array_filter($inputReferences, fn ($value) => $value === '') !== []) {
             throw new InvalidArgumentException('AI input references must contain at most 50 non-empty strings.');
         }
     }
