@@ -11,6 +11,8 @@ final class StoreIssueCandidateRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    /** @return array<string, list<mixed>> */
+
     public function rules(): array
     {
         return ['investigation_id' => ['required', 'uuid']];
