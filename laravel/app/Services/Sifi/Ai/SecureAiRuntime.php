@@ -53,7 +53,7 @@ final class SecureAiRuntime
         if (RateLimiter::tooManyAttempts($key, 10)) return $fail('RATE_LIMITED');
         RateLimiter::hit($key, 60);
         $started = hrtime(true);
-        for ($attempt = 0; $attempt < 2; $attempt++) {
+        for ($attempt = 0; ; $attempt++) {
             if ((hrtime(true) - $started) / 1_000_000 >= $request->timeoutMilliseconds) return $fail('CONNECTION_TIMEOUT');
             try {
                 $result = $this->adapter->infer($request);
