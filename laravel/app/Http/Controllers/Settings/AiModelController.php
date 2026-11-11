@@ -79,6 +79,6 @@ final class AiModelController extends Controller
         $data['assignments']['summary_draft']=['provider'=>$v['provider'],'model'=>$v['model']];$data['enabled']=true;$store->write((int)$r->user()->id,$data);
         return back()->with('ai_notice','Pilihan model disimpan. Pengiriman catatan isu nyata tetap diblokir.');
     }
-    public function disable(Request $r,UserAiSettings $store){$data=$store->read((int)$r->user()->id);$data['enabled']=false;$store->write((int)$r->user()->id,$data);$r->session()->put('sifi_ai_selection',['enabled'=>false]);return back()->with('ai_notice','AI dinonaktifkan.');}
-    public function revoke(Request $r,UserAiSettings $store){$store->revoke((int)$r->user()->id);return back()->with('ai_notice','Credential dan konfigurasi lokal dicabut. Cabut juga key pada penyedia.');}
+    public function disable(Request $r,UserAiSettings $store): \Illuminate\Http\RedirectResponse{$data=$store->read((int)$r->user()->id);$data['enabled']=false;$store->write((int)$r->user()->id,$data);$r->session()->put('sifi_ai_selection',['enabled'=>false]);return back()->with('ai_notice','AI dinonaktifkan.');}
+    public function revoke(Request $r,UserAiSettings $store): \Illuminate\Http\RedirectResponse{$store->revoke((int)$r->user()->id);return back()->with('ai_notice','Credential dan konfigurasi lokal dicabut. Cabut juga key pada penyedia.');}
 }
