@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class SocialWatchHistory
 {
+    /**
+     * @param array<int, mixed> $entries
+     * @return array<string, mixed>
+     */
     public function classify(int $ownerId, SifiMonitoringObject $object, array $entries): array
     {
         if (count($entries) > 10 || ! array_is_list($entries)
