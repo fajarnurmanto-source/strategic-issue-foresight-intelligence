@@ -24,6 +24,7 @@ final class IntegrationHub extends Page
             && $user->hasRole('superadmin', 'web');
     }
 
+    /** @return array<string, mixed> */
     public function inventory(): array
     {
         return app(ProviderInventory::class)->snapshot();
