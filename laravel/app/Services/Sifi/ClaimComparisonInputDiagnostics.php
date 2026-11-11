@@ -10,6 +10,10 @@ final class ClaimComparisonInputDiagnostics
     private const MAX_CLAIMS = 50;
     private const MAX_EVENTS_PER_CLAIM = 10;
 
+    /**
+     * @param array<string, mixed> $input
+     * @return array<string, mixed>
+     */
     public function summarize(array $input): array
     {
         $candidateId = $this->identifier($input['candidate_id'] ?? null);
