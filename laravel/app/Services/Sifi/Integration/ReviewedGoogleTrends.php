@@ -36,7 +36,7 @@ final class ReviewedGoogleTrends
                 $locked->name,
                 ...($locked->keywords_json ?? []),
                 ...($locked->aliases_json ?? []),
-            ], static fn (string $t): bool => $t !== '' && mb_strlen($t) <= 80)));
+            ], static fn (mixed $t): bool => is_string($t) && $t !== '' && mb_strlen($t) <= 80)));
             if (count($terms) > 20) {
                 $terms = array_slice($terms, 0, 20);
             }
