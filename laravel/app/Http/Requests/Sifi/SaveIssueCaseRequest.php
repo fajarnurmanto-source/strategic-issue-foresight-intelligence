@@ -9,6 +9,7 @@ final class SaveIssueCaseRequest extends FormRequest {
   $c=$this->route('candidate');
   return $c instanceof SifiIssueCandidate && $this->user()?->can('update',$c)===true;
  }
+ /** @return array<string, list<mixed>> */
  public function rules():array {
   $common=['candidate_revision'=>['required','integer','between:1,1000000'],
    'case_revision'=>['nullable','integer','between:1,1000000'],
