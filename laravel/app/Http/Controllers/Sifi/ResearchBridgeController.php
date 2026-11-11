@@ -9,6 +9,7 @@ use Inertia\{Inertia,Response};
 
 final class ResearchBridgeController extends Controller
 {
+ /** @return array<string, list<string>> */
  private function forbidden():array{return array_fill_keys(['user_id','provider','url','body','document','result_json','rights','grant','permit','receipt','evidence_admitted','verified','ai','schedule'],['prohibited']);}
  public function index(Request $r,SifiMonitoringObject $object,ResearchRetrievalWorkspace $w,ResearchSessionWorkspace $sessions):Response{
   Gate::authorize('view',$object);$v=$r->validate(['session'=>['nullable','uuid']]);$history=$sessions->history($r->user(),$object);$choices=array_values(array_filter($history,fn($s)=>!$s['expired']&&$s['object_revision']===$object->revision));$selected=$v['session']??($choices[0]['id']??null);
