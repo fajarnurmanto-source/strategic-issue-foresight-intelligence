@@ -135,6 +135,31 @@ while IFS= read -r changed; do
         laravel/app/Http/Requests/Sifi/CoverageDraftRequest.php|\
         laravel/app/Http/Requests/Sifi/MonitoringObjectRequest.php|\
         laravel/app/Http/Requests/Sifi/RunEvidenceDiagnosticsRequest.php|\
+        laravel/app/Http/Requests/Sifi/RunIntelligenceRequest.php|\
+        laravel/app/Http/Requests/Sifi/SaveExecutiveBriefRequest.php|\
+        laravel/app/Http/Requests/Sifi/SaveForesightRequest.php|\
+        laravel/app/Http/Requests/Sifi/SaveIssueCaseRequest.php|\
+        laravel/app/Http/Requests/Sifi/SaveTrajectoryRequest.php|\
+        laravel/app/Http/Requests/Sifi/SourceDraftRequest.php|\
+        laravel/app/Http/Requests/Sifi/StoreClaimEventRequest.php|\
+        laravel/app/Http/Requests/Sifi/StoreEvidenceDraftRequest.php|\
+        laravel/app/Http/Requests/Sifi/StoreIssueCandidateRequest.php|\
+        laravel/app/Http/Requests/Sifi/SubmitEvidenceReviewRequest.php|\
+        laravel/app/Http/Requests/Sifi/UpdateEvidenceDraftRequest.php|\
+        laravel/app/Models/SifiEvidenceDraft.php|\
+        laravel/app/Models/SifiInvestigation.php|\
+        laravel/app/Models/SifiIssueCandidate.php|\
+        laravel/app/Services/Sifi/Aq01SignalProjection.php|\
+        laravel/app/Services/Sifi/ClaimComparisonPreviewInput.php|\
+        laravel/app/Services/Sifi/Integration/BlueskyPublicSearchParser.php|\
+        laravel/app/Services/Sifi/Integration/ConnectorReadiness.php|\
+        laravel/app/Services/Sifi/Integration/GoogleSourceCoverage.php|\
+        laravel/app/Services/Sifi/Integration/GoogleTrendsRssParser.php|\
+        laravel/app/Services/Sifi/Integration/ProviderInventory.php|\
+        laravel/app/Services/Sifi/Integration/ResearchReceiptSignalIntelligence.php|\
+        laravel/app/Services/Sifi/Integration/ReviewedBlueskySearch.php|\
+        laravel/app/Services/Sifi/Integration/SocialSourceCoverage.php|\
+        laravel/app/Services/Sifi/SourceDraftRegistration.php|\
         scripts/rector-sifi-docblock.php|\
         scripts/sifi_phpstan_remediation_stage.sh)
             ;;
@@ -258,9 +283,10 @@ echo 'PHPSTAN_VERIFIED_BATCH8_ERRORS=137'
 echo 'PHPSTAN_VERIFIED_BATCH9_ERRORS=104'
 echo 'PHPSTAN_VERIFIED_BATCH10_ERRORS=68'
 echo 'PHPSTAN_VERIFIED_BATCH11_ERRORS=50'
+echo 'PHPSTAN_VERIFIED_BATCH12_ERRORS=37'
 echo "PHPSTAN_ERRORS_BEFORE_RECTOR=$Before"
 echo "PHPSTAN_ERRORS_AFTER_RECTOR=$After"
-if [ "$After" -lt 50 ]; then
+if [ "$After" -lt 37 ]; then
     echo 'SIFI_PHPSTAN_REMEDIATION=IMPROVED'
 else
     echo 'SIFI_PHPSTAN_REMEDIATION=REVIEW_REQUIRED'
