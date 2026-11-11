@@ -8,6 +8,7 @@ final class SaveForesightRequest extends FormRequest {
   $candidate=$this->route('candidate');
   return $candidate instanceof SifiIssueCandidate && $this->user()?->can('update',$candidate)===true;
  }
+ /** @return array<string, list<mixed>> */
  public function rules():array {
   $base=['candidate_revision'=>['required','integer','between:1,1000000'],
    'case_revision'=>['required','integer','between:1,1000000'],
