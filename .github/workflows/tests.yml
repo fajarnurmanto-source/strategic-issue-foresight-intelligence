@@ -103,6 +103,14 @@ jobs:
             sha256sum ../setup-package-lock.diff
             git -C .. restore -- laravel/package-lock.json
           fi
+      - name: Capture unformatted baseline PHPUnit failures
+        run: |
+          set +e
+          vendor/bin/phpunit --log-junit ../baseline-junit.xml > ../baseline-phpunit.log 2>&1
+          code=$?
+          set -e
+          printf 'BASELINE_PHPUNIT_EXIT=%s\n' "$code"
+          test -s ../baseline-junit.xml
       - name: Generate Pint-only formatting candidate
         run: |
           set -euo pipefail
@@ -119,6 +127,53 @@ jobs:
           vendor/bin/pint --parallel --test
       - name: Full regression against normalized candidate
         run: composer ci:check
+      - name: Compare baseline and formatted test failure identity
+        if: always()
+        run: |
+          set +e
+          vendor/bin/phpunit --log-junit ../formatted-junit.xml > ../formatted-phpunit.log 2>&1
+          code=$?
+          set -e
+          printf 'FORMATTED_PHPUNIT_EXIT=%s\n' "$code"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def report(path):
+              root = ET.parse(path).getroot()
+              cases = root.findall('.//testcase')
+              failed = {}
+              for case in cases:
+                  problems = [n for n in case if n.tag in ('failure', 'error')]
+                  if problems:
+                      failed[case.get('class', case.get('classname', '')) + '::' + case.get('name', '')] = [
+                          {'kind': n.tag, 'message': (n.get('message') or '')[:350]} for n in problems
+                      ]
+              return {'total': len(cases), 'failed': failed}
+          baseline = report('../baseline-junit.xml')
+          formatted = report('../formatted-junit.xml')
+          new = sorted(set(formatted['failed']) - set(baseline['failed']))
+          resolved = sorted(set(baseline['failed']) - set(formatted['failed']))
+          summary = {
+              'baseline_testcases': baseline['total'],
+              'formatted_testcases': formatted['total'],
+              'baseline_failures': len(baseline['failed']),
+              'formatted_failures': len(formatted['failed']),
+              'new_failure_ids': new,
+              'resolved_failure_ids': resolved,
+              'new_failure_details': {k: formatted['failed'][k] for k in new},
+              'scope': 'diagnostic comparison in same ephemeral CI runner; shared state may affect reproducibility',
+              'admission': 'NO_PRODUCTION_OR_EVIDENCE_ADMISSION'
+          }
+          Path('../pint-regression-delta.json').write_text(json.dumps(summary, indent=2))
+          print('PINT_BASELINE_FAILURES=' + str(summary['baseline_failures']))
+          print('PINT_FORMATTED_FAILURES=' + str(summary['formatted_failures']))
+          print('PINT_NEW_FAILURES=' + str(len(new)))
+          print('PINT_RESOLVED_FAILURES=' + str(len(resolved)))
+          print('PINT_NEW_FAILURE_IDENTIFIERS=' + json.dumps(new[:30]))
+          if new or baseline['total'] != formatted['total']:
+              raise SystemExit('PINT_REGRESSION_DELTA_REVIEW_REQUIRED')
+          PY
       - name: Export reviewable patch and manifest
         if: always()
         uses: actions/upload-artifact@v4
@@ -128,5 +183,10 @@ jobs:
             pint-normalization.patch
             pint-changed-files.txt
             setup-package-lock.diff
+            baseline-junit.xml
+            formatted-junit.xml
+            baseline-phpunit.log
+            formatted-phpunit.log
+            pint-regression-delta.json
           if-no-files-found: warn
           retention-days: 7
