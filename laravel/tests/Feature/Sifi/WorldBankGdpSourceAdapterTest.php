@@ -15,7 +15,10 @@ final class WorldBankGdpSourceAdapterTest extends TestCase
     private WorldBankGdpSourceAdapter $adapter;
     protected function setUp():void
     {
-        parent::setUp();$this->withoutVite();Http::preventStrayRequests();
+        parent::setUp();
+        // Replay the audited archive at its original review date; test expiry separately.
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-10-26T12:00:00Z'));
+        $this->withoutVite();Http::preventStrayRequests();
         $this->owner=User::factory()->create(['email_verified_at'=>now()]);$this->adapter=app(WorldBankGdpSourceAdapter::class);
     }
     private function inputs():array
