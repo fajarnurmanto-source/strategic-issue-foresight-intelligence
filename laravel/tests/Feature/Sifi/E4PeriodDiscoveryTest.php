@@ -8,6 +8,8 @@ use App\Services\Sifi\E4PeriodDiscovery;
 use App\Services\Sifi\SearchProviderRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -43,6 +45,7 @@ final class E4PeriodDiscoveryTest extends TestCase
         ], $overrides);
         $this->actingAs($this->owner)->post('/sifi/monitoring-objects', $data)
             ->assertSessionHasNoErrors()->assertRedirect('/sifi/monitoring-objects');
+
         return SifiMonitoringObject::query()->where('user_id', $this->owner->id)
             ->orderByDesc('created_at')->orderByDesc('id')->firstOrFail();
     }
@@ -105,7 +108,7 @@ final class E4PeriodDiscoveryTest extends TestCase
             try {
                 $service->plan($this->owner, $object, $start, $end);
                 $this->fail('Periode di luar kewenangan diterima.');
-            } catch (\Illuminate\Validation\ValidationException $exception) {
+            } catch (ValidationException $exception) {
                 $this->assertArrayHasKey('end_date', $exception->errors());
             }
         }
@@ -121,7 +124,7 @@ final class E4PeriodDiscoveryTest extends TestCase
             'object_revision' => $object->revision,
             'start_date' => $today,
             'end_date' => $today,
-            'submission_key' => (string) \Illuminate\Support\Str::uuid(),
+            'submission_key' => (string) Str::uuid(),
             'consent' => true,
         ])->assertSessionHasErrors('source');
         $this->assertDatabaseCount('sifi_research_sessions', 0);

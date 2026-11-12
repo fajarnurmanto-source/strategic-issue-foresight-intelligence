@@ -15,7 +15,7 @@ final class LegacySessionReadGateway
      */
     public function inspect(?string $sessionId = null): array
     {
-        if (!Schema::hasTable('sifi_research_sessions')) {
+        if (! Schema::hasTable('sifi_research_sessions')) {
             return ['status' => 'SESSION_TABLE_MISSING'];
         }
         $q = DB::table('sifi_research_sessions');

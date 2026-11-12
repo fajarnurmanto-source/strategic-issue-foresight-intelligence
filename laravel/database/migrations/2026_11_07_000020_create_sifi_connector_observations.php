@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('sifi_connector_observations', function (Blueprint $table): void {
@@ -34,7 +35,7 @@ return new class extends Migration {
     {
         if (Schema::hasTable('sifi_connector_observations')
             && DB::table('sifi_connector_observations')->exists()) {
-            throw new \RuntimeException('IH03_REFUSE_NONEMPTY_OBSERVATION_ROLLBACK');
+            throw new RuntimeException('IH03_REFUSE_NONEMPTY_OBSERVATION_ROLLBACK');
         }
         Schema::dropIfExists('sifi_connector_observations');
     }

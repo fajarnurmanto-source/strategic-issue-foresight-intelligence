@@ -10,6 +10,7 @@ final class ResearchReceiptSignalIntelligenceTest extends TestCase
     private function item(string $title, string $doi): array
     {
         $url = 'https://doi.org/'.$doi;
+
         return [
             'id' => hash('sha256', $url),
             'canonical_url' => $url,
@@ -34,7 +35,7 @@ final class ResearchReceiptSignalIntelligenceTest extends TestCase
                 $this->item('Climate resilience evidence', '10.1000/c'),
             ],
         ];
-        $result = (new ResearchReceiptSignalIntelligence())->project($receipt);
+        $result = (new ResearchReceiptSignalIntelligence)->project($receipt);
         $this->assertSame(3, $result['unique_publications']);
         $this->assertSame(1, $result['network_requests']);
         $this->assertSame(1, $result['lexical_topic_cluster_count']);
@@ -47,7 +48,7 @@ final class ResearchReceiptSignalIntelligenceTest extends TestCase
 
     public function test_rejects_synthetic_and_unadmitted_or_tampered_entries(): void
     {
-        $service = new ResearchReceiptSignalIntelligence();
+        $service = new ResearchReceiptSignalIntelligence;
         try {
             $service->project(['mode' => 'SYNTHETIC_HTTP_FAKE_API_ADAPTER', 'entries' => [], 'calls' => []]);
             $this->fail('Synthetic source should be rejected');

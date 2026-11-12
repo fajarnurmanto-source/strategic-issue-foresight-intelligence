@@ -3,7 +3,10 @@
 namespace App\Services\Sifi\Integration;
 
 use App\Services\Sifi\ResearchWorldBankAcquisition;
-use GuzzleHttp\Psr7\{StreamDecoratorTrait, Utils};
+use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use GuzzleHttp\Psr7\Utils;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Component\Process\Process;
@@ -34,7 +37,7 @@ class GoogleTrendsRssTransport
     }
 
     /** @param array<string, mixed> $options */
-    protected function request(array $options): \Illuminate\Http\Client\Response
+    protected function request(array $options): Response
     {
         return Http::withOptions($options)->connectTimeout(8)->timeout(18)->get(self::ENDPOINT);
     }
@@ -43,14 +46,20 @@ class GoogleTrendsRssTransport
     public function fetch(): array
     {
         app(GoogleTrendsLocalPermission::class)->assertAllowed();
-        $streamResource=fopen('php://temp/maxmemory:524288', 'w+b');
-        if ($streamResource===false) throw new \RuntimeException('SIFI_GOOGLE_SINK_OPEN_FAILED');
-        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface {
+        $streamResource = fopen('php://temp/maxmemory:524288', 'w+b');
+        if ($streamResource === false) {
+            throw new \RuntimeException('SIFI_GOOGLE_SINK_OPEN_FAILED');
+        }
+        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface
+        {
             use StreamDecoratorTrait;
 
             private StreamInterface $stream;
 
-            public function __construct(StreamInterface $stream) { $this->stream=$stream; }
+            public function __construct(StreamInterface $stream)
+            {
+                $this->stream = $stream;
+            }
 
             public function write($data): int
             {
@@ -132,7 +141,7 @@ class GoogleTrendsRssTransport
                 'failure_category' => match ($status) {
                     403 => 'GOOGLE_RSS_ACCESS_RESTRICTED',
                     429 => 'PROVIDER_QUOTA',
-                    default => $error instanceof \Illuminate\Http\Client\ConnectionException
+                    default => $error instanceof ConnectionException
                         ? 'CONNECTION_FAILURE' : 'VALIDATION_OR_HTTP_FAILURE',
                 },
                 'elapsed_ms' => (int) ((hrtime(true) - $start) / 1e6),

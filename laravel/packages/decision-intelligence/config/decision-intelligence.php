@@ -1,4 +1,5 @@
 <?php
+
 return [
     'driver' => env('DECISION_AI_DRIVER', 'off'), // off | ollama | gemini | deepseek
     'timeout' => (int) env('DECISION_AI_TIMEOUT', 25),

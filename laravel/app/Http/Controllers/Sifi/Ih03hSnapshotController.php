@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Sifi;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 
 /** Authenticated local view of the previously rendered public-metadata snapshot. */
 final class Ih03hSnapshotController extends Controller
 {
-    public function show(Request $request): \Illuminate\Http\Response
+    public function show(Request $request): Response
     {
         if (! app()->environment(['local', 'testing'])
             || ! in_array(strtolower($request->getHost()), ['localhost', '127.0.0.1', '::1'], true)

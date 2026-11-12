@@ -44,7 +44,9 @@ final class IssueCandidateController extends Controller
             // Lock the originating investigation so repeated submissions do not create new candidates.
             SifiInvestigation::query()->whereKey($investigation->id)->lockForUpdate()->firstOrFail();
             $existing = SifiIssueCandidate::where('investigation_id', $investigation->id)->first();
-            if ($existing !== null) { return $existing; }
+            if ($existing !== null) {
+                return $existing;
+            }
             $candidate = SifiIssueCandidate::create([
                 'id' => (string) Str::uuid(), 'investigation_id' => $investigation->id,
                 'user_id' => $request->user()->id,
@@ -56,6 +58,7 @@ final class IssueCandidateController extends Controller
                 'status' => 'DRAFT',
                 'origin_provenance' => 'OFFLINE_FIXTURE_ONLY',
             ]);
+
             return $candidate;
         });
 
@@ -119,12 +122,15 @@ final class IssueCandidateController extends Controller
                 'next_checks' => $data['next_checks'] ?? null,
                 'review_state' => $data['review_state'],
             ];
-            if (! collect($fields)->contains(fn ($value, $key) => $row->{$key} !== $value)) { return; }
+            if (! collect($fields)->contains(fn ($value, $key) => $row->{$key} !== $value)) {
+                return;
+            }
             $row->fill($fields);
             $row->revision += 1;
             $row->save();
             $this->audit($row, $userId, (int) $row->revision, 'CANDIDATE_EDITED', $fields);
         });
+
         return redirect()->route('sifi.issue-candidates.show', $candidate->id);
     }
 

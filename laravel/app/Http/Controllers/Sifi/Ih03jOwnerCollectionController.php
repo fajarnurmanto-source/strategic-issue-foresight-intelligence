@@ -7,9 +7,9 @@ use App\Models\SifiMonitoringObject;
 use App\Services\Sifi\Integration\AntaraLocalPermission;
 use App\Services\Sifi\Integration\BlueskyLocalPermission;
 use App\Services\Sifi\Integration\ConnectorObservationProjector;
-use App\Services\Sifi\Integration\ReviewedBlueskySearch;
 use App\Services\Sifi\Integration\CrossrefLocalPermission;
 use App\Services\Sifi\Integration\ReviewedAntaraRss;
+use App\Services\Sifi\Integration\ReviewedBlueskySearch;
 use App\Services\Sifi\Integration\ReviewedCrossrefResearch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -111,7 +111,7 @@ final class Ih03jOwnerCollectionController extends Controller
                 $code = 'SOURCE_UNAVAILABLE';
             }
             throw ValidationException::withMessages([
-                'real_source' => 'Permintaan metadata ditahan (' . $code . '). Tidak ada retry otomatis.',
+                'real_source' => 'Permintaan metadata ditahan ('.$code.'). Tidak ada retry otomatis.',
             ]);
         }
 
@@ -131,6 +131,7 @@ final class Ih03jOwnerCollectionController extends Controller
         if ($provider === 'BLUESKY_PUBLIC_SEARCH') {
             try {
                 app(BlueskyLocalPermission::class)->assertAllowed();
+
                 return true;
             } catch (\RuntimeException $exception) {
                 return false;
@@ -145,11 +146,13 @@ final class Ih03jOwnerCollectionController extends Controller
         if ($provider === 'ANTARA_RSS') {
             try {
                 app(AntaraLocalPermission::class)->assertAllowed();
+
                 return true;
             } catch (\RuntimeException $exception) {
                 return false;
             }
         }
+
         return false;
     }
 }

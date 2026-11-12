@@ -35,13 +35,13 @@ final class SignalInboxController extends Controller
         if (strlen($token) >= 32 && preg_match('#^http://127\.0\.0\.1:[0-9]{2,5}$#D', $base)) {
             try {
                 $client = Http::withToken($token)->acceptJson()->connectTimeout(2)->timeout(5);
-                $srcResponse = $client->get($base . '/v1/sources');
-                $sigResponse = $client->get($base . '/v1/signals', array_filter([
+                $srcResponse = $client->get($base.'/v1/sources');
+                $sigResponse = $client->get($base.'/v1/signals', array_filter([
                     'limit' => $limit,
                     'offset' => ($page - 1) * $limit,
                     'source_id' => $source,
                 ], static fn ($v) => $v !== null));
-                $synResponse = $client->get($base . '/v1/syndication');
+                $synResponse = $client->get($base.'/v1/syndication');
                 if ($srcResponse->successful() && $sigResponse->successful() && $synResponse->successful()
                     && $srcResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY'
                     && $sigResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY'
@@ -63,7 +63,7 @@ final class SignalInboxController extends Controller
                         }
                     }
                     if ($selectedId !== null && $present) {
-                        $detailResponse = $client->get($base . '/v1/signals/' . $selectedId . '/history');
+                        $detailResponse = $client->get($base.'/v1/signals/'.$selectedId.'/history');
                         if ($detailResponse->successful() && $detailResponse->json('mode') === 'OFFLINE_FIXTURE_ONLY') {
                             $selectedHistory = $detailResponse->json('versions') ?: [];
                         }

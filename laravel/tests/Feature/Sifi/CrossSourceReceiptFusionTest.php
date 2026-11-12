@@ -74,6 +74,7 @@ final class CrossSourceReceiptFusionTest extends TestCase
         ];
         DB::table('sifi_research_sessions')->where('id', $id)
             ->update(['results_json' => json_encode($results, JSON_THROW_ON_ERROR)]);
+
         return $id;
     }
 }

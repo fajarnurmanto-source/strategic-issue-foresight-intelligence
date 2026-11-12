@@ -81,9 +81,9 @@ function nextTextFrame($stream, float $deadline, int &$wireBytes): ?string
     while (true) {
         $header = receiveBytes($stream, 2, $deadline, $wireBytes);
         $fin = (ord($header[0]) & 0x80) !== 0;
-        $opcode = ord($header[0]) & 0x0f;
+        $opcode = ord($header[0]) & 0x0F;
         $masked = (ord($header[1]) & 0x80) !== 0;
-        $length = ord($header[1]) & 0x7f;
+        $length = ord($header[1]) & 0x7F;
         if ($length === 126) {
             $length = unpack('n', receiveBytes($stream, 2, $deadline, $wireBytes))[1];
         } elseif ($length === 127) {
@@ -102,10 +102,11 @@ function nextTextFrame($stream, float $deadline, int &$wireBytes): ?string
             throw new RuntimeException('JETSTREAM_PROVIDER_CLOSED_CONNECTION');
         }
         if ($opcode === 0x9) {
-            sendControl($stream, 0xa, $payload);
+            sendControl($stream, 0xA, $payload);
+
             continue;
         }
-        if ($opcode === 0xa) {
+        if ($opcode === 0xA) {
             continue;
         }
         if ($opcode !== 0x1) {
@@ -131,10 +132,10 @@ if ($stream === false) {
 
 $deadline = microtime(true) + MAX_SECONDS;
 $key = base64_encode(random_bytes(16));
-$request = "GET ".PATH." HTTP/1.1\r\n"
-    ."Host: ".HOST."\r\n"
+$request = 'GET '.PATH." HTTP/1.1\r\n"
+    .'Host: '.HOST."\r\n"
     ."Upgrade: websocket\r\nConnection: Upgrade\r\n"
-    ."Sec-WebSocket-Key: ".$key."\r\nSec-WebSocket-Version: 13\r\n"
+    .'Sec-WebSocket-Key: '.$key."\r\nSec-WebSocket-Version: 13\r\n"
     ."Sec-WebSocket-Protocol: xrpc.v1.json\r\n"
     ."User-Agent: SIFI-Isolated-Public-Jetstream-Probe/1.0\r\n\r\n";
 

@@ -2,7 +2,8 @@
 
 namespace App\Services\Sifi;
 
-use Illuminate\Support\Facades\{DB,Http};
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Strictly read-only bridge to the AQ01 offline fixture projection.
@@ -19,13 +20,13 @@ final class Aq01SignalProjection
 
         // Real-source signals are owner-scoped and NOT fixture projections or admitted evidence.
         if ($ownerUserId !== null) {
-            $real = DB::table('sifi_real_source_signals')->where('id',$signalId)->where('owner_user_id',$ownerUserId)->first();
+            $real = DB::table('sifi_real_source_signals')->where('id', $signalId)->where('owner_user_id', $ownerUserId)->first();
             if ($real !== null) {
                 return [
-                    'signal_id'=>$signalId, 'title'=>'Sumber nyata: '.mb_substr($real->source_url,0,195),
-                    'source_id'=>'E2E04_REAL_SOURCE', 'publisher'=>parse_url($real->source_url,PHP_URL_HOST),
-                    'published_at'=>null, 'evidence_admission'=>'NOT_EVALUATED',
-                    'provenance_mode'=>'REAL_SOURCE_SNAPSHOT', 'independence_verified'=>false,
+                    'signal_id' => $signalId, 'title' => 'Sumber nyata: '.mb_substr($real->source_url, 0, 195),
+                    'source_id' => 'E2E04_REAL_SOURCE', 'publisher' => parse_url($real->source_url, PHP_URL_HOST),
+                    'published_at' => null, 'evidence_admission' => 'NOT_EVALUATED',
+                    'provenance_mode' => 'REAL_SOURCE_SNAPSHOT', 'independence_verified' => false,
                 ];
             }
         }
@@ -40,7 +41,7 @@ final class Aq01SignalProjection
                 ->acceptJson()
                 ->connectTimeout(1)
                 ->timeout(3)
-                ->get($base . '/v1/signals/' . $signalId . '/history');
+                ->get($base.'/v1/signals/'.$signalId.'/history');
             if (! $response->successful() || $response->json('mode') !== 'OFFLINE_FIXTURE_ONLY') {
                 return null;
             }
@@ -59,6 +60,7 @@ final class Aq01SignalProjection
                 || trim($latest['title']) === '') {
                 return null;
             }
+
             // Projection for UI only: no raw body, secrets or arbitrary fields.
             return [
                 'signal_id' => $signalId,

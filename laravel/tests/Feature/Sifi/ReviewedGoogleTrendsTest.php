@@ -8,7 +8,9 @@ use App\Services\Sifi\Integration\GoogleTrendsLocalPermission;
 use App\Services\Sifi\Integration\GoogleTrendsRssParser;
 use App\Services\Sifi\Integration\GoogleTrendsRssTransport;
 use App\Services\Sifi\Integration\ReviewedGoogleTrends;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -23,7 +25,7 @@ final class ReviewedGoogleTrendsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-09 10:00:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-09 10:00:00', 'Asia/Jakarta'));
         $this->temporary = sys_get_temp_dir().'/sifi-google-trends-'.Str::uuid();
         mkdir($this->temporary, 0700);
         $this->app->useStoragePath($this->temporary);
@@ -39,7 +41,7 @@ final class ReviewedGoogleTrendsTest extends TestCase
     protected function tearDown(): void
     {
         if (str_starts_with($this->temporary, sys_get_temp_dir().'/sifi-google-trends-')) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->temporary);
+            (new Filesystem)->deleteDirectory($this->temporary);
         }
         parent::tearDown();
     }
@@ -75,7 +77,8 @@ final class ReviewedGoogleTrendsTest extends TestCase
 
     public function test_isolated_google_source_creates_owned_research_receipt_without_network_in_test(): void
     {
-        $fake = new class extends GoogleTrendsRssTransport {
+        $fake = new class extends GoogleTrendsRssTransport
+        {
             public int $calls = 0;
 
             public function fetch(): array

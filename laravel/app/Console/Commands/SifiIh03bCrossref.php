@@ -48,11 +48,13 @@ final class SifiIh03bCrossref extends Command
                         throw new \RuntimeException('IH03B_SYNTHETIC_OWNER_NOT_VERIFIED');
                     }
                     $object = $this->previewObject($owner);
+
                     return [$owner->id, $object->id];
                 });
                 $this->info('IH03B_PREVIEW_OWNER_ID='.$preview[0]);
                 $this->info('IH03B_PREVIEW_OBJECT_ID='.$preview[1]);
                 $this->line('SYNTHETIC_OWNER=NO_LOGIN_NO_EXTERNAL_CONTACT');
+
                 return self::SUCCESS;
             }
             $id = $this->option('owner');
@@ -69,6 +71,7 @@ final class SifiIh03bCrossref extends Command
                 }
                 $preview = $this->previewObject($owner);
                 $this->info('IH03B_PREVIEW_OBJECT_ID='.$preview->id);
+
                 return self::SUCCESS;
             }
 
@@ -76,6 +79,7 @@ final class SifiIh03bCrossref extends Command
                 foreach ($objects->orderBy('name')->get(['id', 'name', 'revision']) as $object) {
                     $this->line($object->id.' | revision='.$object->revision.' | '.$object->name);
                 }
+
                 return self::SUCCESS;
             }
 
@@ -93,9 +97,11 @@ final class SifiIh03bCrossref extends Command
             $this->info('IH03B_METADATA_RECEIPT_SAVED='.$sessionId);
             $this->line('EVIDENCE_ADMISSION=NONE');
             $this->line('PRODUCTION_ADMISSION=DENIED');
+
             return self::SUCCESS;
         } catch (\Throwable $exception) {
             $this->error('SIFI_IH03B=HELD: '.$exception->getMessage());
+
             return self::FAILURE;
         }
     }
@@ -108,6 +114,7 @@ final class SifiIh03bCrossref extends Command
         if ($object !== null) {
             return $object;
         }
+
         return SifiMonitoringObject::create([
             'id' => (string) Str::uuid(),
             'user_id' => $owner->id,

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Sifi;
 
 use DecisionIntelligence\IssueFilter;
@@ -29,6 +30,7 @@ final class Ae16UnifiedFilter
         if ($valid['region'] !== 'KOTA_YOGYAKARTA') {
             throw new \InvalidArgumentException('AE16_GEOGRAPHY_UNSUPPORTED');
         }
+
         return $valid + ['time_basis' => 'publication', 'timezone' => 'Asia/Jakarta'];
     }
 
@@ -37,39 +39,41 @@ final class Ae16UnifiedFilter
      * The input item must contain actual reviewed metadata. Missing sentiment/date/geo is never inferred.
      */
     /** @param array<string, mixed> $item
-     * @param array<string, mixed> $filter
+     * @param  array<string, mixed>  $filter
      * @return array{decision: string, reason: string}
      */
     public function classify(array $item, array $filter): array
     {
         $required = ['media_type', 'publication_date', 'geography', 'sentiment'];
         foreach ($required as $field) {
-            if (!isset($item[$field]) || $item[$field] === '' || $item[$field] === 'unknown') {
-                return ['decision' => 'REVIEW_REQUIRED', 'reason' => 'MISSING_OR_UNKNOWN_' . strtoupper($field)];
+            if (! isset($item[$field]) || $item[$field] === '' || $item[$field] === 'unknown') {
+                return ['decision' => 'REVIEW_REQUIRED', 'reason' => 'MISSING_OR_UNKNOWN_'.strtoupper($field)];
             }
         }
-        if (!in_array($item['media_type'], $filter['media'], true)) {
-            return ['decision'=>'EXCLUDED','reason'=>'MEDIA_TYPE'];
+        if (! in_array($item['media_type'], $filter['media'], true)) {
+            return ['decision' => 'EXCLUDED', 'reason' => 'MEDIA_TYPE'];
         }
         $date = $item['publication_date'];
-        if (!is_string($date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) || !checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4))) {
-            return ['decision'=>'REVIEW_REQUIRED','reason'=>'PUBLICATION_DATE_UNVERIFIED'];
+        if (! is_string($date) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) || ! checkdate((int) substr($date, 5, 2), (int) substr($date, 8, 2), (int) substr($date, 0, 4))) {
+            return ['decision' => 'REVIEW_REQUIRED', 'reason' => 'PUBLICATION_DATE_UNVERIFIED'];
         }
         if ($date < $filter['period']['start'] || $date >= $filter['period']['end_exclusive']) {
-            return ['decision'=>'EXCLUDED','reason'=>'OUTSIDE_PUBLICATION_WINDOW'];
+            return ['decision' => 'EXCLUDED', 'reason' => 'OUTSIDE_PUBLICATION_WINDOW'];
         }
         if ($item['geography'] !== $filter['region']) {
-            if (in_array($item['geography'], ['AMBIGUOUS','DIY_UNSPECIFIED'], true)) {
-                return ['decision'=>'REVIEW_REQUIRED','reason'=>'GEOGRAPHY_UNVERIFIED'];
+            if (in_array($item['geography'], ['AMBIGUOUS', 'DIY_UNSPECIFIED'], true)) {
+                return ['decision' => 'REVIEW_REQUIRED', 'reason' => 'GEOGRAPHY_UNVERIFIED'];
             }
-            return ['decision'=>'EXCLUDED','reason'=>'OUTSIDE_CITY'];
+
+            return ['decision' => 'EXCLUDED', 'reason' => 'OUTSIDE_CITY'];
         }
         if (($item['sentiment_target'] ?? null) !== $filter['region'] || ($item['sentiment_reviewed'] ?? false) !== true) {
-            return ['decision'=>'REVIEW_REQUIRED','reason'=>'SENTIMENT_TARGET_OR_REVIEW_MISSING'];
+            return ['decision' => 'REVIEW_REQUIRED', 'reason' => 'SENTIMENT_TARGET_OR_REVIEW_MISSING'];
         }
         if ($filter['sentiment'] !== 'all' && $item['sentiment'] !== $filter['sentiment']) {
-            return ['decision'=>'EXCLUDED','reason'=>'SENTIMENT_MISMATCH'];
+            return ['decision' => 'EXCLUDED', 'reason' => 'SENTIMENT_MISMATCH'];
         }
-        return ['decision'=>'MATCH','reason'=>'FILTER_MATCH_REVIEWED_METADATA'];
+
+        return ['decision' => 'MATCH', 'reason' => 'FILTER_MATCH_REVIEWED_METADATA'];
     }
 }

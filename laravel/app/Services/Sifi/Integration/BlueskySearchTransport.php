@@ -3,7 +3,10 @@
 namespace App\Services\Sifi\Integration;
 
 use App\Services\Sifi\ResearchWorldBankAcquisition;
-use GuzzleHttp\Psr7\{StreamDecoratorTrait, Utils};
+use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use GuzzleHttp\Psr7\Utils;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Component\Process\Process;
@@ -34,9 +37,9 @@ class BlueskySearchTransport
     }
 
     /** @param array<string, mixed> $options
-     * @param array<string, mixed> $query
+     * @param  array<string, mixed>  $query
      */
-    protected function request(array $options, array $query): \Illuminate\Http\Client\Response
+    protected function request(array $options, array $query): Response
     {
         return Http::withOptions($options)->connectTimeout(8)->timeout(18)->get(self::ENDPOINT, $query);
     }
@@ -48,14 +51,20 @@ class BlueskySearchTransport
         app(BlueskyLocalPermission::class)->assertContact($contact);
         app(BlueskyLocalPermission::class)->assertQuery($query);
 
-        $streamResource=fopen('php://temp/maxmemory:262144', 'w+b');
-        if ($streamResource===false) throw new \RuntimeException('SIFI_SOCIAL_SINK_OPEN_FAILED');
-        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface {
+        $streamResource = fopen('php://temp/maxmemory:262144', 'w+b');
+        if ($streamResource === false) {
+            throw new \RuntimeException('SIFI_SOCIAL_SINK_OPEN_FAILED');
+        }
+        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface
+        {
             use StreamDecoratorTrait;
 
             private StreamInterface $stream;
 
-            public function __construct(StreamInterface $stream) { $this->stream=$stream; }
+            public function __construct(StreamInterface $stream)
+            {
+                $this->stream = $stream;
+            }
 
             public function write($data): int
             {
@@ -144,7 +153,7 @@ class BlueskySearchTransport
                 'failure_category' => match ($status) {
                     403 => 'PUBLIC_SEARCH_ACCESS_RESTRICTED',
                     429 => 'PROVIDER_QUOTA',
-                    default => $error instanceof \Illuminate\Http\Client\ConnectionException
+                    default => $error instanceof ConnectionException
                         ? 'CONNECTION_FAILURE' : 'VALIDATION_OR_HTTP_FAILURE',
                 },
                 'elapsed_ms' => (int) ((hrtime(true) - $start) / 1e6),

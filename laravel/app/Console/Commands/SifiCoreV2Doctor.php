@@ -11,6 +11,7 @@ use Illuminate\Console\Command;
 final class SifiCoreV2Doctor extends Command
 {
     protected $signature = 'sifi:v2:doctor {--session= : Optional UUID for a specific existing session} {--json : Emit JSON report}';
+
     protected $description = 'Inspect Core V2 foundation and an existing E2E pipeline without mutating the app';
 
     public function handle(LegacySessionReadGateway $gateway): int
@@ -38,9 +39,10 @@ final class SifiCoreV2Doctor extends Command
             ];
         }
         $session = $this->option('session');
-        if (($session !== null && !is_string($session))
-            || (is_string($session) && $session !== '' && !preg_match('/\A[0-9a-fA-F-]{36}\z/D', $session))) {
+        if (($session !== null && ! is_string($session))
+            || (is_string($session) && $session !== '' && ! preg_match('/\A[0-9a-fA-F-]{36}\z/D', $session))) {
             $this->error('INVALID_UUID_OPTION');
+
             return self::INVALID;
         }
         try {
@@ -74,6 +76,7 @@ final class SifiCoreV2Doctor extends Command
             $this->line('NO_NETWORK_OR_DATABASE_CHANGES=TRUE');
             $this->line('SECURITY_AUDIT=RUN_COMPOSER_AUDIT_SEPARATELY');
         }
+
         return self::SUCCESS;
     }
 }

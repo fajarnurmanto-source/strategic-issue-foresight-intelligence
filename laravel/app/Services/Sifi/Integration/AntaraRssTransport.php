@@ -3,7 +3,10 @@
 namespace App\Services\Sifi\Integration;
 
 use App\Services\Sifi\ResearchWorldBankAcquisition;
-use GuzzleHttp\Psr7\{StreamDecoratorTrait, Utils};
+use GuzzleHttp\Psr7\StreamDecoratorTrait;
+use GuzzleHttp\Psr7\Utils;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Psr\Http\Message\StreamInterface;
 use Symfony\Component\Process\Process;
@@ -29,11 +32,12 @@ class AntaraRssTransport
                 $ips[] = $fields[0];
             }
         }
+
         return app(ResearchWorldBankAcquisition::class)->publicAddress(array_values(array_unique($ips)));
     }
 
     /** @param array<string, mixed> $options */
-    protected function request(array $options): \Illuminate\Http\Client\Response
+    protected function request(array $options): Response
     {
         return Http::withOptions($options)->connectTimeout(8)->timeout(18)->get(self::ENDPOINT);
     }
@@ -43,17 +47,27 @@ class AntaraRssTransport
     {
         app(AntaraLocalPermission::class)->assertAllowed();
         app(AntaraLocalPermission::class)->assertContact($contact);
-        $streamResource=fopen('php://temp/maxmemory:131072', 'w+b');
-        if ($streamResource===false) throw new \RuntimeException('IH03E_RSS_SINK_OPEN_FAILED');
-        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface {
+        $streamResource = fopen('php://temp/maxmemory:131072', 'w+b');
+        if ($streamResource === false) {
+            throw new \RuntimeException('IH03E_RSS_SINK_OPEN_FAILED');
+        }
+        $sink = new class(Utils::streamFor($streamResource)) implements StreamInterface
+        {
             use StreamDecoratorTrait;
+
             private StreamInterface $stream;
-            public function __construct(StreamInterface $stream) { $this->stream=$stream; }
+
+            public function __construct(StreamInterface $stream)
+            {
+                $this->stream = $stream;
+            }
+
             public function write($data): int
             {
                 if ($this->tell() + strlen($data) > 131072) {
                     throw new \LengthException('IH03E_RSS_BYTE_LIMIT');
                 }
+
                 return $this->stream->write($data);
             }
         };
@@ -112,6 +126,7 @@ class AntaraRssTransport
             $sink->rewind();
             $bytes = $sink->getContents();
             $entries = app(AntaraRssMetadataParser::class)->parse($bytes);
+
             return [
                 'state' => 'OK', 'network_requests' => 1,
                 'http_status' => 200, 'response_bytes' => strlen($bytes),
@@ -129,7 +144,7 @@ class AntaraRssTransport
                 'entries' => [],
                 'failure_stage' => $phase,
                 'failure_category' => $status === 429 ? 'PROVIDER_QUOTA'
-                    : ($error instanceof \Illuminate\Http\Client\ConnectionException
+                    : ($error instanceof ConnectionException
                         ? 'CONNECTION_FAILURE' : 'VALIDATION_OR_HTTP_FAILURE'),
                 'elapsed_ms' => (int) ((hrtime(true) - $begin) / 1e6),
             ];

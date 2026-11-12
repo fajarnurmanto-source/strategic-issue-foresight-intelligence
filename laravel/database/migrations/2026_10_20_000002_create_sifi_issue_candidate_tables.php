@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('sifi_issue_candidates', function (Blueprint $table): void {
@@ -31,6 +32,7 @@ return new class extends Migration {
             $table->unique(['candidate_id', 'revision']);
         });
     }
+
     public function down(): void
     {
         Schema::dropIfExists('sifi_issue_candidate_audit');

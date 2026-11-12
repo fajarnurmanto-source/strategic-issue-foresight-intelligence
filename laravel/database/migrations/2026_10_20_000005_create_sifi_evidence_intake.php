@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('sifi_evidence_drafts', function (Blueprint $table): void {
@@ -45,6 +46,7 @@ return new class extends Migration {
             $table->unique(['evidence_id', 'evidence_revision']);
         });
     }
+
     public function down(): void
     {
         Schema::dropIfExists('sifi_evidence_review_notes');

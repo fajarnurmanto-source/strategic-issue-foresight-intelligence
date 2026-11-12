@@ -32,13 +32,13 @@ final class PipelineReadModel
         $identity = get_object_vars($session);
         $sessionId = $identity['id'] ?? null;
         $objectId = $identity['object_id'] ?? null;
-        if ((!is_string($sessionId) && !is_int($sessionId))
-            || (!is_string($objectId) && !is_int($objectId))) {
+        if ((! is_string($sessionId) && ! is_int($sessionId))
+            || (! is_string($objectId) && ! is_int($objectId))) {
             throw new \UnexpectedValueException('SESSION_IDENTITY_MISSING');
         }
 
         $data = json_decode((string) ($session->results_json ?? '{}'), true, 64, JSON_THROW_ON_ERROR);
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw new \UnexpectedValueException('SESSION_RESULTS_NOT_AN_OBJECT');
         }
 
@@ -65,12 +65,12 @@ final class PipelineReadModel
             ? 'REVIEW_REQUIRED' : 'NOT_RECORDED';
 
         if ($sourceHash !== null && $stages['claim_candidate'] !== 'NOT_RECORDED') {
-            if (!hash_equals($sourceHash, (string) ($candidate['source_sha256'] ?? ''))) {
+            if (! hash_equals($sourceHash, (string) ($candidate['source_sha256'] ?? ''))) {
                 $warnings[] = 'CLAIM_SOURCE_HASH_REFERENCE_MISMATCH';
             }
         }
         if ($imageHash !== null && $stages['claim_candidate'] !== 'NOT_RECORDED') {
-            if (!hash_equals($imageHash, (string) ($candidate['image_sha256'] ?? ''))) {
+            if (! hash_equals($imageHash, (string) ($candidate['image_sha256'] ?? ''))) {
                 $warnings[] = 'CLAIM_IMAGE_HASH_REFERENCE_MISMATCH';
             }
         }
@@ -82,12 +82,12 @@ final class PipelineReadModel
             && is_string($brief) && $brief !== '' && $briefHash !== null
             ? 'DRAFT_RECORDED' : 'NOT_RECORDED';
         if ($stages['intelligence_brief'] === 'DRAFT_RECORDED'
-            && !hash_equals($briefHash, hash('sha256', $brief))) {
+            && ! hash_equals($briefHash, hash('sha256', $brief))) {
             $stages['intelligence_brief'] = 'INTEGRITY_WARNING';
             $warnings[] = 'BRIEF_CONTENT_HASH_MISMATCH';
         }
         if ($sourceHash !== null && $stages['analyst_intelligence'] !== 'NOT_RECORDED'
-            && !hash_equals($sourceHash, (string) ($intelligence['source_sha256'] ?? ''))) {
+            && ! hash_equals($sourceHash, (string) ($intelligence['source_sha256'] ?? ''))) {
             $warnings[] = 'INTELLIGENCE_SOURCE_HASH_REFERENCE_MISMATCH';
         }
 
@@ -97,7 +97,7 @@ final class PipelineReadModel
         $handoffReady = ($handoff['state'] ?? null) === 'LOCAL_TRIAGE_DRAFT_NOT_ADMITTED'
             && $handoffSignal !== null && $signalId !== '' && hash_equals($signalId, $handoffSignal);
         $stages['issue_handoff'] = $handoffReady ? 'LOCAL_DRAFT_LINKED' : 'NOT_CONFIRMED';
-        if ($handoffSignal !== null && !$handoffReady) {
+        if ($handoffSignal !== null && ! $handoffReady) {
             $warnings[] = 'LOCAL_SIGNAL_REGISTRY_NOT_CONFIRMED';
         }
 
@@ -139,7 +139,7 @@ final class PipelineReadModel
     }
 
     /**
-     * @param array<array-key, mixed> $data
+     * @param  array<array-key, mixed>  $data
      * @return array<array-key, mixed>
      */
     private static function part(array $data, string $key): array

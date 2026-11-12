@@ -14,8 +14,7 @@ final class IntelligenceDashboardController extends Controller
     public function index(Request $request): Response
     {
         $owner = $request->user()->getAuthIdentifier();
-        $own = static fn (string $table, string $field): int =>
-            (int) DB::table($table)->where($field, $owner)->count();
+        $own = static fn (string $table, string $field): int => (int) DB::table($table)->where($field, $owner)->count();
 
         $metrics = [
             'investigations' => $own('sifi_investigations', 'user_id'),

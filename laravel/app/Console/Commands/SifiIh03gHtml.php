@@ -65,9 +65,11 @@ final class SifiIh03gHtml extends Command
             $this->line('EVIDENCE_ADMISSION=NONE');
             $this->line('PRODUCTION_ADMISSION=DENIED');
             $this->info('SIFI_IH03G_PREVIEW=PASS');
+
             return self::SUCCESS;
         } catch (\Throwable $error) {
             $this->error('SIFI_IH03G=HELD: '.$error->getMessage());
+
             return self::FAILURE;
         }
     }
