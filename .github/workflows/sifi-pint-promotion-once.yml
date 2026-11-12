@@ -1,0 +1,92 @@
+name: SIFI Pint Patch Promotion Stage (One Shot)
+on:
+  push:
+    branches:
+      - fix/sifi-phpstan-ci-independent-20261112
+    paths:
+      - .github/workflows/sifi-pint-promotion-once.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  stage-pint-patch:
+    if: github.repository == 'fajarnurmanto-source/strategic-issue-foresight-intelligence'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout source branch at pinned parent
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify exact base and expected stage branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '86bfbab5361b6e620a460e8c9f7048fd96037382'
+          test "${GITHUB_REF}" = 'refs/heads/fix/sifi-phpstan-ci-independent-20261112'
+          test -z "$(git status --porcelain)"
+          echo "SIFI_PINNED_PARENT=PASS"
+      - name: Download previously tested Pint candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/sifi-pint"
+          gh run download 43216891942 \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name sifi-pint-candidate-97ddccbbd48b70d0483105af1322235b982109f4 \
+            --dir "${RUNNER_TEMP}/sifi-pint"
+          test -s "${RUNNER_TEMP}/sifi-pint/pint-normalization.patch"
+          test -s "${RUNNER_TEMP}/sifi-pint/pint-changed-files.txt"
+          echo "18120a018e5cc76f38de157293173a3a06dc69283de48c398728b1703437448c  ${RUNNER_TEMP}/sifi-pint/pint-normalization.patch" | sha256sum --check --strict
+          echo "SIFI_PINNED_PATCH=PASS"
+      - name: Validate path manifest, immutable archive, apply formatting only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP'])/'sifi-pint'
+          files = (p/'pint-changed-files.txt').read_text().splitlines()
+          if len(files) != 240 or len(set(files)) != 240:
+              raise SystemExit('PINT_MANIFEST_FILE_COUNT_INVALID')
+          if any(not x.startswith('laravel/') or not x.endswith('.php') or '..' in x.split('/') for x in files):
+              raise SystemExit('PINT_PATCH_PATH_OUT_OF_SCOPE')
+          patch = (p/'pint-normalization.patch').read_text()
+          changed = [line[11:] for line in patch.splitlines() if line.startswith('diff --git a/')]
+          if changed != files:
+              raise SystemExit('PINT_PATCH_MANIFEST_MISMATCH')
+          print('SIFI_PINT_SCOPE=240_PHP_ONLY')
+          PY
+          git apply --check "${RUNNER_TEMP}/sifi-pint/pint-normalization.patch"
+          git apply "${RUNNER_TEMP}/sifi-pint/pint-normalization.patch"
+          git diff --check
+          git diff --name-only > "${RUNNER_TEMP}/sifi-applied-files.txt"
+          diff -u "${RUNNER_TEMP}/sifi-pint/pint-changed-files.txt" "${RUNNER_TEMP}/sifi-applied-files.txt"
+          printf '%s  %s\n' \
+            '91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346' \
+            'laravel/resources/sifi/ae09-wb-response.json' | sha256sum --check --strict
+          echo 'SIFI_PINT_APPLIED_SCOPE=PASS'
+      - name: Create immutable candidate commit on staging ref only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- laravel
+          test "$(git diff --cached --name-only | wc -l)" -eq 240
+          git commit -m 'style(sifi): apply reviewed Pint normalization to 240 PHP files'
+          echo "SIFI_PINT_RELEASE_CANDIDATE_SHA=$(git rev-parse HEAD)"
+          # Pushing by GITHUB_TOKEN does not trigger validation workflows.
+          # Stage on a separate ref; the controlling assistant promotes using the
+          # connected GitHub account, which triggers checks on the exact SHA.
+          gh auth setup-git
+          git push origin HEAD:refs/heads/ci/sifi-pint-stage-20261113
+          echo 'SIFI_PINT_STAGING_REF_READY=PASS'
