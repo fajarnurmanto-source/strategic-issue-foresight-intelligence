@@ -52,6 +52,14 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Verify immutable World Bank archive wire SHA256
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346' \
+            'resources/sifi/ae09-wb-response.json' | sha256sum --check --strict
+          echo 'SIFI_AE09_ARCHIVE_WIRE_SHA=PASS'
+
       - name: Start isolated SQLite-memory and loopback mock harness
         run: |
           set -euo pipefail
@@ -127,6 +135,14 @@ jobs:
           touch database/database.sqlite
       - name: Setup isolated application
         run: composer setup
+
+      - name: Verify immutable World Bank archive wire SHA256
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346' \
+            'resources/sifi/ae09-wb-response.json' | sha256sum --check --strict
+          echo 'SIFI_AE09_ARCHIVE_WIRE_SHA=PASS'
 
       - name: Start isolated SQLite-memory and loopback mock harness
         run: |
