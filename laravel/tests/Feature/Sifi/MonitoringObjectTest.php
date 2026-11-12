@@ -9,7 +9,7 @@ use Tests\TestCase;
 final class MonitoringObjectTest extends TestCase {
  use RefreshDatabase;
  private User $owner;
- protected function setUp():void {parent::setUp();$this->withoutVite();Http::preventStrayRequests();$this->owner=User::factory()->create(['email_verified_at'=>now()]);}
+ protected function setUp():void {parent::setUp();$this->travelTo(\Illuminate\Support\Carbon::parse('2026-10-26T12:00:00Z'));$this->withoutVite();Http::preventStrayRequests();$this->owner=User::factory()->create(['email_verified_at'=>now()]);}
  private function data(array $overrides=[]):array {return array_replace(['name'=>'[SYNTHETIC] Objek universal','description'=>'Konfigurasi uji otomatis, bukan fakta atau hasil pemantauan.','category'=>'Kategori bebas dari pengguna','aliases'=>['Alias A'],'keywords'=>['perubahan'],'exclusions'=>['iklan'],'geography'=>null,'objective'=>'Memeriksa informasi dan keterbatasan secara terstruktur.','horizon'=>'90 hari','state'=>'CONFIGURED','source_ids'=>[]],$overrides);}
  private function create(array $v=[]):SifiMonitoringObject {$this->actingAs($this->owner)->post('/sifi/monitoring-objects',$this->data($v))->assertSessionHasNoErrors()->assertRedirect('/sifi/monitoring-objects');return SifiMonitoringObject::where('user_id',$this->owner->id)->latest('created_at')->orderByDesc('id')->firstOrFail();}
  private function source(User $u,?string $url=null):SifiSourceDraft{return SifiSourceDraft::create(['id'=>(string)\Illuminate\Support\Str::uuid(),'user_id'=>$u->id,'name'=>'Synthetic source registration reference','source_type'=>'OPEN_DATA','homepage_url'=>$url??WorldBankGdpSourceAdapter::DOCUMENTATION,'revision'=>1]);}
