@@ -122,7 +122,12 @@ if ($scenario === 'encoding') {
     header('Content-Encoding: gzip');
 }
 if ($scenario === 'disconnect') {
-    http_response_code(503);
+    // A deliberately incomplete 200 body emulates a broken wire, not an HTTP 503.
+    // Guzzle/cURL must fail the transfer before a complete response can be accepted.
+    header('Content-Type: application/json');
+    header('Content-Length: 4096');
+    echo '{"incomplete":';
+    flush();
     return;
 }
 $fixture = dirname(__DIR__, 2).'/laravel/resources/sifi/ae09-wb-response.json';
