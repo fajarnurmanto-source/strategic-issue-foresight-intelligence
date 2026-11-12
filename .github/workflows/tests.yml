@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DB_CONNECTION: sqlite
-      DB_DATABASE: ${{ github.workspace }}/laravel/database/database.sqlite
+      DB_DATABASE: ':memory:'
 
     steps:
       - name: Checkout code
@@ -52,6 +52,39 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Start isolated SQLite-memory and loopback mock harness
+        run: |
+          set -euo pipefail
+          # Never use live provider endpoints; all test traffic stays on loopback.
+          root="/home/fajar/.cache/sifi-validation/gha-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-standard"
+          sudo mkdir -p "${root}"
+          sudo chown "${USER}:$(id -gn)" "${root}"
+          chmod 700 "${root}"
+          mkdir -p "${root}/storage" "${root}/evidence/mock"
+          # Preserve Laravel's prepared storage tree, then redirect only this ephemeral runner.
+          cp -a storage/. "${root}/storage/"
+          mv storage "${RUNNER_TEMP}/sifi-storage-before-standard"
+          ln -s "${root}/storage" storage
+          test "$(realpath storage)" = "${root}/storage"
+          test "$(realpath storage)" = /home/fajar/.cache/sifi-validation/*
+          printf 'R17_RESULT_DIR=%s\n' "${root}" >> "${GITHUB_ENV}"
+          echo 'valid' > "${root}/evidence/mock/scenario.txt"
+          # PHP's local test router never connects to external networks.
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39588 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/ai-mock.log" 2>&1 &
+          echo $! > "${root}/ai-mock.pid"
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39601 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/worldbank-mock.log" 2>&1 &
+          echo $! > "${root}/worldbank-mock.pid"
+          for i in $(seq 1 30); do
+            if curl --noproxy '*' -fsS http://127.0.0.1:39588/health               | grep -qx SIFI_CI_LOOPBACK_ONLY &&
+               curl --noproxy '*' -fsS http://127.0.0.1:39601/health               | grep -qx SIFI_CI_LOOPBACK_ONLY; then
+              echo 'SIFI_CI_LOOPBACK_HARNESS=READY'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'SIFI_CI_LOOPBACK_HARNESS=FAIL_CLOSED' >&2
+          exit 1
+
       # Report PHPStan independently even when the existing lint gate fails.
       # This does not replace or relax the full composer ci:check gate.
       - name: Run PHPStan static analysis
@@ -68,7 +101,7 @@ jobs:
       contents: read
     env:
       DB_CONNECTION: sqlite
-      DB_DATABASE: ${{ github.workspace }}/laravel/database/database.sqlite
+      DB_DATABASE: ':memory:'
     defaults:
       run:
         working-directory: laravel
@@ -94,6 +127,39 @@ jobs:
           touch database/database.sqlite
       - name: Setup isolated application
         run: composer setup
+
+      - name: Start isolated SQLite-memory and loopback mock harness
+        run: |
+          set -euo pipefail
+          # Never use live provider endpoints; all test traffic stays on loopback.
+          root="/home/fajar/.cache/sifi-validation/gha-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-pint"
+          sudo mkdir -p "${root}"
+          sudo chown "${USER}:$(id -gn)" "${root}"
+          chmod 700 "${root}"
+          mkdir -p "${root}/storage" "${root}/evidence/mock"
+          # Preserve Laravel's prepared storage tree, then redirect only this ephemeral runner.
+          cp -a storage/. "${root}/storage/"
+          mv storage "${RUNNER_TEMP}/sifi-storage-before-pint"
+          ln -s "${root}/storage" storage
+          test "$(realpath storage)" = "${root}/storage"
+          test "$(realpath storage)" = /home/fajar/.cache/sifi-validation/*
+          printf 'R17_RESULT_DIR=%s\n' "${root}" >> "${GITHUB_ENV}"
+          echo 'valid' > "${root}/evidence/mock/scenario.txt"
+          # PHP's local test router never connects to external networks.
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39588 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/ai-mock.log" 2>&1 &
+          echo $! > "${root}/ai-mock.pid"
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39601 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/worldbank-mock.log" 2>&1 &
+          echo $! > "${root}/worldbank-mock.pid"
+          for i in $(seq 1 30); do
+            if curl --noproxy '*' -fsS http://127.0.0.1:39588/health               | grep -qx SIFI_CI_LOOPBACK_ONLY &&
+               curl --noproxy '*' -fsS http://127.0.0.1:39601/health               | grep -qx SIFI_CI_LOOPBACK_ONLY; then
+              echo 'SIFI_CI_LOOPBACK_HARNESS=READY'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'SIFI_CI_LOOPBACK_HARNESS=FAIL_CLOSED' >&2
+          exit 1
       - name: Isolate dependency-setup lockfile drift
         run: |
           set -euo pipefail
