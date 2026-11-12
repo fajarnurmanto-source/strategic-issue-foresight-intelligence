@@ -66,7 +66,7 @@ jobs:
           mv storage "${RUNNER_TEMP}/sifi-storage-before-standard"
           ln -s "${root}/storage" storage
           test "$(realpath storage)" = "${root}/storage"
-          test "$(realpath storage)" = /home/fajar/.cache/sifi-validation/*
+          [[ "$(realpath storage)" == /home/fajar/.cache/sifi-validation/* ]]
           printf 'R17_RESULT_DIR=%s\n' "${root}" >> "${GITHUB_ENV}"
           echo 'valid' > "${root}/evidence/mock/scenario.txt"
           # PHP's local test router never connects to external networks.
@@ -142,7 +142,7 @@ jobs:
           mv storage "${RUNNER_TEMP}/sifi-storage-before-pint"
           ln -s "${root}/storage" storage
           test "$(realpath storage)" = "${root}/storage"
-          test "$(realpath storage)" = /home/fajar/.cache/sifi-validation/*
+          [[ "$(realpath storage)" == /home/fajar/.cache/sifi-validation/* ]]
           printf 'R17_RESULT_DIR=%s\n' "${root}" >> "${GITHUB_ENV}"
           echo 'valid' > "${root}/evidence/mock/scenario.txt"
           # PHP's local test router never connects to external networks.
