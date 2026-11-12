@@ -159,9 +159,9 @@ final class RealCollectorTest extends TestCase
         $this->assertCount(1, $items);
         $this->assertNull($items[0]['entries'][0]['event_date']);
         $this->assertStringContainsString('.invalid', $items[0]['entries'][0]['url']);
-        $this->get('/sifi/workbench?object='.$this->o->id)->assertOk()->assertInertia(fn ($page) => $page->has('collectorObservations',1));
+        $this->get('/sifi/workbench?object='.$this->o->id)->assertOk()->assertInertia(fn ($page) => $page->has('collectorObservations', 1));
         $this->actingAs(User::factory()->create(['email_verified_at' => now()]));
         $this->get('/sifi/workbench?object='.$this->o->id)->assertForbidden();
-        $this->assertSame(0,$r['multi_source']['envelope']['usage']['network_requests']);
+        $this->assertSame(0, $r['multi_source']['envelope']['usage']['network_requests']);
     }
 }

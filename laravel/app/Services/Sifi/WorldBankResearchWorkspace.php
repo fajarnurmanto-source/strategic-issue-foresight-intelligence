@@ -28,7 +28,7 @@ final class WorldBankResearchWorkspace
             $this->fail('Source pack berubah.');
         }
 
-return $p;
+        return $p;
     }
 
     /** @return array<string,mixed> */
@@ -94,7 +94,7 @@ return $p;
             $this->fail('Research authorization context berubah.');
         }
 
-return [$r, $result, $context];
+        return [$r, $result, $context];
     }
 
     /** @param array<string,mixed> $v */
@@ -145,7 +145,7 @@ return [$r, $result, $context];
             $this->fail('Receipt tidak valid atau kedaluwarsa.');
         }
 
-return $p;
+        return $p;
     }
 
     /** @param array<string,mixed> $v */
@@ -165,8 +165,8 @@ return $p;
     }
 
     /** @param array<string,mixed> $data */
-    private function audit(User $u,string $id,int $revision,string $action,array $data): void
+    private function audit(User $u, string $id, int $revision, string $action, array $data): void
     {
-        DB::table('sifi_research_retrieval_audit')->insert(['retrieval_id' => $id, 'actor_user_id' => $u->id, 'revision' => $revision, 'action' => $action, 'snapshot_json' => json_encode($data,JSON_THROW_ON_ERROR), 'created_at' => now()]);
+        DB::table('sifi_research_retrieval_audit')->insert(['retrieval_id' => $id, 'actor_user_id' => $u->id, 'revision' => $revision, 'action' => $action, 'snapshot_json' => json_encode($data, JSON_THROW_ON_ERROR), 'created_at' => now()]);
     }
 }

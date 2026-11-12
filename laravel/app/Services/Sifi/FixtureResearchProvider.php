@@ -64,7 +64,7 @@ final class FixtureResearchProvider implements SifiResearchProvider
                 $this->fail('ERROR_WITH_RESULTS');
             }
 
-return $this->empty($context, $packet['state']);
+            return $this->empty($context, $packet['state']);
         }
         $seen = [];
         $origins = [];

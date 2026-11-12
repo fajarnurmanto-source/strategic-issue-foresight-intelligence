@@ -213,13 +213,13 @@ final class ResearchPlanningTest extends TestCase
     public function test_nonempty_migration_rollback_refuses_data_loss(): void
     {
         $o = $this->object();
-        $this->post($this->url($o),$this->data());
+        $this->post($this->url($o), $this->data());
         $m = require database_path('migrations/2026_10_27_000014_create_sifi_research_sessions.php');
         try {
             $m->down();
             $this->fail('Dropped nonempty research tables');
         } catch (\RuntimeException $e) {
-            $this->assertSame('REFUSE_NONEMPTY_RESEARCH_ROLLBACK',$e->getMessage());
-        }$this->assertDatabaseCount('sifi_research_sessions',1);
+            $this->assertSame('REFUSE_NONEMPTY_RESEARCH_ROLLBACK', $e->getMessage());
+        }$this->assertDatabaseCount('sifi_research_sessions', 1);
     }
 }

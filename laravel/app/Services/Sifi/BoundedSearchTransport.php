@@ -52,7 +52,7 @@ final class BoundedSearchTransport
                     throw new \RuntimeException('RESPONSE_BYTE_LIMIT');
                 }
 
-return $this->stream->write($string);
+                return $this->stream->write($string);
             }
         };
         $base = ['provider' => $provider, 'query' => $context['query'], 'query_sha256' => $context['query_sha256'], 'binding_sha256' => hash('sha256', json_encode($binding, JSON_THROW_ON_ERROR)), 'endpoint' => $p['endpoint'], 'method' => $p['method'] ?? 'GET', 'mode' => 'HTTP_FAKE', 'network_requests' => 0, 'cost' => 0, 'results' => [], 'retrieved_at' => null, 'fixture_loaded_at' => now()->toIso8601String(), 'response_sha256' => null, 'response_bytes' => 0, 'retry_after_seconds' => null];
@@ -85,7 +85,7 @@ return $this->stream->write($string);
                 throw new \RuntimeException('INVALID_RESPONSE');
             }
 
-return $base + ['state' => 'OK', 'body' => $json];
+            return $base + ['state' => 'OK', 'body' => $json];
         } catch (ConnectionException) {
             return $base + ['state' => 'TIMEOUT', 'body' => null];
         } catch (\Throwable $e) {

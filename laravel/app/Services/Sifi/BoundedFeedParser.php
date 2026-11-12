@@ -101,7 +101,7 @@ final class BoundedFeedParser
             throw new \RuntimeException('ITEM_TEXT_LIMIT');
         }
 
-return $v;
+        return $v;
     }
 
     public function date(string $value): ?string
@@ -117,7 +117,7 @@ return $v;
             }
         }
 
-return null;
+        return null;
     }
 
     /** @return array{version:string,format:string,publisher:string,items:list<array<string,mixed>>,next:null,body_sha256:string} */
@@ -147,6 +147,6 @@ return null;
             $out[] = ['key' => $r['url'], 'title' => $this->text($r['title'], 300), 'snippet' => '', 'url' => $r['url'], 'publisher' => $this->text($r['domain'], 200), 'origin' => $r['domain'], 'origin_url' => null, 'declared_language' => $languages[$r['language'] ?? ''] ?? 'UNKNOWN', 'published_at' => null, 'updated_at' => null, 'event_date' => null, 'region' => 'UNKNOWN', 'family' => null, 'raw_record_sha256' => hash('sha256', json_encode($r, JSON_THROW_ON_ERROR)), 'pointer' => '/articles/'.$i, 'observation_time' => $seenDate];
         }
 
-        return ['version' => 'sifi-feed-parser-1', 'format' => 'GDELT_JSON', 'publisher' => 'Aggregator metadata — not original publisher', 'items' => $out, 'next' => null, 'body_sha256' => hash('sha256',$body)];
+        return ['version' => 'sifi-feed-parser-1', 'format' => 'GDELT_JSON', 'publisher' => 'Aggregator metadata — not original publisher', 'items' => $out, 'next' => null, 'body_sha256' => hash('sha256', $body)];
     }
 }

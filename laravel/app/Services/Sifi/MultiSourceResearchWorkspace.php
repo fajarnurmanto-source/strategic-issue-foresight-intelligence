@@ -238,7 +238,7 @@ final class MultiSourceResearchWorkspace
             }
         }
 
-return $pairs;
+        return $pairs;
     }
 
     /** @param array<string,mixed> $v */
@@ -298,13 +298,13 @@ return $pairs;
                 $this->fail('Integritas riwayat gagal.');
             }
 
-return ['id' => $s['id'], 'question' => $s['question'], 'revision' => $s['revision'], 'created_at' => $s['created_at'], 'expires_at' => $s['expires_at'], 'expired' => false, 'multi' => $m];
-        }, app(ResearchSessionWorkspace::class)->history($u,$o))));
+            return ['id' => $s['id'], 'question' => $s['question'], 'revision' => $s['revision'], 'created_at' => $s['created_at'], 'expires_at' => $s['expires_at'], 'expired' => false, 'multi' => $m];
+        }, app(ResearchSessionWorkspace::class)->history($u, $o))));
     }
 
     /** @param array<string,mixed> $snapshot */
-    private function audit(User $u,string $id,string $action,array $snapshot): void
+    private function audit(User $u, string $id, string $action, array $snapshot): void
     {
-        DB::table('sifi_research_session_audit')->insert(['session_id' => $id, 'actor_user_id' => $u->id, 'action' => $action, 'snapshot_json' => json_encode($snapshot,JSON_THROW_ON_ERROR), 'created_at' => now()]);
+        DB::table('sifi_research_session_audit')->insert(['session_id' => $id, 'actor_user_id' => $u->id, 'action' => $action, 'snapshot_json' => json_encode($snapshot, JSON_THROW_ON_ERROR), 'created_at' => now()]);
     }
 }

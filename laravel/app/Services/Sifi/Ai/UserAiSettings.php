@@ -13,7 +13,7 @@ final class UserAiSettings
             throw new \InvalidArgumentException('Invalid owner');
         }
 
-return storage_path('app/private/sifi-ai/'.$id.'.enc');
+        return storage_path('app/private/sifi-ai/'.$id.'.enc');
     }
 
     /** @return array<string, mixed> */

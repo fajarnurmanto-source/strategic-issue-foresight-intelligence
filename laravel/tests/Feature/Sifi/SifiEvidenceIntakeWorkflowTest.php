@@ -256,9 +256,9 @@ final class SifiEvidenceIntakeWorkflowTest extends TestCase
         $other = $this->user();
         [$c,$s] = $this->fixture($owner);
         $id = $this->create($owner, $c, $s);
-        $this->post("/sifi/evidence/$id/request-review",['revision' => 1, 'reviewer_email' => $reviewer->email])->assertRedirect();
+        $this->post("/sifi/evidence/$id/request-review", ['revision' => 1, 'reviewer_email' => $reviewer->email])->assertRedirect();
         $this->actingAs($other)->get('/sifi/evidence-reviews')->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->component('sifi/evidence-review-queue')->has('evidence',0)->etc());
-        $this->assertDatabaseCount('sifi_evidence_review_notes',0);
+            ->assertInertia(fn (AssertableInertia $page) => $page->component('sifi/evidence-review-queue')->has('evidence', 0)->etc());
+        $this->assertDatabaseCount('sifi_evidence_review_notes', 0);
     }
 }

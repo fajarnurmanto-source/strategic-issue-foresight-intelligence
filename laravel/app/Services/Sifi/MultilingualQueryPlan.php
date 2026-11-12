@@ -100,6 +100,6 @@ final class MultilingualQueryPlan
             return ['code' => 'UNKNOWN', 'confidence' => round($confidence, 2), 'method' => 'HEURISTIC_LEXICON_INSUFFICIENT_OR_AMBIGUOUS'];
         }
 
-return ['code' => $best, 'confidence' => round(min(.95,$confidence),2), 'method' => 'HEURISTIC_LEXICON_NOT_CALIBRATED'];
+        return ['code' => $best, 'confidence' => round(min(.95, $confidence), 2), 'method' => 'HEURISTIC_LEXICON_NOT_CALIBRATED'];
     }
 }

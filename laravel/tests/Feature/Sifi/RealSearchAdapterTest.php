@@ -294,12 +294,12 @@ final class RealSearchAdapterTest extends TestCase
     {
         $this->get($this->url())->assertInertia(fn (Assert $p) => $p->where('scenarios', fn ($s) => in_array('api_web_2025', $s->all(), true)));
         $this->object->update(['name' => '[SYNTHETIC] Kota Yogyakarta', 'geography' => 'Yogyakarta']);
-        $this->post($this->url(),$this->data(['question' => 'Citra Negatif Apa Saja yang Menyerang Kota Yogyakarta sepanjang Tahun 2025', 'scenario' => 'api_web_2025']))->assertSessionHasNoErrors();
+        $this->post($this->url(), $this->data(['question' => 'Citra Negatif Apa Saja yang Menyerang Kota Yogyakarta sepanjang Tahun 2025', 'scenario' => 'api_web_2025']))->assertSessionHasNoErrors();
         $e = $this->envelope();
-        $this->assertSame(['TAVILY_KEYLESS', 'WIKIPEDIA_ID'],$e['provider_ids']);
-        $this->assertCount(4,$e['calls']);
-        $this->assertCount(4,$e['entries']);
-        $this->assertSame(0,$e['usage']['network_requests']);
-        $this->assertSame('SYNTHETIC_HTTP_FAKE_API_ADAPTER',$e['mode']);
+        $this->assertSame(['TAVILY_KEYLESS', 'WIKIPEDIA_ID'], $e['provider_ids']);
+        $this->assertCount(4, $e['calls']);
+        $this->assertCount(4, $e['entries']);
+        $this->assertSame(0, $e['usage']['network_requests']);
+        $this->assertSame('SYNTHETIC_HTTP_FAKE_API_ADAPTER', $e['mode']);
     }
 }

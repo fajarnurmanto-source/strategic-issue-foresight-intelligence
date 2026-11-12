@@ -349,9 +349,9 @@ final class WorldBankResearchTest extends TestCase
             'session_id' => $this->session, 'object_revision' => 1, 'context_sha256' => ResearchWorldBankAcquisition::digest($this->context),
             'provider' => 'ATTACKER', 'grant' => 'forged', 'permit' => 'forged', 'receipt' => 'forged', 'rights' => 'VERIFIED', 'verified' => true, 'evidence_admitted' => true, 'cost' => 1, 'retry' => 1, 'scheduler' => true,
         ])->assertSessionHasErrors(['provider', 'grant', 'permit', 'receipt', 'rights', 'verified', 'evidence_admitted', 'cost', 'retry', 'scheduler']);
-        $this->assertDatabaseCount('sifi_research_retrievals',0);
-        $this->assertDatabaseCount('sifi_research_retrieval_audit',0);
-        $this->assertSame('MISSING',$this->t->authorityState($this->u));
+        $this->assertDatabaseCount('sifi_research_retrievals', 0);
+        $this->assertDatabaseCount('sifi_research_retrieval_audit', 0);
+        $this->assertSame('MISSING', $this->t->authorityState($this->u));
         Http::assertNothingSent();
     }
 }

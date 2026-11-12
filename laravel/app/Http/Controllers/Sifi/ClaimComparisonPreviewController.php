@@ -70,7 +70,7 @@ final class ClaimComparisonPreviewController extends Controller
             Gate::authorize('view', $fresh);
             abort_unless((int) $fresh->revision === $input['candidate_revision'] && $this->input($source, $fresh) === $input, 409);
 
-            return response()->json($out)->header('Cache-Control','no-store');
+            return response()->json($out)->header('Cache-Control', 'no-store');
         });
     }
 }

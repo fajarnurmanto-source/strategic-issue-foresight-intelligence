@@ -33,7 +33,7 @@ final class ApprovedCorpusSearch
             app(SearchProviderRegistry::class)->parameters($provider, $query, 5, $context);
         }
 
-return $context;
+        return $context;
     }
 
     /** @param array<string, mixed> $dateWindow */
@@ -60,7 +60,7 @@ return $context;
             $digest = app(MultiSourceResearchWorkspace::class)->digest($envelope);
             $r['multi_source'] = ['state' => 'DRAFT', 'envelope' => $envelope, 'envelope_sha256' => $digest, 'saved_at' => null, 'analyst_note' => null, 'selected_ids' => []];
             DB::table('sifi_research_sessions')->where('id', $s->id)->update(['results_json' => json_encode($r, JSON_THROW_ON_ERROR), 'updated_at' => now()]);
-            DB::table('sifi_research_session_audit')->insert(['session_id' => $s->id, 'actor_user_id' => $u->id, 'action' => 'APPROVED_CORPUS_SEARCH_COMPLETED', 'snapshot_json' => json_encode(['envelope_sha256' => $digest, 'request_context_sha256' => hash('sha256',json_encode($context,JSON_THROW_ON_ERROR)), 'network_requests' => $envelope['usage']['network_requests'], 'evidence_admission' => 'NONE'],JSON_THROW_ON_ERROR), 'created_at' => now()]);
+            DB::table('sifi_research_session_audit')->insert(['session_id' => $s->id, 'actor_user_id' => $u->id, 'action' => 'APPROVED_CORPUS_SEARCH_COMPLETED', 'snapshot_json' => json_encode(['envelope_sha256' => $digest, 'request_context_sha256' => hash('sha256', json_encode($context, JSON_THROW_ON_ERROR)), 'network_requests' => $envelope['usage']['network_requests'], 'evidence_admission' => 'NONE'], JSON_THROW_ON_ERROR), 'created_at' => now()]);
         });
 
         return $sessionId;

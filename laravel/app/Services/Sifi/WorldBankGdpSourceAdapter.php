@@ -190,6 +190,6 @@ final class WorldBankGdpSourceAdapter
             $r['changes'][] = ['kind' => 'ANNUAL_PERIOD_COMPARISON_NOT_REVISION_OR_CAUSATION', 'from' => $sorted[$i - 1]['id'], 'to' => $sorted[$i]['id'], 'difference_percentage_points' => $sorted[$i]['value'] - $sorted[$i - 1]['value']];
         }
 
-        return array_replace($r,['status' => 'READY_FOR_ANALYST_DRAFT', 'candidate_reason' => 'Tiga nilai pertumbuhan PDB nasional tahunan berbeda; bahan konteks makro untuk telaah analis. Bukan sinyal lokal Yogyakarta, sebab akibat, ramalan atau verifikasi claim.']);
+        return array_replace($r, ['status' => 'READY_FOR_ANALYST_DRAFT', 'candidate_reason' => 'Tiga nilai pertumbuhan PDB nasional tahunan berbeda; bahan konteks makro untuk telaah analis. Bukan sinyal lokal Yogyakarta, sebab akibat, ramalan atau verifikasi claim.']);
     }
 }

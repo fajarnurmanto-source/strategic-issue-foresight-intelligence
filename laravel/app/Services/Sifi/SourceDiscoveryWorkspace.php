@@ -29,7 +29,7 @@ final class SourceDiscoveryWorkspace
             $this->fail('object_revision', 'Objek dijeda/diarsipkan. Aktifkan konfigurasi sebelum menyimpan kandidat.');
         }
 
-return $o;
+        return $o;
     }
 
     /** @param array<string,mixed> $filters
@@ -87,7 +87,7 @@ return $o;
                     $this->fail('candidate', 'Retensi konteks kedaluwarsa. Tidak diperpanjang diam-diam.');
                 }
 
-return;
+                return;
             }
             if (DB::table('sifi_discovery_selections')->where('object_id', $o->id)->count() >= 50) {
                 $this->fail('candidate', 'Batas 50 pilihan objek tercapai.');
@@ -138,7 +138,7 @@ return;
                     $this->fail('candidate', 'Registrasi existing berubah. Tinjau Source & Coverage.');
                 }
 
-return;
+                return;
             }
             $context = $this->context($o, $filters) + ['reasons' => $found['reasons']];
             if ($register) {
@@ -177,7 +177,7 @@ return;
         return array_values(DB::table('sifi_discovery_selections as s')->join('sifi_discovery_candidates as c', 'c.id', '=', 's.candidate_id')->where('s.object_id', $o->id)->where('c.user_id', $u->id)->orderByDesc('s.updated_at')->limit(50)->get(['s.*', 'c.descriptor_json'])->map(function ($s) {
             $expired = now()->gte($s->expires_at);
 
-            return ['id' => $s->id, 'candidate_id' => $s->candidate_id, 'revision' => (int) $s->revision, 'object_revision' => (int) $s->object_revision, 'expires_at' => $s->expires_at, 'expired' => $expired, 'descriptor' => $expired ? null : json_decode($s->descriptor_json, true, 32, JSON_THROW_ON_ERROR), 'context' => $expired ? null : json_decode($s->context_json,true,32,JSON_THROW_ON_ERROR), 'source_draft_id' => $s->registered_source_id, 'state' => $expired ? 'EXPIRED' : ($s->registered_source_id ? 'REGISTERED_UNASSESSED' : 'SAVED_CANDIDATE'), 'audit' => DB::table('sifi_discovery_audit')->where('selection_id',$s->id)->orderByDesc('revision')->limit(10)->get(['revision', 'action', 'created_at'])->all()];
+            return ['id' => $s->id, 'candidate_id' => $s->candidate_id, 'revision' => (int) $s->revision, 'object_revision' => (int) $s->object_revision, 'expires_at' => $s->expires_at, 'expired' => $expired, 'descriptor' => $expired ? null : json_decode($s->descriptor_json, true, 32, JSON_THROW_ON_ERROR), 'context' => $expired ? null : json_decode($s->context_json, true, 32, JSON_THROW_ON_ERROR), 'source_draft_id' => $s->registered_source_id, 'state' => $expired ? 'EXPIRED' : ($s->registered_source_id ? 'REGISTERED_UNASSESSED' : 'SAVED_CANDIDATE'), 'audit' => DB::table('sifi_discovery_audit')->where('selection_id', $s->id)->orderByDesc('revision')->limit(10)->get(['revision', 'action', 'created_at'])->all()];
         })->all());
     }
 }

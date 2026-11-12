@@ -71,8 +71,8 @@ final class WorldBankResearchController extends Controller
     {
         Gate::authorize('update', $object);
         $v = $r->validate($this->forbidden() + ['object_revision' => ['required', 'integer', 'min:1'], 'revision' => ['required', 'integer', 'min:1'], 'document_sha256' => ['required', 'regex:/\A[a-f0-9]{64}\z/'], 'source_id' => ['required', 'uuid'], 'source_revision' => ['required', 'integer', 'min:1'], 'analyst_note' => ['required', 'string', 'min:20', 'max:1000'], 'confirm_one_shot' => ['required', 'accepted']]);
-        $w->import($r->user(),$object,$retrieval,$v);
+        $w->import($r->user(), $object, $retrieval, $v);
 
-        return redirect()->route('sifi.worldbank-research.index',['object' => $object->id]);
+        return redirect()->route('sifi.worldbank-research.index', ['object' => $object->id]);
     }
 }

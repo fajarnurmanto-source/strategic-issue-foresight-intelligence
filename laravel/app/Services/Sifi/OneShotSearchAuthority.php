@@ -64,9 +64,9 @@ final class OneShotSearchAuthority
                 fsync($handle);
             }
 
-return $p;
+            return $p;
         } finally {
-            flock($handle,LOCK_UN);
+            flock($handle, LOCK_UN);
             fclose($handle);
         }
     }

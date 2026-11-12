@@ -116,6 +116,6 @@ final class SifiSourceCatalogWorkflowTest extends TestCase
     public function test_profile_cannot_be_activated_by_client(): void
     {
         $this->actingAs($this->user())->post('/sifi/source-catalog/profiles', array_merge($this->profileData(), ['collector_state' => 'ON', 'profile_state' => 'APPROVED']))->assertSessionHasErrors(['collector_state', 'profile_state']);
-        $this->assertDatabaseCount('sifi_coverage_profiles',0);
+        $this->assertDatabaseCount('sifi_coverage_profiles', 0);
     }
 }

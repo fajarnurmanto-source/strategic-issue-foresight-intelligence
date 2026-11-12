@@ -416,11 +416,11 @@ final class YogyakartaPadSourceAdapterTest extends TestCase
         $s = $this->register();
         $packet = $this->adapter->template();
         $this->import($packet);
-        $old = $this->fields($s,'pad_import');
+        $old = $this->fields($s, 'pad_import');
         $packet['pages'][0]['records'][0]['amount_rupiah'] = 201000000;
         $this->import($packet);
-        $this->post('/sifi/source-catalog/pipeline-draft',$old)->assertSessionHasErrors('input_digest');
-        $this->assertDatabaseCount('sifi_issue_candidates',0);
+        $this->post('/sifi/source-catalog/pipeline-draft', $old)->assertSessionHasErrors('input_digest');
+        $this->assertDatabaseCount('sifi_issue_candidates', 0);
     }
 }
 class PadTransportHarness extends YogyakartaPadSourceAdapter

@@ -121,7 +121,7 @@ final class E2e01PilotController extends Controller
             $this->fail('DNS host tidak tersedia. Tidak ada request konten.');
         }
         foreach ($ipv4s as $ip) {
-            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4|FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE)) {
+            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                 $this->fail('DNS host tidak aman.');
             }
         }
@@ -352,8 +352,8 @@ final class E2e01PilotController extends Controller
         $p['quote'] = ['text' => $v['quote'], 'character_offset' => $pos, 'character_length' => mb_strlen($v['quote'])];
         $p['analyst_interpretation'] = $v['analyst_interpretation'];
         $p['analyst_limitations'] = $v['limitations'];
-        $this->persist($r,$object,$s,$p,'E2E01_BRIEF_DRAFTED');
+        $this->persist($r, $object, $s, $p, 'E2E01_BRIEF_DRAFTED');
 
-        return back()->with('status','Draft intelligence brief tersimpan di sesi, bukan evidence/brief resmi.');
+        return back()->with('status', 'Draft intelligence brief tersimpan di sesi, bukan evidence/brief resmi.');
     }
 }

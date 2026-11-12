@@ -354,16 +354,16 @@ final class WorldBankGdpSourceAdapterTest extends TestCase
         $out = $this->get('/sifi/issue-candidates/'.$c->id.'/executive-brief/download');
         $out->assertOk();
         foreach (['REAL PUBLIC ARCHIVE', 'The World Bank', 'creativecommons.org/licenses/by/4.0', '2022', '2023', '2024', '91a84ffd', 'NOT_VERIFIED'] as $text) {
-            $this->assertStringContainsString($text,$out->getContent());
+            $this->assertStringContainsString($text, $out->getContent());
         }
         foreach (['Bukan data BMKG aktual', 'SYNTHETIC FIXTURE ONLY', 'SIMULASI', 'angka dibuat SIFI'] as $bad) {
-            $this->assertStringNotContainsString($bad,$out->getContent());
+            $this->assertStringNotContainsString($bad, $out->getContent());
         }
         $dir = getenv('R17_RESULT_DIR');
         $dir = $dir ? $dir.'/evidence' : null;
         if ($dir) {
-            file_put_contents($dir.'/SOURCE_TO_BRIEF_DOWNLOAD.md',$out->getContent());
-            file_put_contents($dir.'/SOURCE_TO_BRIEF_TRACE.json',json_encode($p,JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            file_put_contents($dir.'/SOURCE_TO_BRIEF_DOWNLOAD.md', $out->getContent());
+            file_put_contents($dir.'/SOURCE_TO_BRIEF_TRACE.json', json_encode($p, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
         Http::assertNothingSent();
     }

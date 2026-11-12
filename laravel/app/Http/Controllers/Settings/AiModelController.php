@@ -151,6 +151,6 @@ final class AiModelController extends Controller
     {
         $store->revoke((int) $r->user()->id);
 
-        return back()->with('ai_notice','Credential dan konfigurasi lokal dicabut. Cabut juga key pada penyedia.');
+        return back()->with('ai_notice', 'Credential dan konfigurasi lokal dicabut. Cabut juga key pada penyedia.');
     }
 }

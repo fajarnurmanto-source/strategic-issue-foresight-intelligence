@@ -93,6 +93,6 @@ final class ExecutiveBriefSource
     /** @param array<string, mixed> $snapshot */
     public function digest(array $snapshot): string
     {
-        return hash('sha256',json_encode($snapshot,JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+        return hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
     }
 }

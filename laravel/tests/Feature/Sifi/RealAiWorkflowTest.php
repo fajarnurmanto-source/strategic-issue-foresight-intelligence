@@ -147,7 +147,7 @@ class RealAiWorkflowTest extends TestCase
 }
 class LocalOnlyTestPolicy extends ProviderEndpointPolicy
 {
-    public function authorize(array $provider,string $model,string $purpose): void
+    public function authorize(array $provider, string $model, string $purpose): void
     {
         if ($provider['endpoint'] !== 'http://127.0.0.1:39588') {
             throw new \RuntimeException('TEST_ENDPOINT_DENIED');

@@ -280,8 +280,8 @@ final class SourceObservationPipelineTest extends TestCase
         $url = '/sifi/issue-candidates/'.$c->id.'/executive-brief';
         $this->post($url, $this->briefFields($c))->assertRedirect();
         $original = $this->pipeline->lineage($c);
-        DB::table('sifi_evidence_drafts')->where('candidate_id',$c->id)->update(['rationale' => 'Forged VERIFIED live data']);
-        $this->assertEquals($original,$this->pipeline->lineage($c));
+        DB::table('sifi_evidence_drafts')->where('candidate_id', $c->id)->update(['rationale' => 'Forged VERIFIED live data']);
+        $this->assertEquals($original, $this->pipeline->lineage($c));
         $this->get($url.'/download')->assertStatus(409);
     }
 }

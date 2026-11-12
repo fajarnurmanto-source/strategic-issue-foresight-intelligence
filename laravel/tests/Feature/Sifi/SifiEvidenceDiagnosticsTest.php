@@ -171,7 +171,7 @@ final class SifiEvidenceDiagnosticsTest extends TestCase
     public function test_no_evidence_draft_is_rejected(): void
     {
         DB::table('sifi_evidence_drafts')->where('id', $this->evidence)->delete();
-        $this->actingAs($this->owner)->post($this->url,['revision' => 2])->assertSessionHasErrors('diagnostics');
+        $this->actingAs($this->owner)->post($this->url, ['revision' => 2])->assertSessionHasErrors('diagnostics');
         Http::assertNothingSent();
     }
 }

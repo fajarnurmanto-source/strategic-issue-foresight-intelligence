@@ -157,6 +157,6 @@ final class SifiForesightWorkflowTest extends TestCase
             return Http::response(['error' => 'changed'], 503);
         });
         $this->post($this->url.'/assess', ['candidate_revision' => 3, 'case_revision' => 1, 'trajectory_revision' => 1, 'draft_revision' => 1])->assertSessionHasErrors('analysis');
-        $this->assertDatabaseCount('sifi_foresight_advisories',0);
+        $this->assertDatabaseCount('sifi_foresight_advisories', 0);
     }
 }

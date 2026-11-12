@@ -46,7 +46,7 @@ final class MultilingualDiscovery
         }while (count($selected) < $limit && $take()) {
         }
 
-return $selected;
+        return $selected;
     }
 
     /** @param array<string, mixed> $e
@@ -69,7 +69,7 @@ return $selected;
             return 'EVENT_IN_WINDOW';
         }
 
-return $pub === null ? 'PUBLICATION_UNKNOWN' : 'OUTSIDE_WINDOW';
+        return $pub === null ? 'PUBLICATION_UNKNOWN' : 'OUTSIDE_WINDOW';
     }
 
     /** @param array<string, mixed> $base
@@ -185,6 +185,6 @@ return $pub === null ? 'PUBLICATION_UNKNOWN' : 'OUTSIDE_WINDOW';
             $stop = $failed ? ($entries ? 'PARTIAL_COVERAGE' : 'NO_RESULTS_PROVIDER_ERRORS') : ($entries ? 'COMPLETED' : 'NO_RESULTS');
         }
 
-        return ['version' => 'sifi-multilingual-discovery-1', 'mode' => 'SYNTHETIC_MULTILINGUAL_METADATA_ONLY', 'entries' => $entries, 'comparisons' => $pairs, 'calls' => $calls, 'multilingual_plan' => $p, 'provider_ids' => self::PROVIDERS, 'plan_sha256' => hash('sha256', json_encode($base, JSON_THROW_ON_ERROR)), 'binding_sha256' => $bind, 'budget' => ['simulated_call_limit' => $p['limits']['simulated_calls']] + $p['limits'], 'usage' => ['simulated_calls' => count($calls), 'fixture_metadata_bytes' => $bytes, 'network_requests' => 0, 'documents_retrieved' => 0, 'cost' => 0], 'raw_result_count' => $raw, 'unique_result_count' => count($entries), 'collapsed_hits' => max(0, $raw - count($seen)), 'omitted_unique_count' => count($seen) - count($entries), 'stopping_reason' => $stop, 'coverage' => 'SYNTHETIC multilingual corpus; bukan internet search. Original language dan period classifications tidak membuktikan kredibilitas atau fakta.', 'coverage_languages' => array_values(array_unique(array_column($entries,'source_language'))), 'filtered_counts' => $filtered, 'independence' => 'INDEPENDENCE_NOT_VERIFIED', 'claim_verification' => 'NOT_PERFORMED_METADATA_ONLY', 'ai' => 'OFF', 'fixture_scenario' => 'multilingual'];
+        return ['version' => 'sifi-multilingual-discovery-1', 'mode' => 'SYNTHETIC_MULTILINGUAL_METADATA_ONLY', 'entries' => $entries, 'comparisons' => $pairs, 'calls' => $calls, 'multilingual_plan' => $p, 'provider_ids' => self::PROVIDERS, 'plan_sha256' => hash('sha256', json_encode($base, JSON_THROW_ON_ERROR)), 'binding_sha256' => $bind, 'budget' => ['simulated_call_limit' => $p['limits']['simulated_calls']] + $p['limits'], 'usage' => ['simulated_calls' => count($calls), 'fixture_metadata_bytes' => $bytes, 'network_requests' => 0, 'documents_retrieved' => 0, 'cost' => 0], 'raw_result_count' => $raw, 'unique_result_count' => count($entries), 'collapsed_hits' => max(0, $raw - count($seen)), 'omitted_unique_count' => count($seen) - count($entries), 'stopping_reason' => $stop, 'coverage' => 'SYNTHETIC multilingual corpus; bukan internet search. Original language dan period classifications tidak membuktikan kredibilitas atau fakta.', 'coverage_languages' => array_values(array_unique(array_column($entries, 'source_language'))), 'filtered_counts' => $filtered, 'independence' => 'INDEPENDENCE_NOT_VERIFIED', 'claim_verification' => 'NOT_PERFORMED_METADATA_ONLY', 'ai' => 'OFF', 'fixture_scenario' => 'multilingual'];
     }
 }

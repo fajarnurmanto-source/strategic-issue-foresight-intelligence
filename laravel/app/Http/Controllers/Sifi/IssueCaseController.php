@@ -172,10 +172,10 @@ final class IssueCaseController extends Controller
             DB::table('sifi_issue_case_advisories')->insert(['case_id' => $case->id,
                 'actor_user_id' => (int) $request->user()->id, 'case_revision' => (int) $case->revision,
                 'input_digest' => $digest, 'status' => 'ADVISORY_ONLY',
-                'result_json' => json_encode($result,JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                'result_json' => json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                 'created_at' => now()]);
         });
 
-        return redirect()->route('sifi.issue-case.show',$candidate->id);
+        return redirect()->route('sifi.issue-case.show', $candidate->id);
     }
 }

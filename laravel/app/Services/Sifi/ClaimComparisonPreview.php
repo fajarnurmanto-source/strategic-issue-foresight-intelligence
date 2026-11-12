@@ -32,7 +32,7 @@ class ClaimComparisonPreview
             throw new \RuntimeException('FIXTURE_CATALOG_UNAVAILABLE');
         }
 
-return $c;
+        return $c;
     }
 
     /** @return list<array<string, mixed>> */
@@ -44,7 +44,7 @@ return $c;
                 $out[] = ['id' => $id, 'label' => $p['label']];
             }
 
-return $out;
+            return $out;
         } catch (\Throwable) {
             return [];
         }

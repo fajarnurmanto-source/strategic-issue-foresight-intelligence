@@ -265,15 +265,15 @@ class ZeroSpendAiTest extends TestCase
             $p['endpoint'] = 'http://127.0.0.1:39588';
             $adapter = new ConfiguredHttpAiAdapter(new ProviderHttpTransport(new ZeroSpendLoopbackPolicy), $p, $model, FreeAiCatalogue::SYNTHETIC);
             $r = (new SecureAiRuntime($adapter, new AiTaskCapabilityRegistry))->invoke($this->owner, (int) $this->owner->id, ['enabled' => true, 'provider' => $p['id'], 'model' => $model], new AiInferenceRequest('summary_draft', [], AiModelController::schema(), 1000, 'PUBLIC', 'fixture'));
-            $this->assertSame('AVAILABLE',$r->status);
-            $this->assertSame($model,$r->modelId);
-            $this->assertStringContainsString('SYNTHETIC ONLY',$r->structuredOutput['explanation']);
+            $this->assertSame('AVAILABLE', $r->status);
+            $this->assertSame($model, $r->modelId);
+            $this->assertStringContainsString('SYNTHETIC ONLY', $r->structuredOutput['explanation']);
         }
     }
 }
 class ZeroSpendLoopbackPolicy extends ProviderEndpointPolicy
 {
-    public function authorize(array $provider,string $model,string $purpose): void
+    public function authorize(array $provider, string $model, string $purpose): void
     {
         if ($provider['endpoint'] !== 'http://127.0.0.1:39588') {
             throw new \RuntimeException('TEST_ENDPOINT_DENIED');

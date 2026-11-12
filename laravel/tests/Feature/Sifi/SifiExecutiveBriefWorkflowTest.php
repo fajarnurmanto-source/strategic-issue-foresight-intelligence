@@ -162,6 +162,6 @@ final class SifiExecutiveBriefWorkflowTest extends TestCase
     {
         $this->create();
         $this->post($this->url, $this->fields(['brief_revision' => 1]))->assertRedirect($this->url);
-        $this->assertDatabaseCount('sifi_executive_brief_audit',1);
+        $this->assertDatabaseCount('sifi_executive_brief_audit', 1);
     }
 }

@@ -84,6 +84,6 @@ final class MultiSourceResearchController extends Controller
         $v = $r->validate(['revision' => ['required', 'integer', 'min:1'], 'object_revision' => ['required', 'integer', 'min:1'], 'envelope_sha256' => ['required', 'regex:/^[a-f0-9]{64}$/']]);
         app(FeedResearchBridge::class)->draft($r->user(), $object, $session, $v);
 
-        return redirect()->route('sifi.multi-research.index',['object' => $object->id, 'research' => $session]);
+        return redirect()->route('sifi.multi-research.index', ['object' => $object->id, 'research' => $session]);
     }
 }

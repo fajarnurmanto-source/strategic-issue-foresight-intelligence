@@ -211,7 +211,7 @@ final class SifiTrajectoryWorkflowTest extends TestCase
                 'risk_marker' => 'HYPOTHESIS_ONLY', 'opportunity_marker' => 'HYPOTHESIS_ONLY', 'watch_marker' => 'CONDITION_DEFINED_NOT_MONITORED',
                 'verification_checks' => ['Periksa waktu', 'Periksa asal', 'Jangan buat skor', 'Tidak ada observasi']]);
         });
-        $this->post($this->url.'/assess',['candidate_revision' => 3, 'case_revision' => 1, 'draft_revision' => 1])->assertSessionHasErrors('analysis');
-        $this->assertDatabaseCount('sifi_trajectory_advisories',0);
+        $this->post($this->url.'/assess', ['candidate_revision' => 3, 'case_revision' => 1, 'draft_revision' => 1])->assertSessionHasErrors('analysis');
+        $this->assertDatabaseCount('sifi_trajectory_advisories', 0);
     }
 }

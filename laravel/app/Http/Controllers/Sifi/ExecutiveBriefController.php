@@ -153,7 +153,7 @@ final class ExecutiveBriefController extends Controller
         }
         $out .= "\nDO NOT USE AS AN OFFICIAL OR VERIFIED INTELLIGENCE FINDING.\n";
 
-        return response($out,200,['Content-Type' => 'text/plain; charset=UTF-8',
+        return response($out, 200, ['Content-Type' => 'text/plain; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="sifi-executive-brief-draft.md"',
             'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }

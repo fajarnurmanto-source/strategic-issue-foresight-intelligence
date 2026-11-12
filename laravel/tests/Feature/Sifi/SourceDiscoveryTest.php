@@ -334,7 +334,7 @@ final class SourceDiscoveryTest extends TestCase
             DB::table('sifi_discovery_candidates')->insert($c);
             $this->fail('Duplicate identity inserted');
         } catch (UniqueConstraintViolationException) {
-            $this->assertDatabaseCount('sifi_discovery_candidates',1);
+            $this->assertDatabaseCount('sifi_discovery_candidates', 1);
         }
         $row = (array) DB::table('sifi_discovery_selections')->first();
         $row['id'] = (string) Str::uuid();
@@ -342,7 +342,7 @@ final class SourceDiscoveryTest extends TestCase
             DB::table('sifi_discovery_selections')->insert($row);
             $this->fail('Duplicate context inserted');
         } catch (UniqueConstraintViolationException) {
-            $this->assertDatabaseCount('sifi_discovery_selections',1);
+            $this->assertDatabaseCount('sifi_discovery_selections', 1);
         }
     }
 }

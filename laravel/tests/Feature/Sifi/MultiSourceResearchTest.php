@@ -321,8 +321,8 @@ final class MultiSourceResearchTest extends TestCase
     {
         $this->object->update(['name' => '[SYNTHETIC] Isu Yogyakarta', 'geography' => 'Yogyakarta', 'aliases_json' => ['Kota Pelajar']]);
         $e = $this->multi($this->create(['question' => 'Bagaimana perkembangan Yogyakarta?']))['envelope'];
-        $this->assertGreaterThanOrEqual(4,$e['unique_result_count']);
-        $this->assertSame(['SYNTHETIC_CATALOG', 'SYNTHETIC_BULLETIN'],array_values(array_unique(array_column($e['calls'],'provider'))));
+        $this->assertGreaterThanOrEqual(4, $e['unique_result_count']);
+        $this->assertSame(['SYNTHETIC_CATALOG', 'SYNTHETIC_BULLETIN'], array_values(array_unique(array_column($e['calls'], 'provider'))));
         $e = $this->multi($this->create(['question' => 'Bagaimana ruang terbuka Kota Pelajar?']))['envelope'];
         $this->assertNotEmpty($e['entries']);
     }

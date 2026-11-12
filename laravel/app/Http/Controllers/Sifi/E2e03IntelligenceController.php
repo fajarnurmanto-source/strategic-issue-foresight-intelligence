@@ -120,6 +120,6 @@ final class E2e03IntelligenceController extends Controller
             ]);
         });
 
-        return back()->with('status','Analisis terstruktur disimpan dengan provenance dan tanpa evidence admission.');
+        return back()->with('status', 'Analisis terstruktur disimpan dengan provenance dan tanpa evidence admission.');
     }
 }

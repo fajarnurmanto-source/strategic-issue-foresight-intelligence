@@ -177,6 +177,6 @@ final class LocalAiSimulator implements AiProviderAdapter
             throw new \RuntimeException('api_key=never-log');
         }
 
-        return new AiInferenceResult('AVAILABLE',$this->mode === 'malformed' ? ['unknown' => 'bad'] : ['summary' => 'SYNTHETIC ONLY'],'local-test',$this->mode === 'identity' ? 'other' : $this->selectedModel,'test',0,0,0,[],['mode' => 'SYNTHETIC_ONLY']);
+        return new AiInferenceResult('AVAILABLE', $this->mode === 'malformed' ? ['unknown' => 'bad'] : ['summary' => 'SYNTHETIC ONLY'], 'local-test', $this->mode === 'identity' ? 'other' : $this->selectedModel, 'test', 0, 0, 0, [], ['mode' => 'SYNTHETIC_ONLY']);
     }
 }

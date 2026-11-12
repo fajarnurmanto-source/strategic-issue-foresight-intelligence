@@ -133,6 +133,6 @@ final class Ae16UniversalSearchController extends Controller
             DB::table('sifi_research_session_audit')->insert(['session_id' => $session->id, 'actor_user_id' => $r->user()->id, 'action' => 'AE16_EXTERNAL_METADATA_OBSERVED', 'snapshot_json' => json_encode(['provider' => $saved['provider'], 'state' => $saved['state'], 'network_requests' => $saved['network_requests'], 'response_sha256' => $saved['response_sha256'], 'result_count' => count($saved['results']), 'admission' => 'NONE'], JSON_THROW_ON_ERROR), 'created_at' => now()]);
         });
 
-        return redirect()->route('sifi.ae16-universal-search.index',['object' => $object->id])->with('status','Satu hasil request telah direkam pada Research Session. Tidak ada evidence admission.');
+        return redirect()->route('sifi.ae16-universal-search.index', ['object' => $object->id])->with('status', 'Satu hasil request telah direkam pada Research Session. Tidak ada evidence admission.');
     }
 }

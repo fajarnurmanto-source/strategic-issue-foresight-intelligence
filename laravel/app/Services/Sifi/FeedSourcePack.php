@@ -15,7 +15,7 @@ final class FeedSourcePack
             $out[$id] = ['id' => $id, 'label' => $label, 'format' => $format, 'endpoint' => 'https://'.$file.'.sources.invalid/feed', 'fixture_file' => $file, 'rights_state' => 'UNASSESSED', 'collector_state' => 'OFF', 'fixture_use' => 'SELF_AUTHORED_SYNTHETIC_ONLY', 'attribution' => 'SIFI self-authored SYNTHETIC; not external publication', 'terms' => 'Real access, retention and commercial reuse NOT_APPROVED', 'live_enabled' => false, 'max_pages' => $format === 'GDELT_JSON' ? 1 : 2];
         }
 
-return $out;
+        return $out;
     }
 
     /** @return array<string, mixed> */

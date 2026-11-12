@@ -295,7 +295,7 @@ final class EvidenceIntakeController extends Controller
     {
         DB::table('sifi_evidence_draft_audit')->insert([
             'evidence_id' => $row->id, 'actor_user_id' => $actor, 'revision' => $row->revision,
-            'action' => $action, 'snapshot_json' => json_encode(array_merge($this->present($row),$additional),JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'action' => $action, 'snapshot_json' => json_encode(array_merge($this->present($row), $additional), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'created_at' => now(),
         ]);
     }

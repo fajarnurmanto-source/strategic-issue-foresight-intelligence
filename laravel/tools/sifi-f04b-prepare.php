@@ -21,7 +21,7 @@ function ask(string $q): string
         throw new RuntimeException('INPUT_ABORTED');
     }
 
-return trim($s);
+    return trim($s);
 }
 function stop(string $code): never
 {
@@ -130,5 +130,5 @@ try {
     echo "F04B_GRANT_READY=YES\nF04B_GRANT_EXPIRES_IN_MINUTES=15\nF04B_REQUESTS_SENT=0\n";
     echo "Open SIFI Gateway; select SAME session/provider/query/dates and click once. DO NOT rerun on failure.\n";
 } catch (Throwable $e) {
-    stop(preg_replace('/[^A-Za-z0-9_]/','_',mb_substr($e->getMessage(),0,90)));
+    stop(preg_replace('/[^A-Za-z0-9_]/', '_', mb_substr($e->getMessage(), 0, 90)));
 }

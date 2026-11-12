@@ -221,7 +221,7 @@ final class SourceCatalogController extends Controller
         DB::table('sifi_catalog_audit')->insert([
             'subject_type' => $type, 'subject_id' => $id, 'actor_user_id' => $actor,
             'revision' => $revision, 'action' => $action,
-            'snapshot_json' => json_encode($snapshot,JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'snapshot_json' => json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'created_at' => now(),
         ]);
     }

@@ -61,6 +61,6 @@ final class SourceDiscoveryController extends Controller
         $v = $r->validate($this->forbidden() + ['object_revision' => ['required', 'integer', 'min:1'], 'revision' => ['required', 'integer', 'min:1']]);
         $w->change($r->user(), $o->id, (int) $v['object_revision'], $id, (int) $v['revision'], $register);
 
-        return redirect()->route('sifi.source-discovery.index',['object' => $o->id]);
+        return redirect()->route('sifi.source-discovery.index', ['object' => $o->id]);
     }
 }

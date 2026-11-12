@@ -16,7 +16,7 @@ final class RealSearchWorkspace
             throw new \RuntimeException('RESULT_URL_POLICY');
         }
 
-return $url;
+        return $url;
     }
 
     /** @param array<string, mixed> $plan

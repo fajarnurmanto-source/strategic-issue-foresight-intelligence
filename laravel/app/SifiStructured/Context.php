@@ -68,7 +68,7 @@ final readonly class Context
             }
         }
 
-return $a;
+        return $a;
     }
 
     public function json(): string

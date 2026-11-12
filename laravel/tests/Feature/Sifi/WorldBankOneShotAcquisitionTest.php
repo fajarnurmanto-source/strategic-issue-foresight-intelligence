@@ -93,7 +93,7 @@ final class WorldBankOneShotAcquisitionTest extends TestCase
             $this->receipts[] = $p['receipt_id'];
         }
 
-return $p;
+        return $p;
     }
 
     private function register(): SifiSourceDraft
@@ -426,15 +426,15 @@ return $p;
         $this->assertStringNotContainsString('BMKG sebagai rujukan format', $download->getContent());
         $path = storage_path('app/private/sifi-worldbank-acquisitions/'.$p['receipt_id'].'.enc');
         unlink($path);
-        $this->assertEquals($lineage,$pipeline->lineage($c));
-        $this->assertDatabaseCount('sifi_event_hypotheses',0);
-        $this->assertDatabaseCount('sifi_evidence_review_notes',0);
+        $this->assertEquals($lineage, $pipeline->lineage($c));
+        $this->assertDatabaseCount('sifi_event_hypotheses', 0);
+        $this->assertDatabaseCount('sifi_evidence_review_notes', 0);
         $this->assertFalse(app(UserAiSettings::class)->read($this->owner->id)['enabled']);
         Http::assertNothingSent();
         $dir = getenv('R17_RESULT_DIR');
         if ($dir) {
-            file_put_contents($dir.'/evidence/MOCK_SOURCE_TO_BRIEF.md',$download->getContent());
-            file_put_contents($dir.'/evidence/MOCK_SOURCE_TO_BRIEF_TRACE.json',json_encode($lineage,JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            file_put_contents($dir.'/evidence/MOCK_SOURCE_TO_BRIEF.md', $download->getContent());
+            file_put_contents($dir.'/evidence/MOCK_SOURCE_TO_BRIEF_TRACE.json', json_encode($lineage, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
     }
 }

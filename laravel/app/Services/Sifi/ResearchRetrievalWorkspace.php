@@ -200,7 +200,7 @@ final class ResearchRetrievalWorkspace
         return array_values(DB::table('sifi_research_retrievals')->where('user_id', $u->id)->where('object_id', $o->id)->orderByDesc('created_at')->limit(30)->get()->map(function ($r) {
             $expired = now()->gte($r->expires_at);
 
-            return ['id' => $r->id, 'revision' => (int) $r->revision, 'state' => $r->state, 'candidate_id' => $r->candidate_id, 'expired' => $expired, 'result' => $expired ? null : json_decode($r->result_json,true), 'document' => $expired ? null : json_decode($r->document_json ?? 'null',true)];
+            return ['id' => $r->id, 'revision' => (int) $r->revision, 'state' => $r->state, 'candidate_id' => $r->candidate_id, 'expired' => $expired, 'result' => $expired ? null : json_decode($r->result_json, true), 'document' => $expired ? null : json_decode($r->document_json ?? 'null', true)];
         })->values()->all());
     }
 }

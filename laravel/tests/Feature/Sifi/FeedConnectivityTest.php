@@ -332,11 +332,11 @@ final class FeedConnectivityTest extends TestCase
     public function test_provider_does_not_follow_or_resolve_any_external_url(): void
     {
         $provider = new FeedResearchProvider('SYNTHETIC_RSS');
-        $p = $provider->search(['page' => 1, 'object_name' => 'SYNTHETIC test', 'query_sha256' => str_repeat('a',64)]);
-        $this->assertSame('https://rss.sources.invalid/feed?page=2',$p['next']);
-        $this->assertSame(0,$p['network_requests']);
+        $p = $provider->search(['page' => 1, 'object_name' => 'SYNTHETIC test', 'query_sha256' => str_repeat('a', 64)]);
+        $this->assertSame('https://rss.sources.invalid/feed?page=2', $p['next']);
+        $this->assertSame(0, $p['network_requests']);
         $this->assertFalse($p['source']['live_enabled']);
         $this->expectException(\RuntimeException::class);
-        $provider->search(['page' => 3, 'object_name' => 'SYNTHETIC', 'query_sha256' => str_repeat('a',64)]);
+        $provider->search(['page' => 3, 'object_name' => 'SYNTHETIC', 'query_sha256' => str_repeat('a', 64)]);
     }
 }

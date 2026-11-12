@@ -87,6 +87,6 @@ final class TavilySearchProvider implements SifiResearchProvider
             }$query[] = $key.'='.$v;
         }sort($query);
 
-        return 'https://'.$host.($p['path'] ?? '/').($query ? '?'.implode('&',$query) : '');
+        return 'https://'.$host.($p['path'] ?? '/').($query ? '?'.implode('&', $query) : '');
     }
 }

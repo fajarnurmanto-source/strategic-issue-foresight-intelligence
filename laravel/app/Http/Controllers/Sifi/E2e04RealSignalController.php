@@ -154,6 +154,6 @@ final class E2e04RealSignalController extends Controller
             return $candidateId;
         }, 3);
 
-        return redirect()->route('sifi.evidence.index',$destination)->with('status','Real-source signal → Investigation → Issue Candidate → Evidence Draft tersimpan. Review independen masih diperlukan.');
+        return redirect()->route('sifi.evidence.index', $destination)->with('status', 'Real-source signal → Investigation → Issue Candidate → Evidence Draft tersimpan. Review independen masih diperlukan.');
     }
 }

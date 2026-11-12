@@ -220,10 +220,10 @@ final class RealSearchAuthorityTest extends TestCase
         }
         $this->travel(31)->days();
         try {
-            $wire->recover('CROSSREF',$this->context);
+            $wire->recover('CROSSREF', $this->context);
             $this->fail('Expired recovery accepted');
         } catch (\RuntimeException $e) {
-            $this->assertSame('RECEIPT_CONTEXT_OR_EXPIRY',$e->getMessage());
-        }$this->assertSame(1,$wire->calls);
+            $this->assertSame('RECEIPT_CONTEXT_OR_EXPIRY', $e->getMessage());
+        }$this->assertSame(1, $wire->calls);
     }
 }

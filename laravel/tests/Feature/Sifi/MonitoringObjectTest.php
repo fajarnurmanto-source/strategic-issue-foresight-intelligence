@@ -161,10 +161,10 @@ final class MonitoringObjectTest extends TestCase
         $before = $o->fresh()->toArray();
         $this->get('/sifi/monitoring-objects')->assertOk();
         $this->get('/sifi/workbench?object='.$o->id)->assertOk();
-        $this->assertSame($before,$o->fresh()->toArray());
-        $this->assertDatabaseCount('sifi_monitoring_object_audit',1);
-        $this->assertDatabaseCount('sifi_issue_candidates',0);
-        $this->assertDatabaseCount('sifi_claim_drafts',0);
+        $this->assertSame($before, $o->fresh()->toArray());
+        $this->assertDatabaseCount('sifi_monitoring_object_audit', 1);
+        $this->assertDatabaseCount('sifi_issue_candidates', 0);
+        $this->assertDatabaseCount('sifi_claim_drafts', 0);
         Http::assertNothingSent();
     }
 }

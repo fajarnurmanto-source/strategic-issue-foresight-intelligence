@@ -242,12 +242,12 @@ final class MultilingualDiscoveryTest extends TestCase
 
     public function test_unrecognized_question_intent_is_not_replaced_by_object_objective(): void
     {
-        $e = $this->multi($this->create([],['question' => 'Bagaimana fenomena quasar berkaitan dengan Yogyakarta pada tahun 2025?']))['envelope'];
+        $e = $this->multi($this->create([], ['question' => 'Bagaimana fenomena quasar berkaitan dengan Yogyakarta pada tahun 2025?']))['envelope'];
         $p = $e['multilingual_plan'];
-        $this->assertSame([],$p['topic_concepts']);
-        $this->assertContains('quasar',$p['untranslated_terms']);
+        $this->assertSame([], $p['topic_concepts']);
+        $this->assertContains('quasar', $p['untranslated_terms']);
         foreach ($p['queries'] as $q) {
-            $this->assertStringContainsString('quasar',$q['query']);
-        }$this->assertSame('NOT_PERFORMED',$p['question_translation']);
+            $this->assertStringContainsString('quasar', $q['query']);
+        }$this->assertSame('NOT_PERFORMED', $p['question_translation']);
     }
 }

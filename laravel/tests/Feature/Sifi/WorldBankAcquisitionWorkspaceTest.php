@@ -201,8 +201,8 @@ final class WorldBankAcquisitionWorkspaceTest extends TestCase
         $other = User::factory()->create(['email_verified_at' => now()]);
         $source = SifiSourceDraft::create(['id' => (string) Str::uuid(), 'user_id' => $other->id, 'name' => 'AE11 other mock source', 'source_type' => 'OPEN_DATA', 'homepage_url' => WorldBankGdpSourceAdapter::DOCUMENTATION, 'revision' => 1]);
         $this->actingAs($other)->post('/sifi/source-catalog/pipeline-draft', ['scenario' => 'wb_acquisition', 'receipt_id' => $id, 'analyst_note' => 'Cannot reuse a foreign account receipt for a draft.', 'confirm_archive' => true, 'source_draft_id' => $source->id, 'source_revision' => 1, 'input_digest' => $p['packet_hash']])->assertSessionHasErrors('scenario');
-        $this->assertDatabaseCount('sifi_issue_candidates',0);
-        $this->assertDatabaseCount('sifi_evidence_drafts',0);
-        $this->assertSame($n,$this->calls());
+        $this->assertDatabaseCount('sifi_issue_candidates', 0);
+        $this->assertDatabaseCount('sifi_evidence_drafts', 0);
+        $this->assertSame($n, $this->calls());
     }
 }

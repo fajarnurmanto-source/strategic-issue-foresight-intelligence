@@ -218,9 +218,9 @@ final class ResearchBridgeTest extends TestCase
         } catch (ValidationException) {
             $this->assertTrue(true);
         }$bad = $packet;
-        $bad['results'] = [$entries[0], array_replace($entries[0],['origin' => 'other'])];
+        $bad['results'] = [$entries[0], array_replace($entries[0], ['origin' => 'other'])];
         try {
-            $provider->fromFixtureResponse($context,json_encode($bad));
+            $provider->fromFixtureResponse($context, json_encode($bad));
             $this->fail('Ambiguous origin');
         } catch (ValidationException) {
             $this->assertTrue(true);

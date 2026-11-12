@@ -34,7 +34,7 @@ class OneShotSearchTransport
             throw new \RuntimeException('RECEIPT_CONTEXT_OR_EXPIRY');
         }
 
-return $p;
+        return $p;
     }
 
     /** @return array<string, mixed> */
@@ -148,7 +148,7 @@ return $p;
                         throw new \LengthException('BYTE_LIMIT');
                     }
 
-return $this->stream->write($s);
+                    return $this->stream->write($s);
                 }
             };
             try {
@@ -229,13 +229,13 @@ return $this->stream->write($s);
             // Failure receipts are written too. A consumed request is never retried during recovery.
             $receipt = $dir.'/'.app(OneShotSearchAuthority::class)->contextHash($provider, $context).'.receipt.enc';
             $encoded = Crypt::encryptString(json_encode($base, JSON_THROW_ON_ERROR));
-            if (file_put_contents($receipt,$encoded,LOCK_EX) !== strlen($encoded)) {
+            if (file_put_contents($receipt, $encoded, LOCK_EX) !== strlen($encoded)) {
                 throw new \RuntimeException('RECEIPT_STORAGE_FAILED');
-            }chmod($receipt,0600);
+            }chmod($receipt, 0600);
 
             return $base;
         } finally {
-            flock($lock,LOCK_UN);
+            flock($lock, LOCK_UN);
             fclose($lock);
         }
     }

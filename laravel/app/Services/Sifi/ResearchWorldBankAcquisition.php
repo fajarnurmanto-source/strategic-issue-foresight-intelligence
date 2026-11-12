@@ -45,7 +45,7 @@ class ResearchWorldBankAcquisition extends WorldBankOneShotAcquisition
             return null;
         }
 
-return is_array($p) ? $p : null;
+        return is_array($p) ? $p : null;
     }
 
     /** @param array<string, mixed> $p */
@@ -82,7 +82,7 @@ return is_array($p) ? $p : null;
             return 'EXPIRED';
         }
 
-return parent::canAcquire($u) ? 'READY' : 'BLOCKED';
+        return parent::canAcquire($u) ? 'READY' : 'BLOCKED';
     }
 
     /** @param array<string, mixed> $permit */
@@ -147,7 +147,7 @@ return parent::canAcquire($u) ? 'READY' : 'BLOCKED';
             }
         }
 
-return $this->publicAddress(array_values(array_unique($ips)));
+        return $this->publicAddress(array_values(array_unique($ips)));
     }
 
     /** @param array<string, mixed> $options */

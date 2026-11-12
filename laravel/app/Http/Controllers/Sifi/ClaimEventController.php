@@ -194,10 +194,10 @@ final class ClaimEventController extends Controller
             DB::table('sifi_claim_event_assessments')->insert(['candidate_id' => $locked->id,
                 'actor_user_id' => (int) $request->user()->id, 'candidate_revision' => $revision,
                 'input_digest' => $digest, 'status' => 'ADVISORY_ONLY',
-                'result_json' => json_encode($result,JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                'result_json' => json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                 'created_at' => now()]);
         });
 
-        return redirect()->route('sifi.claim-events.show',$candidate->id);
+        return redirect()->route('sifi.claim-events.show', $candidate->id);
     }
 }

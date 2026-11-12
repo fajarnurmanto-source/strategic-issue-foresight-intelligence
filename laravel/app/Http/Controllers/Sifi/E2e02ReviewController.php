@@ -71,7 +71,7 @@ final class E2e02ReviewController extends Controller
             $this->fail('DNS tidak tersedia; tidak ada fetch.');
         }
         foreach ($ips as $ip) {
-            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4|FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE)) {
+            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                 $this->fail('DNS tidak aman.');
             }
         }
@@ -231,6 +231,6 @@ final class E2e02ReviewController extends Controller
                 'created_at' => now()->toIso8601String()];
         }, 'E2E02_REVIEW_PACKET_DRAFTED');
 
-        return back()->with('status','Kandidat claim/evidence tersimpan dalam sesi. Belum ditautkan ke Issue Candidate/signal atau direview.');
+        return back()->with('status', 'Kandidat claim/evidence tersimpan dalam sesi. Belum ditautkan ke Issue Candidate/signal atau direview.');
     }
 }

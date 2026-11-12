@@ -55,7 +55,7 @@ final class RealCollectorWorkspace
                     $this->fail('Submission key berubah.');
                 }
 
-return $row->id;
+                return $row->id;
             }
             $id = app(ResearchSessionWorkspace::class)->create($u, $o, ['question' => $v['question'], 'object_revision' => $o->revision, 'query_limit' => 1, 'result_limit' => 5, 'time_window' => '2025']);
             $s = app(ResearchRetrievalWorkspace::class)->session($u, $o, $id);
@@ -65,7 +65,7 @@ return $row->id;
             if (! is_dir($dir)) {
                 mkdir($dir, 0700, true);
             }$lock = fopen($dir.'/crossref.lock', 'c+');
-            if (! $lock || ! flock($lock, LOCK_EX|LOCK_NB)) {
+            if (! $lock || ! flock($lock, LOCK_EX | LOCK_NB)) {
                 $this->fail('Collector sedang berjalan. Tidak ada request tambahan.');
             }
             try {
@@ -191,10 +191,10 @@ return $row->id;
                 $left = MultiSourceFixtureSupport::words($a['snippet']);
                 $right = MultiSourceFixtureSupport::words($b['snippet']);
                 $same = (bool) array_intersect($a['origins'], $b['origins']);
-                $pairs[] = ['left' => $a['id'], 'right' => $b['id'], 'shared_terms' => array_slice(array_values(array_intersect($left,$right)),0,12), 'left_only_terms' => array_slice(array_values(array_diff($left,$right)),0,12), 'right_only_terms' => array_slice(array_values(array_diff($right,$left)),0,12), 'possible_republication' => $same, 'shared_declared_origin' => $same, 'independence' => 'NOT_VERIFIED', 'conclusion' => 'Perbandingan label bibliografi saja; bukan perbandingan isi artikel, corroboration, atau verifikasi citra negatif.'];
+                $pairs[] = ['left' => $a['id'], 'right' => $b['id'], 'shared_terms' => array_slice(array_values(array_intersect($left, $right)), 0, 12), 'left_only_terms' => array_slice(array_values(array_diff($left, $right)), 0, 12), 'right_only_terms' => array_slice(array_values(array_diff($right, $left)), 0, 12), 'possible_republication' => $same, 'shared_declared_origin' => $same, 'independence' => 'NOT_VERIFIED', 'conclusion' => 'Perbandingan label bibliografi saja; bukan perbandingan isi artikel, corroboration, atau verifikasi citra negatif.'];
             }
         }
 
-return $pairs;
+        return $pairs;
     }
 }

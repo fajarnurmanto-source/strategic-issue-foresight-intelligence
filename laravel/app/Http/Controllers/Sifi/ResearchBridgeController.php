@@ -55,6 +55,6 @@ final class ResearchBridgeController extends Controller
         $v = $r->validate($this->forbidden() + ['object_revision' => ['required', 'integer', 'min:1'], 'revision' => ['required', 'integer', 'min:1'], 'confirm_fixture' => ['required', 'accepted'], 'analyst_note' => ['required', 'string', 'min:20', 'max:1000']]);
         $w->import($r->user(), $object, $retrieval, $v);
 
-        return redirect()->route('sifi.research-bridge.index',['object' => $object->id]);
+        return redirect()->route('sifi.research-bridge.index', ['object' => $object->id]);
     }
 }

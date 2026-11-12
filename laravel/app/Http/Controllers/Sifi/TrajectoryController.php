@@ -200,9 +200,9 @@ final class TrajectoryController extends Controller
             }
             DB::table('sifi_trajectory_advisories')->insert(['draft_id' => $draft->id, 'actor_user_id' => (int) $request->user()->id,
                 'draft_revision' => $draft->revision, 'input_digest' => $digest, 'status' => 'ADVISORY_ONLY',
-                'result_json' => json_encode($out,JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), 'created_at' => now()]);
+                'result_json' => json_encode($out, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), 'created_at' => now()]);
         });
 
-        return redirect()->route('sifi.trajectory.show',$candidate->id);
+        return redirect()->route('sifi.trajectory.show', $candidate->id);
     }
 }
