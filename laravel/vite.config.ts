@@ -68,6 +68,8 @@ export default defineConfig({
             'public/**',
             '.github/**',
             'composer.json',
+            // Immutable external-source archive: exact wire SHA is enforced by PHP and CI.
+            'resources/sifi/ae09-wb-response.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
         ],
