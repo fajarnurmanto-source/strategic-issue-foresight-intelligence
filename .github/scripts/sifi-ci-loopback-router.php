@@ -127,7 +127,7 @@ if ($scenario === 'disconnect') {
 }
 $fixture = dirname(__DIR__, 2).'/laravel/resources/sifi/ae09-wb-response.json';
 $packet = json_decode((string) file_get_contents($fixture), true, 16, JSON_THROW_ON_ERROR);
-$packet[0]['lastupdated'] = gmdate('Y-m-d');
+$packet[0]['lastupdated'] = in_array($scenario, ['revised'], true) ? '2026-10-26' : '2026-10-25';
 foreach ($packet[1] as $i => &$record) {
     $record['value'] = [1.25, 2.5, 3.75][$i];
 }
@@ -137,6 +137,8 @@ if ($scenario === 'stale') $packet[0]['lastupdated'] = '2020-01-01';
 if ($scenario === 'schema') $packet[1][0]['indicator']['id'] = 'INVALID';
 if ($scenario === 'too_many') $packet[0]['pages'] = 2;
 if ($scenario === 'duplicate') $packet[1][1] = $packet[1][0];
+if ($scenario === 'revised') $packet[1][0]['value'] = 1.5;
+if ($scenario === 'same_version_conflict') $packet[1][0]['value'] = 1.5;
 $raw = json_encode($packet, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 if ($scenario === 'malformed') $raw = '{broken';
 if ($scenario === 'oversize_length') $raw = str_repeat('x', 65537);
