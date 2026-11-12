@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = '3376699c322fb2066fb47f59b62660fd1fee75aa'
+          test "$(git rev-parse HEAD^)" = 'da152096b04f5220c4b781fb418a5fc408d80af2'
           test "${{ github.event.pull_request.head.ref }}" = 'fix/sifi-phpstan-ci-independent-20261112'
           test -z "$(git status --porcelain)"
           echo "SIFI_PINNED_PARENT=PASS"
@@ -65,7 +65,7 @@ jobs:
           if any(not x.startswith('laravel/') or not x.endswith('.php') or '..' in x.split('/') for x in files):
               raise SystemExit('PINT_PATCH_PATH_OUT_OF_SCOPE')
           patch = (p/'pint-normalization.patch').read_text()
-          changed = [line[11:] for line in patch.splitlines() if line.startswith('diff --git a/')]
+          changed = [line.split(' b/', 1)[0][len('diff --git a/'):] for line in patch.splitlines() if line.startswith('diff --git a/')]
           if changed != files:
               raise SystemExit('PINT_PATCH_MANIFEST_MISMATCH')
           print('SIFI_PINT_SCOPE=240_PHP_ONLY')
