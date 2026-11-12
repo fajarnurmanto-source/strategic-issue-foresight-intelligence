@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Requests\Sifi;
 
 use App\Models\SifiIssueCandidate;
@@ -9,8 +10,10 @@ final class RunEvidenceDiagnosticsRequest extends FormRequest
     public function authorize(): bool
     {
         $candidate = $this->route('candidate');
+
         return $candidate instanceof SifiIssueCandidate && $this->user()?->can('view', $candidate) === true;
     }
+
     /** @return array<string, list<string>> */
     public function rules(): array
     {

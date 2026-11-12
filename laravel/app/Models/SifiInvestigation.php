@@ -9,8 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 final class SifiInvestigation extends Model
 {
     protected $table = 'sifi_investigations';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
+
     protected $guarded = ['*'];
 
     /** @return HasOne<SifiIssueCandidate, $this> */

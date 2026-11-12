@@ -4,6 +4,7 @@ namespace Tests\Feature\Sifi;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -13,6 +14,7 @@ final class SifiInvestigationWorkflowTest extends TestCase
     use RefreshDatabase;
 
     private const SIGNAL_A = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
     private const SIGNAL_B = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
     protected function setUp(): void
@@ -79,11 +81,11 @@ final class SifiInvestigationWorkflowTest extends TestCase
         $this->actingAs($owner)->post('/sifi/investigations', ['signal_id' => self::SIGNAL_A]);
         $id = DB::table('sifi_investigations')->value('id');
         $outsider = $this->analyst();
-        $this->actingAs($outsider)->get('/sifi/investigations/' . $id)->assertNotFound();
-        $this->actingAs($outsider)->patch('/sifi/investigations/' . $id, [
+        $this->actingAs($outsider)->get('/sifi/investigations/'.$id)->assertNotFound();
+        $this->actingAs($outsider)->patch('/sifi/investigations/'.$id, [
             'title' => 'Unauthorized change', 'review_state' => 'DRAFT', 'revision' => 1,
         ])->assertNotFound();
-        $this->actingAs($outsider)->post('/sifi/investigations/' . $id . '/signals', [
+        $this->actingAs($outsider)->post('/sifi/investigations/'.$id.'/signals', [
             'signal_id' => self::SIGNAL_A,
         ])->assertNotFound();
     }
@@ -100,10 +102,10 @@ final class SifiInvestigationWorkflowTest extends TestCase
             'next_steps' => 'Periksa data resmi dan lapangan',
             'review_state' => 'REVIEW_REQUESTED', 'revision' => 1,
         ];
-        $this->patch('/sifi/investigations/' . $id, $assessment)->assertRedirect();
+        $this->patch('/sifi/investigations/'.$id, $assessment)->assertRedirect();
         $this->assertDatabaseHas('sifi_investigations', ['id' => $id, 'revision' => 2, 'review_state' => 'REVIEW_REQUESTED']);
         $this->assertDatabaseHas('sifi_investigation_audit', ['investigation_id' => $id, 'revision' => 2, 'action' => 'ASSESSMENT_EDITED']);
-        $this->patch('/sifi/investigations/' . $id, $assessment)->assertSessionHasErrors('revision');
+        $this->patch('/sifi/investigations/'.$id, $assessment)->assertSessionHasErrors('revision');
         $this->assertDatabaseCount('sifi_investigation_audit', 2);
     }
 
@@ -112,7 +114,7 @@ final class SifiInvestigationWorkflowTest extends TestCase
         $this->offlineFixture(self::SIGNAL_A);
         $this->actingAs($this->analyst())->post('/sifi/investigations', ['signal_id' => self::SIGNAL_A]);
         $id = DB::table('sifi_investigations')->value('id');
-        $this->patch('/sifi/investigations/' . $id, [
+        $this->patch('/sifi/investigations/'.$id, [
             'title' => 'Valid title', 'review_state' => 'EVIDENCE_ADMITTED', 'revision' => 1,
         ])->assertSessionHasErrors('review_state');
         $this->assertDatabaseCount('sifi_investigation_audit', 1);
@@ -124,7 +126,7 @@ final class SifiInvestigationWorkflowTest extends TestCase
         $this->actingAs($this->analyst())->post('/sifi/investigations', ['signal_id' => self::SIGNAL_A]);
         $id = DB::table('sifi_investigations')->value('id');
         // A request repeating an existing Signal ID must be a no-op.
-        $this->post('/sifi/investigations/' . $id . '/signals', ['signal_id' => self::SIGNAL_A])->assertRedirect();
+        $this->post('/sifi/investigations/'.$id.'/signals', ['signal_id' => self::SIGNAL_A])->assertRedirect();
         $this->assertDatabaseCount('sifi_investigation_signals', 1);
         $this->assertDatabaseCount('sifi_investigation_audit', 1);
     }
@@ -148,9 +150,10 @@ final class SifiInvestigationWorkflowTest extends TestCase
     public function test_attaching_new_offline_signal_increments_revision(): void
     {
         // Single dynamic offline stub handles both ids; no source networking.
-        Http::fake(function (\Illuminate\Http\Client\Request $request) {
+        Http::fake(function (Request $request) {
             preg_match('#/v1/signals/([0-9a-f]{64})/history$#D', $request->url(), $match);
             $id = $match[1] ?? '';
+
             return Http::response([
                 'mode' => 'OFFLINE_FIXTURE_ONLY',
                 'versions' => [[
@@ -163,7 +166,7 @@ final class SifiInvestigationWorkflowTest extends TestCase
         });
         $this->actingAs($this->analyst())->post('/sifi/investigations', ['signal_id' => self::SIGNAL_A]);
         $id = DB::table('sifi_investigations')->value('id');
-        $this->post('/sifi/investigations/' . $id . '/signals', ['signal_id' => self::SIGNAL_B])
+        $this->post('/sifi/investigations/'.$id.'/signals', ['signal_id' => self::SIGNAL_B])
             ->assertRedirect();
         $this->assertDatabaseCount('sifi_investigation_signals', 2);
         $this->assertDatabaseHas('sifi_investigation_audit', ['investigation_id' => $id, 'revision' => 2, 'action' => 'SIGNAL_ATTACHED']);
@@ -175,6 +178,6 @@ final class SifiInvestigationWorkflowTest extends TestCase
         $this->actingAs($this->analyst())->post('/sifi/investigations', ['signal_id' => self::SIGNAL_A]);
         $id = DB::table('sifi_investigations')->value('id');
         Http::fake(['*' => Http::response(['error' => 'offline'], 503)]);
-        $this->get('/sifi/investigations/' . $id)->assertOk();
+        $this->get('/sifi/investigations/'.$id)->assertOk();
     }
 }

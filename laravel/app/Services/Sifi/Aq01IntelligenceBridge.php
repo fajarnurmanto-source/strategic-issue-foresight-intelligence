@@ -10,7 +10,7 @@ use RuntimeException;
 final class Aq01IntelligenceBridge
 {
     /**
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public function assess(array $input): array
@@ -33,7 +33,7 @@ final class Aq01IntelligenceBridge
         try {
             $response = Http::withToken($token)->acceptJson()->asJson()
                 ->withoutRedirecting()->connectTimeout(1)->timeout(4)
-                ->post($base . '/v1/intelligence/assess', $payload);
+                ->post($base.'/v1/intelligence/assess', $payload);
         } catch (\Throwable $e) {
             throw new RuntimeException('AQ01 engine unavailable', 0, $e);
         }
@@ -90,6 +90,7 @@ final class Aq01IntelligenceBridge
         }
         // Drop one-time nonce before persistence. Output never includes raw titles or bodies.
         unset($data['request_nonce']);
+
         return $data;
     }
 }

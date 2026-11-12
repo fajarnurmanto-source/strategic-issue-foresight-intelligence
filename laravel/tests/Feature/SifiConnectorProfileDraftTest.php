@@ -7,6 +7,7 @@ use App\Services\Sifi\Integration\ConnectorProfileDrafts;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -18,6 +19,7 @@ final class SifiConnectorProfileDraftTest extends TestCase
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
         $user->assignRole(Role::findOrCreate('superadmin', 'web'));
+
         return $user;
     }
 
@@ -110,7 +112,7 @@ final class SifiConnectorProfileDraftTest extends TestCase
     public function test_readonly_readiness_lists_all_fail_closed_dispatch_blockers_without_network_or_writes(): void
     {
         config()->set('sifi_superadmin.enabled', true);
-        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        Http::preventStrayRequests();
         $admin = $this->admin();
         $service = app(ConnectorProfileDrafts::class);
         $service->create($admin, $this->syntheticInput());
@@ -129,7 +131,7 @@ final class SifiConnectorProfileDraftTest extends TestCase
         $this->assertArrayNotHasKey('credential', $result[0]);
         $this->assertArrayNotHasKey('credential_ciphertext', $result[0]);
         $this->assertDatabaseCount('sifi_connector_audits', 1);
-        \Illuminate\Support\Facades\Http::assertNothingSent();
+        Http::assertNothingSent();
     }
 
     public function test_missing_credential_and_unset_rate_are_visible_as_diagnostic_reasons(): void
@@ -185,5 +187,4 @@ final class SifiConnectorProfileDraftTest extends TestCase
         $this->expectException(AuthorizationException::class);
         $service->revokeCredential($regularUser, $profile->id);
     }
-
 }

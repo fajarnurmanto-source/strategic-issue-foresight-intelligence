@@ -39,11 +39,12 @@ final class ConnectorProfiles extends Page
 
     /**
      * Safe presentation data only; secrets never leave the service boundary.
+     *
      * @return list<array<string, mixed>>
      */
     public function profiles(): array
     {
-        if (! static::canAccess() || ! $this->databaseReady()) {
+        if (! self::canAccess() || ! $this->databaseReady()) {
             return [];
         }
 
@@ -64,9 +65,8 @@ final class ConnectorProfiles extends Page
             ->modalDescription('Kredensial tersimpan akan dihapus permanen. Izin penggunaan dan biaya tetap ditolak. Tidak ada koneksi API yang dijalankan.')
             ->modalSubmitActionLabel('Ya, cabut kredensial')
             ->requiresConfirmation()
-            ->visible(fn (): bool => static::canAccess() && $this->databaseReady()
-                && collect($this->profiles())->contains(fn (array $p): bool =>
-                    $p['credential_saved'] && $p['rights_status'] !== 'REVOKED'))
+            ->visible(fn (): bool => self::canAccess() && $this->databaseReady()
+                && collect($this->profiles())->contains(fn (array $p): bool => $p['credential_saved'] && $p['rights_status'] !== 'REVOKED'))
             ->schema([
                 Select::make('profile_id')
                     ->label('Pilih draft provider')
@@ -101,7 +101,7 @@ final class ConnectorProfiles extends Page
             ->label('Tambah draft provider')
             ->modalHeading('Konfigurasi provider (draft)')
             ->modalDescription('Hanya menyimpan konfigurasi. Tidak melakukan koneksi API, aktivasi, atau otorisasi biaya.')
-            ->visible(fn (): bool => static::canAccess() && $this->databaseReady())
+            ->visible(fn (): bool => self::canAccess() && $this->databaseReady())
             ->schema([
                 TextInput::make('provider_key')
                     ->label('Kode provider')

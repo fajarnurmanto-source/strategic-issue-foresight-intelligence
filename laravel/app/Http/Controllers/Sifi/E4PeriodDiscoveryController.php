@@ -104,6 +104,7 @@ final class E4PeriodDiscoveryController extends Controller
         foreach ($plan['sources'] as $source) {
             if (! $source['dispatchable']) {
                 $sources[] = $source + ['result_state' => 'NOT_DISPATCHED', 'session_id' => null, 'result_count' => 0];
+
                 continue;
             }
             $sessionId = null;
@@ -172,7 +173,7 @@ final class E4PeriodDiscoveryController extends Controller
     }
 
     /**
-     * @param array<string,mixed> $source
+     * @param  array<string,mixed>  $source
      * @return list<array<string, string|null>>
      */
     private function entries(int $ownerId, string $objectId, string $sessionId,
@@ -214,6 +215,7 @@ final class E4PeriodDiscoveryController extends Controller
                 'session_id' => $sessionId,
             ];
         }
+
         return $items;
     }
 }

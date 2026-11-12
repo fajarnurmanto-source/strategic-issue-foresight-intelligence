@@ -8,10 +8,11 @@ use InvalidArgumentException;
 final class ClaimComparisonInputDiagnostics
 {
     private const MAX_CLAIMS = 50;
+
     private const MAX_EVENTS_PER_CLAIM = 10;
 
     /**
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public function summarize(array $input): array
@@ -19,14 +20,14 @@ final class ClaimComparisonInputDiagnostics
         $candidateId = $this->identifier($input['candidate_id'] ?? null);
         $candidateRevision = $this->revision($input['candidate_revision'] ?? null);
         foreach (['claims', 'events', 'links'] as $key) {
-            if (!isset($input[$key]) || !is_array($input[$key]) || !array_is_list($input[$key])) {
+            if (! isset($input[$key]) || ! is_array($input[$key]) || ! array_is_list($input[$key])) {
                 throw new InvalidArgumentException('Invalid server-owned draft projection.');
             }
         }
 
         $claims = [];
         foreach ($input['claims'] as $claim) {
-            if (!is_array($claim)) {
+            if (! is_array($claim)) {
                 throw new InvalidArgumentException('Invalid server-owned claim projection.');
             }
             if (array_key_exists('candidate_id', $claim) && $claim['candidate_id'] !== $candidateId) {
@@ -37,7 +38,7 @@ final class ClaimComparisonInputDiagnostics
                 throw new InvalidArgumentException('Ambiguous server-owned claim projection.');
             }
             $modality = $claim['modality'] ?? null;
-            if (!is_string($modality) || trim($modality) === '' || strlen($modality) > 80) {
+            if (! is_string($modality) || trim($modality) === '' || strlen($modality) > 80) {
                 throw new InvalidArgumentException('Invalid server-owned draft modality.');
             }
             $claims[$id] = [
@@ -51,7 +52,7 @@ final class ClaimComparisonInputDiagnostics
 
         $events = [];
         foreach ($input['events'] as $event) {
-            if (!is_array($event)) {
+            if (! is_array($event)) {
                 throw new InvalidArgumentException('Invalid server-owned event projection.');
             }
             if (array_key_exists('candidate_id', $event) && $event['candidate_id'] !== $candidateId) {
@@ -61,9 +62,9 @@ final class ClaimComparisonInputDiagnostics
             if (isset($events[$id])) {
                 throw new InvalidArgumentException('Ambiguous server-owned event projection.');
             }
-            if (!array_key_exists('time_note', $event) || !array_key_exists('place_note', $event)
-                || ($event['time_note'] !== null && !is_string($event['time_note']))
-                || ($event['place_note'] !== null && !is_string($event['place_note']))) {
+            if (! array_key_exists('time_note', $event) || ! array_key_exists('place_note', $event)
+                || ($event['time_note'] !== null && ! is_string($event['time_note']))
+                || ($event['place_note'] !== null && ! is_string($event['place_note']))) {
                 throw new InvalidArgumentException('Invalid server-owned event notes.');
             }
             $events[$id] = [
@@ -77,16 +78,16 @@ final class ClaimComparisonInputDiagnostics
         $linksByClaim = [];
         $linkCount = 0;
         foreach ($input['links'] as $link) {
-            if (!is_array($link)
+            if (! is_array($link)
                 || (array_key_exists('candidate_id', $link) && $link['candidate_id'] !== $candidateId)
-                || !is_string($link['claim_id'] ?? null)
-                || !is_string($link['event_id'] ?? null)
-                || !in_array($link['relation'] ?? null, ['UNKNOWN', 'POSSIBLE_ASSOCIATION'], true)) {
+                || ! is_string($link['claim_id'] ?? null)
+                || ! is_string($link['event_id'] ?? null)
+                || ! in_array($link['relation'] ?? null, ['UNKNOWN', 'POSSIBLE_ASSOCIATION'], true)) {
                 continue;
             }
             $claimId = $link['claim_id'];
             $eventId = $link['event_id'];
-            if (!isset($claims[$claimId], $events[$eventId]) || isset($linksByClaim[$claimId][$eventId])) {
+            if (! isset($claims[$claimId], $events[$eventId]) || isset($linksByClaim[$claimId][$eventId])) {
                 continue;
             }
             $linksByClaim[$claimId][$eventId] = $events[$eventId];
@@ -138,7 +139,7 @@ final class ClaimComparisonInputDiagnostics
 
     private function identifier(mixed $value): string
     {
-        if (!is_string($value) || trim($value) === '' || strlen($value) > 128) {
+        if (! is_string($value) || trim($value) === '' || strlen($value) > 128) {
             throw new InvalidArgumentException('Invalid server-owned projection identifier.');
         }
 
@@ -147,7 +148,7 @@ final class ClaimComparisonInputDiagnostics
 
     private function revision(mixed $value): int
     {
-        if (!is_int($value) || $value < 1) {
+        if (! is_int($value) || $value < 1) {
             throw new InvalidArgumentException('Invalid server-owned projection revision.');
         }
 

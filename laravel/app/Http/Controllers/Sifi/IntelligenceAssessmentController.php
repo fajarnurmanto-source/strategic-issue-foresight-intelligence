@@ -15,7 +15,7 @@ use RuntimeException;
 final class IntelligenceAssessmentController extends Controller
 {
     public function store(RunIntelligenceRequest $request, SifiIssueCandidate $candidate,
-                          Aq01IntelligenceBridge $bridge): RedirectResponse
+        Aq01IntelligenceBridge $bridge): RedirectResponse
     {
         $revision = (int) $request->validated('revision');
         if ($revision !== (int) $candidate->revision) {
@@ -93,6 +93,7 @@ final class IntelligenceAssessmentController extends Controller
                 'created_at' => now(),
             ]);
         });
+
         return redirect()->route('sifi.issue-candidates.show', $candidate->id);
     }
 }

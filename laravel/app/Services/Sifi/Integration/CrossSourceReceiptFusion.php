@@ -67,6 +67,7 @@ final class CrossSourceReceiptFusion
         $sameUrl = array_values(array_filter(array_keys($seen),
             static fn (string $url): bool => count($seen[$url]) > 1));
         sort($sameUrl, SORT_STRING);
+
         return [
             'schema_version' => 'sifi.ih03f.cross-source-shadow-fusion.v1',
             'mode' => 'LOCAL_READ_ONLY_EXISTING_LIVE_METADATA',
@@ -142,6 +143,7 @@ final class CrossSourceReceiptFusion
             }
             $entries[] = $entry;
         }
+
         return [
             'object_id' => (string) $object->id,
             'object_revision' => (int) $object->revision,
@@ -153,6 +155,7 @@ final class CrossSourceReceiptFusion
     private function terms(string $title): array
     {
         $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($title)) ?: [];
+
         return array_values(array_unique(array_filter($words,
             static fn (string $word): bool => mb_strlen($word) >= 4 && ! in_array($word, self::STOP, true))));
     }

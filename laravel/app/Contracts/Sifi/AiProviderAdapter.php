@@ -4,8 +4,8 @@ namespace App\Contracts\Sifi;
 
 use App\Data\Sifi\AiInferenceRequest;
 use App\Data\Sifi\AiInferenceResult;
-use App\Data\Sifi\AiProviderCapabilities;
 use App\Data\Sifi\AiModelDescriptor;
+use App\Data\Sifi\AiProviderCapabilities;
 
 interface AiProviderAdapter
 {

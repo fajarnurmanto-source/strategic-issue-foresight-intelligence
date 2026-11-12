@@ -64,11 +64,13 @@ final class ReviewedCrossrefResearch
 
             $this->reserveBudget($owner, $locked, $values['submission_key']);
 
-            $windowLabel='UNSPECIFIED';
-            if(isset($values['date_window'])){
-                $endTime=strtotime($values['date_window']['end'].' -1 day');
-                if($endTime===false) throw new \RuntimeException('IH03B_DATE_WINDOW_INVALID');
-                $windowLabel=$values['date_window']['start'].' / '.date('Y-m-d',$endTime);
+            $windowLabel = 'UNSPECIFIED';
+            if (isset($values['date_window'])) {
+                $endTime = strtotime($values['date_window']['end'].' -1 day');
+                if ($endTime === false) {
+                    throw new \RuntimeException('IH03B_DATE_WINDOW_INVALID');
+                }
+                $windowLabel = $values['date_window']['start'].' / '.date('Y-m-d', $endTime);
             }
             $sessionId = app(ResearchSessionWorkspace::class)->create($owner, $locked, [
                 'question' => $values['question'],
@@ -163,7 +165,9 @@ final class ReviewedCrossrefResearch
         }
         try {
             $raw = stream_get_contents($handle);
-            if($raw===false) throw new \RuntimeException('IH03B_BUDGET_READ_FAILED');
+            if ($raw === false) {
+                throw new \RuntimeException('IH03B_BUDGET_READ_FAILED');
+            }
             $budget = $raw === '' ? ['day' => '', 'count' => 0, 'last' => 0, 'keys' => []]
                 : json_decode(Crypt::decryptString($raw), true, 12, JSON_THROW_ON_ERROR);
             if (! is_array($budget) || ! is_array($budget['keys'] ?? null)) {
@@ -200,7 +204,7 @@ final class ReviewedCrossrefResearch
     }
 
     /** @param array<string, mixed> $values
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     private function issueOneShotAuthority(
         User $owner, SifiMonitoringObject $object, array $values, array $context
@@ -223,7 +227,7 @@ final class ReviewedCrossrefResearch
             'response_byte_limit' => 32768,
             'consumed' => false,
             // Laravel's clock is authoritative (including frozen test time).
-            'expires_at' => (int)now()->timestamp + 30,
+            'expires_at' => (int) now()->timestamp + 30,
             'approval_scope_sha256' => hash('sha256', 'IH03B_LOCAL_CROSSREF_20261107|'.$owner->id.'|'.$object->id.'|'.$values['submission_key']),
             'nonce' => bin2hex(random_bytes(32)),
             'contact_email' => $values['contact_email'],

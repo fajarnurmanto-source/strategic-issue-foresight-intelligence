@@ -6,7 +6,9 @@ use App\Models\SifiMonitoringObject;
 use App\Models\User;
 use App\Services\Sifi\Integration\AntaraRssTransport;
 use App\Services\Sifi\Integration\ReviewedAntaraRss;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -21,7 +23,7 @@ final class ReviewedAntaraRssTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
         $this->temporary = sys_get_temp_dir().'/sifi-ih03e-review-'.Str::uuid();
         mkdir($this->temporary, 0700);
         $this->app->useStoragePath($this->temporary);
@@ -37,19 +39,22 @@ final class ReviewedAntaraRssTest extends TestCase
     protected function tearDown(): void
     {
         if (str_starts_with($this->temporary, sys_get_temp_dir().'/sifi-ih03e-review-')) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->temporary);
+            (new Filesystem)->deleteDirectory($this->temporary);
         }
         parent::tearDown();
     }
 
     public function test_bounded_real_publisher_receipt_without_live_http_or_evidence(): void
     {
-        $wire = new class extends AntaraRssTransport {
+        $wire = new class extends AntaraRssTransport
+        {
             public int $calls = 0;
+
             public function fetch(string $contact): array
             {
                 $this->calls++;
                 $url = 'https://www.antaranews.com/berita/123/berita-baru';
+
                 return [
                     'state' => 'OK', 'network_requests' => 1, 'http_status' => 200,
                     'response_bytes' => 300, 'response_sha256' => str_repeat('a', 64),

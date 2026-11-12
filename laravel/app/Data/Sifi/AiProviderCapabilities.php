@@ -5,8 +5,8 @@ namespace App\Data\Sifi;
 final readonly class AiProviderCapabilities
 {
     /**
-     * @param list<string> $tasks
-     * @param list<string> $structuredOutputFormats
+     * @param  list<string>  $tasks
+     * @param  list<string>  $structuredOutputFormats
      */
     public function __construct(
         public bool $enabled,

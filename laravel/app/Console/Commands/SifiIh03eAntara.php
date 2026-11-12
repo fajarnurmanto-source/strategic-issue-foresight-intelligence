@@ -49,10 +49,12 @@ final class SifiIh03eAntara extends Command
             $this->line('ARTICLE_FULLTEXT_RETRIEVAL=NONE');
             $this->line('EVIDENCE_ADMISSION=NONE');
             $this->line('PRODUCTION_ADMISSION=DENIED');
+
             return $result['state'] === 'OK' && $result['news_links'] > 0
                 ? self::SUCCESS : self::FAILURE;
         } catch (\Throwable $error) {
             $this->error('SIFI_IH03E=HELD: '.$error->getMessage());
+
             return self::FAILURE;
         }
     }

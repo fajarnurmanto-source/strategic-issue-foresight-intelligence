@@ -16,6 +16,7 @@ final class GdeltLocalPermission
         if ($database === ':memory:') {
             return true;
         }
+
         return is_string($database)
             && preg_match('#\A/mnt/d/Research/SIFI/05_VALIDATION/[^\r\n]+\.sqlite\z#D', $database) === 1;
     }

@@ -4,9 +4,13 @@ namespace Tests\Feature\Sifi;
 
 use App\Models\SifiMonitoringObject;
 use App\Models\User;
+use App\Services\Sifi\CollectorObservations;
 use App\Services\Sifi\Integration\ReviewedCrossrefResearch;
 use App\Services\Sifi\OneShotSearchTransport;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -21,7 +25,7 @@ final class ReviewedCrossrefResearchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-08 12:00:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-08 12:00:00', 'Asia/Jakarta'));
         $this->temporary = sys_get_temp_dir().'/sifi-ih03b-review-'.Str::uuid();
         mkdir($this->temporary, 0700);
         $this->app->useStoragePath($this->temporary);
@@ -37,16 +41,22 @@ final class ReviewedCrossrefResearchTest extends TestCase
     protected function tearDown(): void
     {
         if (str_starts_with($this->temporary, sys_get_temp_dir().'/sifi-ih03b-review-')) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->temporary);
+            (new Filesystem)->deleteDirectory($this->temporary);
         }
         parent::tearDown();
     }
 
     public function test_one_real_metadata_receipt_reuses_existing_research_storage_without_http_or_evidence(): void
     {
-        $wire = new class extends OneShotSearchTransport {
+        $wire = new class extends OneShotSearchTransport
+        {
             public int $calls = 0;
-            protected function address(string $host): string { return '8.8.8.8'; }
+
+            protected function address(string $host): string
+            {
+                return '8.8.8.8';
+            }
+
             protected function request(string $endpoint, array $options): \Illuminate\Http\Client\Response
             {
                 $this->calls++;
@@ -57,9 +67,10 @@ final class ReviewedCrossrefResearchTest extends TestCase
                     'type' => 'journal-article',
                     'published' => ['date-parts' => [[2025, 7, 1]]],
                 ]]]], JSON_THROW_ON_ERROR);
-                $response = new \GuzzleHttp\Psr7\Response(200, ['Content-Type' => 'application/json'], $body);
+                $response = new Response(200, ['Content-Type' => 'application/json'], $body);
                 $options['on_headers']($response);
                 $options['sink']->write($body);
+
                 return new \Illuminate\Http\Client\Response($response);
             }
         };
@@ -93,7 +104,7 @@ final class ReviewedCrossrefResearchTest extends TestCase
         $this->assertDatabaseCount('sifi_real_source_signals', 0);
         $this->assertDatabaseCount('sifi_evidence_drafts', 0);
 
-        $observations = app(\App\Services\Sifi\CollectorObservations::class)->forObject($owner, $object);
+        $observations = app(CollectorObservations::class)->forObject($owner, $object);
         $this->assertCount(1, $observations);
         $this->assertSame(['CROSSREF'], $observations[0]['provider_ids']);
         $this->assertSame('SCHOLARLY_BIBLIOGRAPHIC_METADATA', $observations[0]['source_kind']);

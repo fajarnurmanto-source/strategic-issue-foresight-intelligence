@@ -7,7 +7,10 @@ use App\Models\User;
 use App\Services\Sifi\Integration\ReviewedGdeltNews;
 use App\Services\Sifi\OneShotSearchTransport;
 use App\Services\Sifi\SearchProviderRegistry;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -23,7 +26,7 @@ final class ReviewedGdeltNewsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
         $this->temporary = sys_get_temp_dir().'/sifi-ih03d-review-'.Str::uuid();
         mkdir($this->temporary, 0700);
         $this->app->useStoragePath($this->temporary);
@@ -39,16 +42,22 @@ final class ReviewedGdeltNewsTest extends TestCase
     protected function tearDown(): void
     {
         if (str_starts_with($this->temporary, sys_get_temp_dir().'/sifi-ih03d-review-')) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->temporary);
+            (new Filesystem)->deleteDirectory($this->temporary);
         }
         parent::tearDown();
     }
 
     public function test_bounded_gdelt_metadata_receipt_withheld_article_text(): void
     {
-        $wire = new class extends OneShotSearchTransport {
+        $wire = new class extends OneShotSearchTransport
+        {
             public int $calls = 0;
-            protected function address(string $host): string { return '8.8.8.8'; }
+
+            protected function address(string $host): string
+            {
+                return '8.8.8.8';
+            }
+
             protected function request(string $endpoint, array $options): \Illuminate\Http\Client\Response
             {
                 $this->calls++;
@@ -64,9 +73,10 @@ final class ReviewedGdeltNewsTest extends TestCase
                     'sourcecountry' => 'United States',
                     'socialimage' => 'https://unlicensed.example.org/asset.jpg',
                 ]]], JSON_THROW_ON_ERROR);
-                $response = new \GuzzleHttp\Psr7\Response(200, ['Content-Type' => 'application/json'], $body);
+                $response = new Response(200, ['Content-Type' => 'application/json'], $body);
                 $options['on_headers']($response);
                 $options['sink']->write($body);
+
                 return new \Illuminate\Http\Client\Response($response);
             }
         };

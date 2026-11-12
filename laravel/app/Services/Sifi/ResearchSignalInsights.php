@@ -9,7 +9,7 @@ namespace App\Services\Sifi;
 final class ResearchSignalInsights
 {
     /**
-     * @param array<string, mixed> $envelope
+     * @param  array<string, mixed>  $envelope
      * @return array<string, mixed>
      */
     public function summarize(array $envelope): array

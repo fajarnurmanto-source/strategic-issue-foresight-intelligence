@@ -17,6 +17,7 @@ use Inertia\Response;
 final class InvestigationController extends Controller
 {
     private const REVIEW_STATES = ['DRAFT', 'REVIEW_REQUESTED', 'ON_HOLD'];
+
     private const SIGNAL_LIMIT = 10;
 
     public function index(Request $request): Response
@@ -58,7 +59,7 @@ final class InvestigationController extends Controller
         $id = (string) Str::uuid();
         $now = now();
         $userId = (int) $request->user()->id;
-        $title = mb_substr('Investigasi: ' . $signal['title'], 0, 180);
+        $title = mb_substr('Investigasi: '.$signal['title'], 0, 180);
 
         DB::transaction(function () use ($id, $now, $userId, $title, $data): void {
             DB::table('sifi_investigations')->insert([
@@ -74,6 +75,7 @@ final class InvestigationController extends Controller
                 'title' => $title, 'review_state' => 'DRAFT', 'signal_ids' => [$data['signal_id']],
             ], $now);
         });
+
         return redirect()->route('sifi.investigations.show', $id);
     }
 
@@ -144,15 +146,21 @@ final class InvestigationController extends Controller
             ];
             $changed = false;
             foreach ($fields as $key => $value) {
-                if ($current->{$key} !== $value) { $changed = true; break; }
+                if ($current->{$key} !== $value) {
+                    $changed = true;
+                    break;
+                }
             }
-            if (! $changed) { return; }
+            if (! $changed) {
+                return;
+            }
             $revision = (int) $current->revision + 1;
             DB::table('sifi_investigations')->where('id', $id)->update([
                 ...$fields, 'revision' => $revision, 'updated_at' => now(),
             ]);
             $this->audit($id, $userId, $revision, 'ASSESSMENT_EDITED', $fields, now());
         });
+
         return redirect()->route('sifi.investigations.show', $id);
     }
 
@@ -170,7 +178,9 @@ final class InvestigationController extends Controller
             abort_unless($current !== null, 404);
             $already = DB::table('sifi_investigation_signals')
                 ->where('investigation_id', $row->id)->where('signal_id', $data['signal_id'])->exists();
-            if ($already) { return; }
+            if ($already) {
+                return;
+            }
             $count = DB::table('sifi_investigation_signals')
                 ->where('investigation_id', $row->id)->count();
             if ($count >= self::SIGNAL_LIMIT) {
@@ -186,6 +196,7 @@ final class InvestigationController extends Controller
             ]);
             $this->audit($row->id, $userId, $revision, 'SIGNAL_ATTACHED', ['signal_id' => $data['signal_id']], now());
         });
+
         return redirect()->route('sifi.investigations.show', $row->id);
     }
 
@@ -194,6 +205,7 @@ final class InvestigationController extends Controller
         $row = DB::table('sifi_investigations')
             ->where('id', $id)->where('user_id', (int) $request->user()->id)->first();
         abort_unless($row !== null, 404);
+
         return $row;
     }
 

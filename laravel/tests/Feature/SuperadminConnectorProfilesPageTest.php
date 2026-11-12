@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Superadmin\Pages\ConnectorProfiles;
 use App\Models\User;
+use App\Services\Sifi\Integration\ConnectorProfileDrafts;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -104,12 +105,13 @@ final class SuperadminConnectorProfilesPageTest extends TestCase
         $this->assertSame(0, (int) $profile->billing_authorized);
         $this->assertSame(0, (int) $profile->max_cost_micros);
     }
+
     public function test_superadmin_can_revoke_a_credential_through_confirmed_filament_action(): void
     {
         config()->set('sifi_superadmin.enabled', true);
         $admin = $this->verifiedAdmin();
         $this->actingAs($admin);
-        $profile = app(\App\Services\Sifi\Integration\ConnectorProfileDrafts::class)
+        $profile = app(ConnectorProfileDrafts::class)
             ->create($admin, $this->syntheticInput());
 
         Filament::setCurrentPanel(Filament::getPanel('superadmin'));
@@ -136,5 +138,4 @@ final class SuperadminConnectorProfilesPageTest extends TestCase
             ->assertSee('CREDENTIAL REVOKED')
             ->assertDontSee('SYNTHETIC-HUB-KEY-NOT-REAL');
     }
-
 }

@@ -73,9 +73,11 @@ final class SifiIh03cInsights extends Command
 
             $this->line(json_encode($snapshot,
                 JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+
             return self::SUCCESS;
         } catch (\Throwable $error) {
             $this->error('SIFI_IH03C=HELD: '.$error->getMessage());
+
             return self::FAILURE;
         }
     }

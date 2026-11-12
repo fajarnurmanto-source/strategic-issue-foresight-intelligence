@@ -12,6 +12,7 @@ final class UpdateIssueCandidateRequest extends FormRequest
     public function authorize(): bool
     {
         $candidate = $this->route('candidate');
+
         return $candidate instanceof SifiIssueCandidate && $this->user()?->can('update', $candidate) === true;
     }
 
@@ -24,7 +25,7 @@ final class UpdateIssueCandidateRequest extends FormRequest
             'exposure_notes' => ['nullable', 'string', 'max:4000'],
             'evidence_gaps' => ['nullable', 'string', 'max:4000'],
             'next_checks' => ['nullable', 'string', 'max:4000'],
-            'review_state' => ['required', Rule::in(['DRAFT','REVIEW_REQUESTED','ON_HOLD'])],
+            'review_state' => ['required', Rule::in(['DRAFT', 'REVIEW_REQUESTED', 'ON_HOLD'])],
             'revision' => ['required', 'integer', 'min:1'],
         ];
     }
@@ -33,7 +34,9 @@ final class UpdateIssueCandidateRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            if ($this->input('review_state') !== 'REVIEW_REQUESTED') { return; }
+            if ($this->input('review_state') !== 'REVIEW_REQUESTED') {
+                return;
+            }
             foreach (['issue_hypothesis', 'evidence_gaps', 'next_checks'] as $field) {
                 $value = $this->input($field);
                 if (! is_string($value) || trim($value) === '') {

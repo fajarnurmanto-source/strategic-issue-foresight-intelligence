@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DB_CONNECTION: sqlite
-      DB_DATABASE: ${{ github.workspace }}/laravel/database/database.sqlite
+      DB_DATABASE: ':memory:'
 
     steps:
       - name: Checkout code
@@ -52,5 +52,223 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Verify immutable World Bank archive wire SHA256
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346' \
+            'resources/sifi/ae09-wb-response.json' | sha256sum --check --strict
+          echo 'SIFI_AE09_ARCHIVE_WIRE_SHA=PASS'
+
+      - name: Start isolated SQLite-memory and loopback mock harness
+        run: |
+          set -euo pipefail
+          # Never use live provider endpoints; all test traffic stays on loopback.
+          root="/home/fajar/.cache/sifi-validation/gha-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-standard"
+          sudo mkdir -p "${root}"
+          sudo chown "${USER}:$(id -gn)" "${root}"
+          chmod 700 "${root}"
+          mkdir -p "${root}/storage" "${root}/evidence/mock"
+          # Preserve Laravel's prepared storage tree, then redirect only this ephemeral runner.
+          cp -a storage/. "${root}/storage/"
+          mv storage "${RUNNER_TEMP}/sifi-storage-before-standard"
+          ln -s "${root}/storage" storage
+          test "$(realpath storage)" = "${root}/storage"
+          [[ "$(realpath storage)" == /home/fajar/.cache/sifi-validation/* ]]
+          printf 'R17_RESULT_DIR=%s\n' "${root}" >> "${GITHUB_ENV}"
+          echo 'valid' > "${root}/evidence/mock/scenario.txt"
+          # PHP's local test router never connects to external networks.
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39588 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/ai-mock.log" 2>&1 &
+          echo $! > "${root}/ai-mock.pid"
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39601 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/worldbank-mock.log" 2>&1 &
+          echo $! > "${root}/worldbank-mock.pid"
+          for i in $(seq 1 30); do
+            if curl --noproxy '*' -fsS http://127.0.0.1:39588/health               | grep -qx SIFI_CI_LOOPBACK_ONLY &&
+               curl --noproxy '*' -fsS http://127.0.0.1:39601/health               | grep -qx SIFI_CI_LOOPBACK_ONLY; then
+              echo 'SIFI_CI_LOOPBACK_HARNESS=READY'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'SIFI_CI_LOOPBACK_HARNESS=FAIL_CLOSED' >&2
+          exit 1
+
+      # Report PHPStan independently even when the existing lint gate fails.
+      # This does not replace or relax the full composer ci:check gate.
+      - name: Run PHPStan static analysis
+        run: composer types:check
+
       - name: Run CI Checks
         run: composer ci:check
+
+  pint-normalization-candidate:
+    # Diagnostic only: Pint edits this ephemeral runner checkout, never pushes code.
+    # Preserve the original ci job and its full lint gate unchanged.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+    defaults:
+      run:
+        working-directory: laravel
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Prepare writable directories
+        run: |
+          mkdir -p bootstrap/cache storage/app/public storage/framework/cache/data
+          mkdir -p storage/framework/sessions storage/framework/testing storage/framework/views storage/logs
+          touch database/database.sqlite
+      - name: Setup isolated application
+        run: composer setup
+
+      - name: Verify immutable World Bank archive wire SHA256
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '91a84ffd873a11d5e74c13a742f8490cfb35b7ee8b4843e768a1e0b2777aa346' \
+            'resources/sifi/ae09-wb-response.json' | sha256sum --check --strict
+          echo 'SIFI_AE09_ARCHIVE_WIRE_SHA=PASS'
+
+      - name: Start isolated SQLite-memory and loopback mock harness
+        run: |
+          set -euo pipefail
+          # Never use live provider endpoints; all test traffic stays on loopback.
+          root="/home/fajar/.cache/sifi-validation/gha-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-pint"
+          sudo mkdir -p "${root}"
+          sudo chown "${USER}:$(id -gn)" "${root}"
+          chmod 700 "${root}"
+          mkdir -p "${root}/storage" "${root}/evidence/mock"
+          # Preserve Laravel's prepared storage tree, then redirect only this ephemeral runner.
+          cp -a storage/. "${root}/storage/"
+          mv storage "${RUNNER_TEMP}/sifi-storage-before-pint"
+          ln -s "${root}/storage" storage
+          test "$(realpath storage)" = "${root}/storage"
+          [[ "$(realpath storage)" == /home/fajar/.cache/sifi-validation/* ]]
+          printf 'R17_RESULT_DIR=%s\n' "${root}" >> "${GITHUB_ENV}"
+          echo 'valid' > "${root}/evidence/mock/scenario.txt"
+          # PHP's local test router never connects to external networks.
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39588 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/ai-mock.log" 2>&1 &
+          echo $! > "${root}/ai-mock.pid"
+          R17_RESULT_DIR="${root}" php -S 127.0.0.1:39601 ../.github/scripts/sifi-ci-loopback-router.php             > "${root}/worldbank-mock.log" 2>&1 &
+          echo $! > "${root}/worldbank-mock.pid"
+          for i in $(seq 1 30); do
+            if curl --noproxy '*' -fsS http://127.0.0.1:39588/health               | grep -qx SIFI_CI_LOOPBACK_ONLY &&
+               curl --noproxy '*' -fsS http://127.0.0.1:39601/health               | grep -qx SIFI_CI_LOOPBACK_ONLY; then
+              echo 'SIFI_CI_LOOPBACK_HARNESS=READY'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'SIFI_CI_LOOPBACK_HARNESS=FAIL_CLOSED' >&2
+          exit 1
+      - name: Isolate dependency-setup lockfile drift
+        run: |
+          set -euo pipefail
+          git -C .. diff --binary -- laravel/package-lock.json > ../setup-package-lock.diff
+          if [ -s ../setup-package-lock.diff ]; then
+            echo 'DEPENDENCY_SETUP_PACKAGE_LOCK_DRIFT=RECORDED_NOT_ADMITTED'
+            sha256sum ../setup-package-lock.diff
+            git -C .. restore -- laravel/package-lock.json
+          fi
+      - name: Capture unformatted baseline PHPUnit failures
+        run: |
+          set +e
+          vendor/bin/phpunit --log-junit ../baseline-junit.xml > ../baseline-phpunit.log 2>&1
+          code=$?
+          set -e
+          printf 'BASELINE_PHPUNIT_EXIT=%s\n' "$code"
+          test -s ../baseline-junit.xml
+      - name: Generate Pint-only formatting candidate
+        run: |
+          set -euo pipefail
+          vendor/bin/pint --parallel
+          git -C .. diff --check
+          git -C .. diff --name-only > ../pint-changed-files.txt
+          if grep -Ev '^laravel/.*\.php$' ../pint-changed-files.txt; then
+            echo 'PINT_UNEXPECTED_PATH' >&2
+            exit 1
+          fi
+          git -C .. diff --binary -- laravel > ../pint-normalization.patch
+          echo "PINT_CHANGED_FILE_COUNT=$(wc -l < ../pint-changed-files.txt)"
+          sha256sum ../pint-normalization.patch
+          vendor/bin/pint --parallel --test
+      - name: Full regression against normalized candidate
+        run: composer ci:check
+      - name: Compare baseline and formatted test failure identity
+        if: always()
+        run: |
+          set +e
+          vendor/bin/phpunit --log-junit ../formatted-junit.xml > ../formatted-phpunit.log 2>&1
+          code=$?
+          set -e
+          printf 'FORMATTED_PHPUNIT_EXIT=%s\n' "$code"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def report(path):
+              root = ET.parse(path).getroot()
+              cases = root.findall('.//testcase')
+              failed = {}
+              for case in cases:
+                  problems = [n for n in case if n.tag in ('failure', 'error')]
+                  if problems:
+                      failed[case.get('class', case.get('classname', '')) + '::' + case.get('name', '')] = [
+                          {'kind': n.tag, 'message': (n.get('message') or '')[:350]} for n in problems
+                      ]
+              return {'total': len(cases), 'failed': failed}
+          baseline = report('../baseline-junit.xml')
+          formatted = report('../formatted-junit.xml')
+          new = sorted(set(formatted['failed']) - set(baseline['failed']))
+          resolved = sorted(set(baseline['failed']) - set(formatted['failed']))
+          summary = {
+              'baseline_testcases': baseline['total'],
+              'formatted_testcases': formatted['total'],
+              'baseline_failures': len(baseline['failed']),
+              'formatted_failures': len(formatted['failed']),
+              'new_failure_ids': new,
+              'resolved_failure_ids': resolved,
+              'new_failure_details': {k: formatted['failed'][k] for k in new},
+              'scope': 'diagnostic comparison in same ephemeral CI runner; shared state may affect reproducibility',
+              'admission': 'NO_PRODUCTION_OR_EVIDENCE_ADMISSION'
+          }
+          Path('../pint-regression-delta.json').write_text(json.dumps(summary, indent=2))
+          print('PINT_BASELINE_FAILURES=' + str(summary['baseline_failures']))
+          print('PINT_FORMATTED_FAILURES=' + str(summary['formatted_failures']))
+          print('PINT_NEW_FAILURES=' + str(len(new)))
+          print('PINT_RESOLVED_FAILURES=' + str(len(resolved)))
+          print('PINT_NEW_FAILURE_IDENTIFIERS=' + json.dumps(new[:30]))
+          if new or baseline['total'] != formatted['total']:
+              raise SystemExit('PINT_REGRESSION_DELTA_REVIEW_REQUIRED')
+          PY
+      - name: Export reviewable patch and manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sifi-pint-candidate-${{ github.sha }}
+          path: |
+            pint-normalization.patch
+            pint-changed-files.txt
+            setup-package-lock.diff
+            baseline-junit.xml
+            formatted-junit.xml
+            baseline-phpunit.log
+            formatted-phpunit.log
+            pint-regression-delta.json
+          if-no-files-found: warn
+          retention-days: 7

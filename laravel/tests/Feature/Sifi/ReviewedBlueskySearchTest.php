@@ -4,11 +4,15 @@ namespace Tests\Feature\Sifi;
 
 use App\Models\SifiMonitoringObject;
 use App\Models\User;
+use App\Services\Sifi\Integration\BlueskyLocalPermission;
 use App\Services\Sifi\Integration\BlueskyPublicSearchParser;
 use App\Services\Sifi\Integration\BlueskySearchTransport;
 use App\Services\Sifi\Integration\ReviewedBlueskySearch;
 use App\Services\Sifi\Integration\SocialWatchHistory;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -23,7 +27,7 @@ final class ReviewedBlueskySearchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
         $this->temporary = sys_get_temp_dir().'/sifi-social-bluesky-'.Str::uuid();
         mkdir($this->temporary, 0700);
         $this->app->useStoragePath($this->temporary);
@@ -39,7 +43,7 @@ final class ReviewedBlueskySearchTest extends TestCase
     protected function tearDown(): void
     {
         if (str_starts_with($this->temporary, sys_get_temp_dir().'/sifi-social-bluesky-')) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->temporary);
+            (new Filesystem)->deleteDirectory($this->temporary);
         }
         parent::tearDown();
     }
@@ -67,7 +71,8 @@ final class ReviewedBlueskySearchTest extends TestCase
 
     public function test_one_local_social_search_creates_an_owned_receipt_without_live_network(): void
     {
-        $fake = new class extends BlueskySearchTransport {
+        $fake = new class extends BlueskySearchTransport
+        {
             public int $calls = 0;
 
             public function fetch(string $query, string $contact): array
@@ -131,7 +136,8 @@ final class ReviewedBlueskySearchTest extends TestCase
 
     public function test_public_search_403_is_a_restricted_provider_not_an_empty_corpus(): void
     {
-        $transport = new class extends BlueskySearchTransport {
+        $transport = new class extends BlueskySearchTransport
+        {
             public int $calls = 0;
 
             protected function address(): string
@@ -142,7 +148,7 @@ final class ReviewedBlueskySearchTest extends TestCase
             protected function request(array $options, array $query): \Illuminate\Http\Client\Response
             {
                 $this->calls++;
-                ($options['on_headers'])(new \GuzzleHttp\Psr7\Response(403));
+                ($options['on_headers'])(new Response(403));
 
                 throw new \LogicException('HTTP 403 must abort in header policy');
             }
@@ -162,7 +168,7 @@ final class ReviewedBlueskySearchTest extends TestCase
     {
         config(['sifi_social.bluesky_public_search_enabled' => false]);
         $this->expectExceptionMessage('SIFI_SOCIAL_ISOLATED_OPT_IN_REQUIRED');
-        app(\App\Services\Sifi\Integration\BlueskyLocalPermission::class)->assertAllowed();
+        app(BlueskyLocalPermission::class)->assertAllowed();
         Http::assertNothingSent();
     }
 }

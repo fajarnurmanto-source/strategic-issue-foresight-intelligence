@@ -7,8 +7,8 @@ use InvalidArgumentException;
 final readonly class AiInferenceRequest
 {
     /**
-     * @param list<string> $inputReferences
-     * @param array<string, mixed> $outputSchema
+     * @param  list<string>  $inputReferences
+     * @param  array<string, mixed>  $outputSchema
      */
     public function __construct(
         public string $task,

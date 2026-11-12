@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Gate;
 final class ShadowPipeline
 {
     /**
-     * @param array<array-key, array{id: string, object_revision: int|string, results: array<string, mixed>}> $sessions
+     * @param  array<array-key, array{id: string, object_revision: int|string, results: array<string, mixed>}>  $sessions
      * @return array<string, array<string, mixed>>
      */
     public function forSessions(User $user, SifiMonitoringObject $object, array $sessions): array
@@ -78,7 +78,7 @@ final class ShadowPipeline
                 && $link->candidate_id === ($handoff['issue_candidate_id'] ?? null)
                 && $link->investigation_id === ($handoff['investigation_id'] ?? null);
 
-            if ($handoff !== [] && !$confirmed) {
+            if ($handoff !== [] && ! $confirmed) {
                 $timeline['warnings'][] = 'HANDOFF_LINEAGE_NOT_CONFIRMED';
                 $timeline['stages']['issue_handoff'] = 'NOT_CONFIRMED';
             }

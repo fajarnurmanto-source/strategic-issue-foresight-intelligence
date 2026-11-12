@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Gate;
 final class ReviewedAntaraRss
 {
     /**
-     * @param array<string, mixed> $dateWindow
-     * @param array<array-key, mixed> $keywords
+     * @param  array<string, mixed>  $dateWindow
+     * @param  array<array-key, mixed>  $keywords
      * @return array<string, mixed>
      */
     public function collect(User $owner, SifiMonitoringObject $object, string $contact, array $dateWindow = [], array $keywords = []): array
@@ -75,6 +75,7 @@ final class ReviewedAntaraRss
                             return true;
                         }
                     }
+
                     return false;
                 }));
             }

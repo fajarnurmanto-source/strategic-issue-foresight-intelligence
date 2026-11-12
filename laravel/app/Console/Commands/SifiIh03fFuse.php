@@ -46,9 +46,11 @@ final class SifiIh03fFuse extends Command
                     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
             }
             $this->info('SIFI_IH03F_FUSION=PASS');
+
             return self::SUCCESS;
         } catch (\Throwable $error) {
             $this->error('SIFI_IH03F=HELD: '.$error->getMessage());
+
             return self::FAILURE;
         }
     }

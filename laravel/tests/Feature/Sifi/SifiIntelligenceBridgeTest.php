@@ -8,6 +8,7 @@ use Illuminate\Http\Client\Request as OutboundRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 final class SifiIntelligenceBridgeTest extends TestCase
@@ -15,9 +16,13 @@ final class SifiIntelligenceBridgeTest extends TestCase
     use RefreshDatabase;
 
     private string $endpoint = '';
+
     private string $candidateId = '';
+
     private string $investigationId = '';
+
     private User $owner;
+
     private string $sid;
 
     protected function setUp(): void
@@ -30,7 +35,7 @@ final class SifiIntelligenceBridgeTest extends TestCase
         $this->candidateId = (string) Str::uuid();
         $this->investigationId = (string) Str::uuid();
         $this->sid = str_repeat('a', 64);
-        $this->endpoint = '/sifi/issue-candidates/' . $this->candidateId . '/intelligence';
+        $this->endpoint = '/sifi/issue-candidates/'.$this->candidateId.'/intelligence';
         DB::table('sifi_investigations')->insert([
             'id' => $this->investigationId, 'user_id' => $this->owner->id,
             'title' => 'Fixture Investigation', 'revision' => 1,
@@ -54,6 +59,7 @@ final class SifiIntelligenceBridgeTest extends TestCase
     {
         Http::fake(function (OutboundRequest $req) {
             $payload = $req->data();
+
             return Http::response([
                 'schema_version' => 'sifi.intelligence.advisory.v1',
                 'mode' => 'OFFLINE_FIXTURE_ONLY', 'kind' => 'REVIEW_AID_ONLY',
@@ -81,7 +87,7 @@ final class SifiIntelligenceBridgeTest extends TestCase
     {
         $this->fakeAdvisory();
         $this->actingAs($this->owner)->post($this->endpoint, ['revision' => 2])
-            ->assertRedirect('/sifi/issue-candidates/' . $this->candidateId);
+            ->assertRedirect('/sifi/issue-candidates/'.$this->candidateId);
         $this->assertDatabaseHas('sifi_intelligence_assessments', [
             'candidate_id' => $this->candidateId, 'candidate_revision' => 2,
             'status' => 'ADVISORY_ONLY',
@@ -91,11 +97,10 @@ final class SifiIntelligenceBridgeTest extends TestCase
             'id' => $this->candidateId, 'revision' => 2, 'review_state' => 'DRAFT',
         ]);
         $this->assertDatabaseMissing('sifi_issue_candidates', ['review_state' => 'VERIFIED']);
-        $this->actingAs($this->owner)->get('/sifi/issue-candidates/' . $this->candidateId)
-            ->assertOk()->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) =>
-                $page->component('sifi/issue-candidate-detail')
-                    ->where('intelligence.0.result.evidence_admission', 'NOT_EVALUATED')
-                    ->where('intelligence.0.result.status', 'NOT_VERIFIED')->etc());
+        $this->actingAs($this->owner)->get('/sifi/issue-candidates/'.$this->candidateId)
+            ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->component('sifi/issue-candidate-detail')
+            ->where('intelligence.0.result.evidence_admission', 'NOT_EVALUATED')
+            ->where('intelligence.0.result.status', 'NOT_VERIFIED')->etc());
         Http::assertSentCount(1);
     }
 
@@ -147,6 +152,7 @@ final class SifiIntelligenceBridgeTest extends TestCase
     {
         Http::fake(function (OutboundRequest $req) {
             $p = $req->data();
+
             return Http::response([
                 'schema_version' => 'sifi.intelligence.advisory.v1',
                 'mode' => 'OFFLINE_FIXTURE_ONLY', 'kind' => 'REVIEW_AID_ONLY',
@@ -169,6 +175,7 @@ final class SifiIntelligenceBridgeTest extends TestCase
             DB::table('sifi_issue_candidates')->where('id', $this->candidateId)
                 ->update(['revision' => 3]);
             $p = $req->data();
+
             return Http::response([
                 'schema_version' => 'sifi.intelligence.advisory.v1',
                 'mode' => 'OFFLINE_FIXTURE_ONLY', 'kind' => 'REVIEW_AID_ONLY',

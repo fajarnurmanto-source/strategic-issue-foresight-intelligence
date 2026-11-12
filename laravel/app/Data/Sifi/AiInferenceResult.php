@@ -7,9 +7,9 @@ use InvalidArgumentException;
 final readonly class AiInferenceResult
 {
     /**
-     * @param array<string, mixed>|null $structuredOutput
-     * @param list<string> $warnings
-     * @param array<string, scalar|null> $provenance
+     * @param  array<string, mixed>|null  $structuredOutput
+     * @param  list<string>  $warnings
+     * @param  array<string, scalar|null>  $provenance
      */
     public function __construct(
         public string $status,

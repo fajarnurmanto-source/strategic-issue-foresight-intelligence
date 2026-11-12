@@ -12,7 +12,6 @@ final class StoreIssueCandidateRequest extends FormRequest
     }
 
     /** @return array<string, list<mixed>> */
-
     public function rules(): array
     {
         return ['investigation_id' => ['required', 'uuid']];

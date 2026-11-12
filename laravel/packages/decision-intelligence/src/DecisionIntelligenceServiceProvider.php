@@ -1,4 +1,5 @@
 <?php
+
 namespace DecisionIntelligence;
 
 use Illuminate\Support\ServiceProvider;

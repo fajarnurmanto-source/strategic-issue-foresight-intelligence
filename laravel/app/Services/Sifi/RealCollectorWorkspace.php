@@ -1,64 +1,200 @@
 <?php
+
 namespace App\Services\Sifi;
-use App\Models\{User,SifiMonitoringObject};
-use Illuminate\Support\Facades\{DB,Gate,Crypt};
+
+use App\Models\SifiMonitoringObject;
+use App\Models\User;
+use App\Services\Sifi\Integration\ConnectorObservationProjector;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 /** One reviewed source, one approved object, on-demand only. No claim/evidence admission. */
 final class RealCollectorWorkspace
 {
- public const OBJECT='5c2d1282-f796-4019-8529-26c3f6867154';
- public const QUESTION='Citra Negatif Apa Saja yang Menyerang Kota Yogyakarta sepanjang Tahun 2025';
- public function eligible(User $u,?SifiMonitoringObject $o):bool{return $u->id===1&&$o?->id===self::OBJECT&&$o->state==='CONFIGURED'&&now()->lt('2026-11-05');}
- private function fail(string $s):never{throw ValidationException::withMessages(['research'=>$s]);}
- /** @return array<string, mixed> */
- public function status(User $u,?SifiMonitoringObject $o):array{return ['state'=>$this->eligible($u,$o)?'ON_DEMAND_METADATA_ONLY':'OFF','source'=>'CROSSREF','endpoint'=>'https://api.crossref.org/works','rights'=>'BIBLIOGRAPHIC_METADATA_REUSE_NO_ABSTRACT','scheduler'=>'OFF','max_requests_per_day'=>5,'min_interval_seconds'=>10,'limit'=>5,'bytes'=>32768,'timeout_seconds'=>5,'cost'=>0,'review_expires'=>'2026-11-05','coverage'=>'Metadata ilmiah, bukan arsip berita, penilaian reputasi, atau bukti kejadian. Kata Yogyakarta tidak memastikan wilayah Kota.'];}
- /** @param array<string, mixed> $v */
- public function collect(User $u,SifiMonitoringObject $object,array $v):string
- {
-  Gate::forUser($u)->authorize('update',$object);if(!$this->eligible($u,$object)||$v['question']!==self::QUESTION)$this->fail('Collector ini hanya diotorisasi untuk pertanyaan existing Kota Yogyakarta 2025.');
-  return DB::transaction(function()use($u,$object,$v){
-   User::whereKey($u->id)->lockForUpdate()->firstOrFail();$o=SifiMonitoringObject::whereKey($object->id)->lockForUpdate()->firstOrFail();Gate::forUser($u)->authorize('update',$o);if(!$this->eligible($u,$o)||$o->revision!==(int)$v['object_revision'])$this->fail('Konteks berubah atau review sumber kedaluwarsa.');
-   $existing=DB::table('sifi_research_session_audit')->where('actor_user_id',$u->id)->where('action','REAL_COLLECTOR_COMPLETED')->where('snapshot_json->submission_key',$v['submission_key'])->first();if($existing){$row=app(ResearchRetrievalWorkspace::class)->session($u,$o,$existing->session_id);if($row->question!==$v['question'])$this->fail('Submission key berubah.');return $row->id;}
-   $id=app(ResearchSessionWorkspace::class)->create($u,$o,['question'=>$v['question'],'object_revision'=>$o->revision,'query_limit'=>1,'result_limit'=>5,'time_window'=>'2025']);$s=app(ResearchRetrievalWorkspace::class)->session($u,$o,$id);$plan=json_decode($s->plan_json,true,32,JSON_THROW_ON_ERROR);
-   $ctx=['mode'=>'LIVE','query'=>'Yogyakarta','query_sha256'=>hash('sha256','Yogyakarta'),'binding'=>['owner_id'=>$u->id,'object_id'=>$o->id,'session_id'=>$id,'object_revision'=>$o->revision,'plan_sha256'=>hash('sha256',json_encode($plan,JSON_THROW_ON_ERROR))],'limit'=>5,'date_window'=>['start'=>'2025-01-01','end'=>'2026-01-01']];
-   $dir=storage_path('app/private/sifi-collector');if(!is_dir($dir))mkdir($dir,0700,true);$lock=fopen($dir.'/crossref.lock','c+');if(!$lock||!flock($lock,LOCK_EX|LOCK_NB))$this->fail('Collector sedang berjalan. Tidak ada request tambahan.');
-   try{
-    $raw=stream_get_contents($lock);if($raw===false)throw new \RuntimeException('BUDGET_READ_FAILED');$budget=$raw===''?['day'=>now()->toDateString(),'count'=>0,'last'=>0,'keys'=>[]]:json_decode(Crypt::decryptString($raw),true,20,JSON_THROW_ON_ERROR);$key=hash('sha256',$u->id.'|'.$o->id.'|'.$v['submission_key']);
-    if(in_array($key,$budget['keys'],true))$this->fail('Request ini sudah direservasi; tidak diulang. Muat ulang untuk tindakan baru.');
-    if($budget['day']!==now()->toDateString())$budget=['day'=>now()->toDateString(),'count'=>0,'last'=>$budget['last'],'keys'=>$budget['keys']];if($budget['count']>=5||microtime(true)-$budget['last']<10)$this->fail('Batas collector tercapai: 5 request/hari dan jeda 10 detik. Tidak ada retry otomatis.');
-    $budget['count']++;$budget['last']=microtime(true);$budget['keys']=array_slice([...$budget['keys'],$key],-100);$cipher=Crypt::encryptString(json_encode($budget,JSON_THROW_ON_ERROR));rewind($lock);if(fwrite($lock,$cipher)!==strlen($cipher)||!ftruncate($lock,strlen($cipher))||!fflush($lock))throw new \RuntimeException('BUDGET_RESERVATION_FAILED');chmod($dir.'/crossref.lock',0600);
-    $fake=app()->environment('testing')&&config('sifi.collector_fixture')===true;
-    if($fake){SearchWireFixture::install('api_fixture');$ctx['mode']='HTTP_FAKE';}
-    else{$old=config('sifi.real_search_live');config(['sifi.real_search_live'=>true]);$auth=app(OneShotSearchAuthority::class);$path=$auth->path('CROSSREF',$ctx);if(file_exists($path))throw new \RuntimeException('AUTHORITY_ALREADY_EXISTS');if(!is_dir(dirname($path)))mkdir(dirname($path),0700,true);$permit=['version'=>'sifi-search-authority-1','context_hash'=>$auth->contextHash('CROSSREF',$ctx),'endpoint'=>'https://api.crossref.org/works','method'=>'GET','cost_limit'=>0,'request_limit'=>1,'response_byte_limit'=>32768,'consumed'=>false,'expires_at'=>time()+30,'approval_scope_sha256'=>hash('sha256','AE15_OWNER_MANDATE_2026_10_30|CROSSREF|'.$key),'nonce'=>bin2hex(random_bytes(32)),'contact_email'=>'yktvjogjakota@gmail.com'];file_put_contents($path,Crypt::encryptString(json_encode($permit,JSON_THROW_ON_ERROR)),LOCK_EX);chmod($path,0600);}
-    try{$packet=(new CorpusSearchProvider('CROSSREF'))->search($ctx);}finally{if(!$fake)config(['sifi.real_search_live'=>$old]);}
-   }finally{flock($lock,LOCK_UN);fclose($lock);}
-   $e=$this->envelope($u,$o,$plan,$packet,$ctx);$e['insights']=app(ResearchSignalInsights::class)->summarize($e);$results=json_decode($s->results_json,true,32,JSON_THROW_ON_ERROR);$results['multi_source']=['state'=>'DRAFT','envelope'=>$e,'envelope_sha256'=>app(MultiSourceResearchWorkspace::class)->digest($e),'saved_at'=>null,'analyst_note'=>null,'selected_ids'=>[]];DB::table('sifi_research_sessions')->where('id',$id)->update(['results_json'=>json_encode($results,JSON_THROW_ON_ERROR),'stopping_reason'=>$e['stopping_reason'],'updated_at'=>now()]);
-   app(\App\Services\Sifi\Integration\ConnectorObservationProjector::class)->record($u,$o,$id,$e);
-   DB::table('sifi_research_session_audit')->insert(['session_id'=>$id,'actor_user_id'=>$u->id,'action'=>'REAL_COLLECTOR_COMPLETED','snapshot_json'=>json_encode(['submission_key'=>$v['submission_key'],'envelope_sha256'=>app(MultiSourceResearchWorkspace::class)->digest($e),'http_status'=>$packet['http_status']??null,'network_requests'=>$packet['network_requests'],'evidence_admission'=>'NONE'],JSON_THROW_ON_ERROR),'created_at'=>now()]);return $id;
-  });
- }
- /** @param array<string, mixed> $plan
-  * @param array<string, mixed> $packet
-  * @param array<string, mixed> $context
-  * @return array<string, mixed>
-  */
- public function envelope(User $u,SifiMonitoringObject $o,array $plan,array $packet,array $context):array
- {
-  if(($packet['provider']??null)!=='CROSSREF'||count($packet['results'])>5||($packet['response_bytes']??32769)>32768||!hash_equals($context['query_sha256'],$packet['query_sha256'])||$context['binding']['owner_id']!==$u->id||$context['binding']['object_id']!==$o->id||!hash_equals(hash('sha256',json_encode($context['binding'],JSON_THROW_ON_ERROR)),$packet['binding_sha256']))throw new \RuntimeException('RECEIPT_BINDING');
-  $entries=[];$omitted=0;$collapsed=0;foreach($packet['results'] as $item){$words=MultiSourceFixtureSupport::words($item['title']);if(!in_array('yogyakarta',$words,true)||($item['published_at']!==null&&!str_starts_with($item['published_at'],'2025'))){$omitted++;continue;}foreach($o->exclusions_json as $term)if(mb_stripos($item['title'],$term)!==false)continue 2;$url=$context['mode']==='HTTP_FAKE'?app(MultiSourceResearchWorkspace::class)->canonical($item['url']):app(RealSearchWorkspace::class)->liveCanonical($item['url']);$id=hash('sha256',$url);$fp=hash('sha256',json_encode([$item['title'],$item['origin'],$item['published_at']],JSON_THROW_ON_ERROR));$prior=null;if(isset($entries[$id])){$entries[$id]['lineage'][]=['provider'=>'CROSSREF','query_index'=>0,'result_key'=>$item['key'],'url'=>$url,'origin'=>$item['origin'],'snippet'=>$item['snippet'],'response_sha256'=>$packet['response_sha256'],'variant_sha256'=>$fp,'variant_title'=>$item['title'],'variant_published_at'=>$item['published_at']];if($entries[$id]['item_revision_sha256']!==$fp)$entries[$id]['revision_state']='INTRA_RESPONSE_VARIANT_NOT_VERIFIED';$collapsed++;continue;}
-   foreach(app(MultiSourceResearchWorkspace::class)->history($u,$o) as $old)foreach($old['multi']['envelope']['entries']??[] as $x)if($x['id']===$id){$prior=$x;break 2;}
-   $entries[$id]=$item+['id'=>$id,'canonical_url'=>$url,'original_title'=>$item['title'],'original_snippet'=>$item['snippet'],'derived_translation'=>null,'origins'=>[$item['origin']],'origin_state'=>'DECLARED_NOT_VERIFIED','lineage'=>[['provider'=>'CROSSREF','query_index'=>0,'result_key'=>$item['key'],'url'=>$url,'origin'=>$item['origin'],'snippet'=>$item['snippet'],'response_sha256'=>$packet['response_sha256']]],'snippet_sha256'=>hash('sha256',$item['snippet']),'item_revision_sha256'=>$fp,'revision_state'=>$prior===null?'FIRST_SEEN':(($prior['item_revision_sha256']??null)===$fp?'UNCHANGED_METADATA':'CHANGED_METADATA'),'language_detection'=>app(MultilingualQueryPlan::class)->detect($item['title']),'source_language'=>'UNKNOWN','declared_language'=>'UNKNOWN','event_date'=>null,'time_classification'=>str_starts_with($item['published_at']??'','2025')?'PUBLISHED_IN_WINDOW':'PUBLICATION_UNKNOWN_OR_OUTSIDE','region'=>'CITY_SCOPE_NOT_VERIFIED','source_type'=>'PUBLIC_API_METADATA','observation_kind'=>'BIBLIOGRAPHIC_METADATA_NOT_EVENT','relevance'=>['question_hits'=>array_values(array_intersect($plan['question_terms'],$words)),'context_hits'=>['yogyakarta']],'relevance_group'=>'OBJECT_NAME_CANDIDATE_ONLY'];
-  }
-  $state=$packet['state'];return ['version'=>'sifi-real-collector-1','mode'=>$context['mode']==='LIVE'?'APPROVED_LIVE_CORPUS_METADATA':'SYNTHETIC_HTTP_FAKE_API_ADAPTER','entries'=>array_values($entries),'comparisons'=>$this->compare(array_values($entries)),'calls'=>[['provider'=>'CROSSREF','query_index'=>0,'query'=>$context['query'],'state'=>$state,'http_status'=>$packet['http_status']??null,'wire_delivery_confirmed'=>$packet['wire_delivery_confirmed']??false,'retrieved_at'=>$packet['retrieved_at'],'response_sha256'=>$packet['response_sha256'],'response_bytes'=>$packet['response_bytes']]],'collector'=>['state'=>'ON_DEMAND_METADATA_ONLY','original_question'=>$plan['question']??self::QUESTION,'request_query'=>$context['query'],'date_window'=>$context['date_window'],'http_status'=>$packet['http_status']??null,'wire_delivery_confirmed'=>$packet['wire_delivery_confirmed']??false,'failure_category'=>$packet['failure_category']??($state==='OK'?null:$state),'retrieved_at'=>$packet['retrieved_at'],'response_sha256'=>$packet['response_sha256'],'response_bytes'=>$packet['response_bytes'],'elapsed_ms'=>$packet['elapsed_ms']??null,'dispatch_attempts'=>$packet['dispatch_attempts']??0,'retry_count'=>0,'scheduler'=>'OFF','coverage'=>'Bibliographic metadata only. Yogyakarta may refer to province/university; Kota scope not verified. Publication2025 does not establish event2025, negative image, credibility or independent corroboration.'],'provider_ids'=>['CROSSREF'],'plan_sha256'=>hash('sha256',json_encode($plan,JSON_THROW_ON_ERROR)),'budget'=>['simulated_call_limit'=>1,'network_request_limit'=>1,'result_limit'=>5,'metadata_byte_limit'=>32768,'time_limit_ms'=>5000,'cost_limit'=>0],'usage'=>['simulated_calls'=>1,'fixture_metadata_bytes'=>$packet['response_bytes'],'network_requests'=>$packet['network_requests'],'documents_retrieved'=>0,'cost'=>0],'raw_result_count'=>count($packet['results']),'unique_result_count'=>count($entries),'collapsed_hits'=>$collapsed,'omitted_unique_count'=>0,'filtered_by_relevance_or_period'=>$omitted,'stopping_reason'=>$state==='OK'?($entries?'COMPLETED':'NO_RESULTS'):'NO_RESULTS_PROVIDER_ERRORS','coverage'=>'Crossref scholarly metadata, no abstracts/articles/news coverage. Nonmatching titles filtered; no inference that negative news is absent.','independence'=>'NOT_VERIFIED','claim_verification'=>'NOT_PERFORMED_METADATA_ONLY','ai'=>'OFF'];
- }
- /** @param list<array<string, mixed>> $entries
-  * @return list<array<string, mixed>>
-  */
- public function compare(array $entries):array{
-  $pairs=[];foreach($entries as $i=>$a)foreach(array_slice($entries,$i+1) as $b){$left=MultiSourceFixtureSupport::words($a['snippet']);$right=MultiSourceFixtureSupport::words($b['snippet']);$same=(bool)array_intersect($a['origins'],$b['origins']);$pairs[]=['left'=>$a['id'],'right'=>$b['id'],'shared_terms'=>array_slice(array_values(array_intersect($left,$right)),0,12),'left_only_terms'=>array_slice(array_values(array_diff($left,$right)),0,12),'right_only_terms'=>array_slice(array_values(array_diff($right,$left)),0,12),'possible_republication'=>$same,'shared_declared_origin'=>$same,'independence'=>'NOT_VERIFIED','conclusion'=>'Perbandingan label bibliografi saja; bukan perbandingan isi artikel, corroboration, atau verifikasi citra negatif.'];}return $pairs;
- }
+    public const OBJECT = '5c2d1282-f796-4019-8529-26c3f6867154';
+
+    public const QUESTION = 'Citra Negatif Apa Saja yang Menyerang Kota Yogyakarta sepanjang Tahun 2025';
+
+    public function eligible(User $u, ?SifiMonitoringObject $o): bool
+    {
+        return $u->id === 1 && $o?->id === self::OBJECT && $o->state === 'CONFIGURED' && now()->lt('2026-11-05');
+    }
+
+    private function fail(string $s): never
+    {
+        throw ValidationException::withMessages(['research' => $s]);
+    }
+
+    /** @return array<string, mixed> */
+    public function status(User $u, ?SifiMonitoringObject $o): array
+    {
+        return ['state' => $this->eligible($u, $o) ? 'ON_DEMAND_METADATA_ONLY' : 'OFF', 'source' => 'CROSSREF', 'endpoint' => 'https://api.crossref.org/works', 'rights' => 'BIBLIOGRAPHIC_METADATA_REUSE_NO_ABSTRACT', 'scheduler' => 'OFF', 'max_requests_per_day' => 5, 'min_interval_seconds' => 10, 'limit' => 5, 'bytes' => 32768, 'timeout_seconds' => 5, 'cost' => 0, 'review_expires' => '2026-11-05', 'coverage' => 'Metadata ilmiah, bukan arsip berita, penilaian reputasi, atau bukti kejadian. Kata Yogyakarta tidak memastikan wilayah Kota.'];
+    }
+
+    /** @param array<string, mixed> $v */
+    public function collect(User $u, SifiMonitoringObject $object, array $v): string
+    {
+        Gate::forUser($u)->authorize('update', $object);
+        if (! $this->eligible($u, $object) || $v['question'] !== self::QUESTION) {
+            $this->fail('Collector ini hanya diotorisasi untuk pertanyaan existing Kota Yogyakarta 2025.');
+        }
+
+        return DB::transaction(function () use ($u, $object, $v) {
+            User::whereKey($u->id)->lockForUpdate()->firstOrFail();
+            $o = SifiMonitoringObject::whereKey($object->id)->lockForUpdate()->firstOrFail();
+            Gate::forUser($u)->authorize('update', $o);
+            if (! $this->eligible($u, $o) || $o->revision !== (int) $v['object_revision']) {
+                $this->fail('Konteks berubah atau review sumber kedaluwarsa.');
+            }
+            $existing = DB::table('sifi_research_session_audit')->where('actor_user_id', $u->id)->where('action', 'REAL_COLLECTOR_COMPLETED')->where('snapshot_json->submission_key', $v['submission_key'])->first();
+            if ($existing) {
+                $row = app(ResearchRetrievalWorkspace::class)->session($u, $o, $existing->session_id);
+                if ($row->question !== $v['question']) {
+                    $this->fail('Submission key berubah.');
+                }
+
+                return $row->id;
+            }
+            $id = app(ResearchSessionWorkspace::class)->create($u, $o, ['question' => $v['question'], 'object_revision' => $o->revision, 'query_limit' => 1, 'result_limit' => 5, 'time_window' => '2025']);
+            $s = app(ResearchRetrievalWorkspace::class)->session($u, $o, $id);
+            $plan = json_decode($s->plan_json, true, 32, JSON_THROW_ON_ERROR);
+            $ctx = ['mode' => 'LIVE', 'query' => 'Yogyakarta', 'query_sha256' => hash('sha256', 'Yogyakarta'), 'binding' => ['owner_id' => $u->id, 'object_id' => $o->id, 'session_id' => $id, 'object_revision' => $o->revision, 'plan_sha256' => hash('sha256', json_encode($plan, JSON_THROW_ON_ERROR))], 'limit' => 5, 'date_window' => ['start' => '2025-01-01', 'end' => '2026-01-01']];
+            $dir = storage_path('app/private/sifi-collector');
+            if (! is_dir($dir)) {
+                mkdir($dir, 0700, true);
+            }$lock = fopen($dir.'/crossref.lock', 'c+');
+            if (! $lock || ! flock($lock, LOCK_EX | LOCK_NB)) {
+                $this->fail('Collector sedang berjalan. Tidak ada request tambahan.');
+            }
+            try {
+                $raw = stream_get_contents($lock);
+                if ($raw === false) {
+                    throw new \RuntimeException('BUDGET_READ_FAILED');
+                }$budget = $raw === '' ? ['day' => now()->toDateString(), 'count' => 0, 'last' => 0, 'keys' => []] : json_decode(Crypt::decryptString($raw), true, 20, JSON_THROW_ON_ERROR);
+                $key = hash('sha256', $u->id.'|'.$o->id.'|'.$v['submission_key']);
+                if (in_array($key, $budget['keys'], true)) {
+                    $this->fail('Request ini sudah direservasi; tidak diulang. Muat ulang untuk tindakan baru.');
+                }
+                if ($budget['day'] !== now()->toDateString()) {
+                    $budget = ['day' => now()->toDateString(), 'count' => 0, 'last' => $budget['last'], 'keys' => $budget['keys']];
+                }if ($budget['count'] >= 5 || microtime(true) - $budget['last'] < 10) {
+                    $this->fail('Batas collector tercapai: 5 request/hari dan jeda 10 detik. Tidak ada retry otomatis.');
+                }
+                $budget['count']++;
+                $budget['last'] = microtime(true);
+                $budget['keys'] = array_slice([...$budget['keys'], $key], -100);
+                $cipher = Crypt::encryptString(json_encode($budget, JSON_THROW_ON_ERROR));
+                rewind($lock);
+                if (fwrite($lock, $cipher) !== strlen($cipher) || ! ftruncate($lock, strlen($cipher)) || ! fflush($lock)) {
+                    throw new \RuntimeException('BUDGET_RESERVATION_FAILED');
+                }chmod($dir.'/crossref.lock', 0600);
+                $fake = app()->environment('testing') && config('sifi.collector_fixture') === true;
+                if ($fake) {
+                    SearchWireFixture::install('api_fixture');
+                    $ctx['mode'] = 'HTTP_FAKE';
+                } else {
+                    $old = config('sifi.real_search_live');
+                    config(['sifi.real_search_live' => true]);
+                    $auth = app(OneShotSearchAuthority::class);
+                    $path = $auth->path('CROSSREF', $ctx);
+                    if (file_exists($path)) {
+                        throw new \RuntimeException('AUTHORITY_ALREADY_EXISTS');
+                    }if (! is_dir(dirname($path))) {
+                        mkdir(dirname($path), 0700, true);
+                    }$permit = ['version' => 'sifi-search-authority-1', 'context_hash' => $auth->contextHash('CROSSREF', $ctx), 'endpoint' => 'https://api.crossref.org/works', 'method' => 'GET', 'cost_limit' => 0, 'request_limit' => 1, 'response_byte_limit' => 32768, 'consumed' => false, 'expires_at' => time() + 30, 'approval_scope_sha256' => hash('sha256', 'AE15_OWNER_MANDATE_2026_10_30|CROSSREF|'.$key), 'nonce' => bin2hex(random_bytes(32)), 'contact_email' => 'yktvjogjakota@gmail.com'];
+                    file_put_contents($path, Crypt::encryptString(json_encode($permit, JSON_THROW_ON_ERROR)), LOCK_EX);
+                    chmod($path, 0600);
+                }
+                try {
+                    $packet = (new CorpusSearchProvider('CROSSREF'))->search($ctx);
+                } finally {
+                    if (! $fake) {
+                        config(['sifi.real_search_live' => $old]);
+                    }
+                }
+            } finally {
+                flock($lock, LOCK_UN);
+                fclose($lock);
+            }
+            $e = $this->envelope($u, $o, $plan, $packet, $ctx);
+            $e['insights'] = app(ResearchSignalInsights::class)->summarize($e);
+            $results = json_decode($s->results_json, true, 32, JSON_THROW_ON_ERROR);
+            $results['multi_source'] = ['state' => 'DRAFT', 'envelope' => $e, 'envelope_sha256' => app(MultiSourceResearchWorkspace::class)->digest($e), 'saved_at' => null, 'analyst_note' => null, 'selected_ids' => []];
+            DB::table('sifi_research_sessions')->where('id', $id)->update(['results_json' => json_encode($results, JSON_THROW_ON_ERROR), 'stopping_reason' => $e['stopping_reason'], 'updated_at' => now()]);
+            app(ConnectorObservationProjector::class)->record($u, $o, $id, $e);
+            DB::table('sifi_research_session_audit')->insert(['session_id' => $id, 'actor_user_id' => $u->id, 'action' => 'REAL_COLLECTOR_COMPLETED', 'snapshot_json' => json_encode(['submission_key' => $v['submission_key'], 'envelope_sha256' => app(MultiSourceResearchWorkspace::class)->digest($e), 'http_status' => $packet['http_status'] ?? null, 'network_requests' => $packet['network_requests'], 'evidence_admission' => 'NONE'], JSON_THROW_ON_ERROR), 'created_at' => now()]);
+
+            return $id;
+        });
+    }
+
+    /** @param array<string, mixed> $plan
+     * @param  array<string, mixed>  $packet
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
+    public function envelope(User $u, SifiMonitoringObject $o, array $plan, array $packet, array $context): array
+    {
+        if (($packet['provider'] ?? null) !== 'CROSSREF' || count($packet['results']) > 5 || ($packet['response_bytes'] ?? 32769) > 32768 || ! hash_equals($context['query_sha256'], $packet['query_sha256']) || $context['binding']['owner_id'] !== $u->id || $context['binding']['object_id'] !== $o->id || ! hash_equals(hash('sha256', json_encode($context['binding'], JSON_THROW_ON_ERROR)), $packet['binding_sha256'])) {
+            throw new \RuntimeException('RECEIPT_BINDING');
+        }
+        $entries = [];
+        $omitted = 0;
+        $collapsed = 0;
+        foreach ($packet['results'] as $item) {
+            $words = MultiSourceFixtureSupport::words($item['title']);
+            if (! in_array('yogyakarta', $words, true) || ($item['published_at'] !== null && ! str_starts_with($item['published_at'], '2025'))) {
+                $omitted++;
+
+                continue;
+            }foreach ($o->exclusions_json as $term) {
+                if (mb_stripos($item['title'], $term) !== false) {
+                    continue 2;
+                }
+            }$url = $context['mode'] === 'HTTP_FAKE' ? app(MultiSourceResearchWorkspace::class)->canonical($item['url']) : app(RealSearchWorkspace::class)->liveCanonical($item['url']);
+            $id = hash('sha256', $url);
+            $fp = hash('sha256', json_encode([$item['title'], $item['origin'], $item['published_at']], JSON_THROW_ON_ERROR));
+            $prior = null;
+            if (isset($entries[$id])) {
+                $entries[$id]['lineage'][] = ['provider' => 'CROSSREF', 'query_index' => 0, 'result_key' => $item['key'], 'url' => $url, 'origin' => $item['origin'], 'snippet' => $item['snippet'], 'response_sha256' => $packet['response_sha256'], 'variant_sha256' => $fp, 'variant_title' => $item['title'], 'variant_published_at' => $item['published_at']];
+                if ($entries[$id]['item_revision_sha256'] !== $fp) {
+                    $entries[$id]['revision_state'] = 'INTRA_RESPONSE_VARIANT_NOT_VERIFIED';
+                }$collapsed++;
+
+                continue;
+            }
+            foreach (app(MultiSourceResearchWorkspace::class)->history($u, $o) as $old) {
+                foreach ($old['multi']['envelope']['entries'] ?? [] as $x) {
+                    if ($x['id'] === $id) {
+                        $prior = $x;
+                        break 2;
+                    }
+                }
+            }
+            $entries[$id] = $item + ['id' => $id, 'canonical_url' => $url, 'original_title' => $item['title'], 'original_snippet' => $item['snippet'], 'derived_translation' => null, 'origins' => [$item['origin']], 'origin_state' => 'DECLARED_NOT_VERIFIED', 'lineage' => [['provider' => 'CROSSREF', 'query_index' => 0, 'result_key' => $item['key'], 'url' => $url, 'origin' => $item['origin'], 'snippet' => $item['snippet'], 'response_sha256' => $packet['response_sha256']]], 'snippet_sha256' => hash('sha256', $item['snippet']), 'item_revision_sha256' => $fp, 'revision_state' => $prior === null ? 'FIRST_SEEN' : (($prior['item_revision_sha256'] ?? null) === $fp ? 'UNCHANGED_METADATA' : 'CHANGED_METADATA'), 'language_detection' => app(MultilingualQueryPlan::class)->detect($item['title']), 'source_language' => 'UNKNOWN', 'declared_language' => 'UNKNOWN', 'event_date' => null, 'time_classification' => str_starts_with($item['published_at'] ?? '', '2025') ? 'PUBLISHED_IN_WINDOW' : 'PUBLICATION_UNKNOWN_OR_OUTSIDE', 'region' => 'CITY_SCOPE_NOT_VERIFIED', 'source_type' => 'PUBLIC_API_METADATA', 'observation_kind' => 'BIBLIOGRAPHIC_METADATA_NOT_EVENT', 'relevance' => ['question_hits' => array_values(array_intersect($plan['question_terms'], $words)), 'context_hits' => ['yogyakarta']], 'relevance_group' => 'OBJECT_NAME_CANDIDATE_ONLY'];
+        }
+        $state = $packet['state'];
+
+        return ['version' => 'sifi-real-collector-1', 'mode' => $context['mode'] === 'LIVE' ? 'APPROVED_LIVE_CORPUS_METADATA' : 'SYNTHETIC_HTTP_FAKE_API_ADAPTER', 'entries' => array_values($entries), 'comparisons' => $this->compare(array_values($entries)), 'calls' => [['provider' => 'CROSSREF', 'query_index' => 0, 'query' => $context['query'], 'state' => $state, 'http_status' => $packet['http_status'] ?? null, 'wire_delivery_confirmed' => $packet['wire_delivery_confirmed'] ?? false, 'retrieved_at' => $packet['retrieved_at'], 'response_sha256' => $packet['response_sha256'], 'response_bytes' => $packet['response_bytes']]], 'collector' => ['state' => 'ON_DEMAND_METADATA_ONLY', 'original_question' => $plan['question'] ?? self::QUESTION, 'request_query' => $context['query'], 'date_window' => $context['date_window'], 'http_status' => $packet['http_status'] ?? null, 'wire_delivery_confirmed' => $packet['wire_delivery_confirmed'] ?? false, 'failure_category' => $packet['failure_category'] ?? ($state === 'OK' ? null : $state), 'retrieved_at' => $packet['retrieved_at'], 'response_sha256' => $packet['response_sha256'], 'response_bytes' => $packet['response_bytes'], 'elapsed_ms' => $packet['elapsed_ms'] ?? null, 'dispatch_attempts' => $packet['dispatch_attempts'] ?? 0, 'retry_count' => 0, 'scheduler' => 'OFF', 'coverage' => 'Bibliographic metadata only. Yogyakarta may refer to province/university; Kota scope not verified. Publication2025 does not establish event2025, negative image, credibility or independent corroboration.'], 'provider_ids' => ['CROSSREF'], 'plan_sha256' => hash('sha256', json_encode($plan, JSON_THROW_ON_ERROR)), 'budget' => ['simulated_call_limit' => 1, 'network_request_limit' => 1, 'result_limit' => 5, 'metadata_byte_limit' => 32768, 'time_limit_ms' => 5000, 'cost_limit' => 0], 'usage' => ['simulated_calls' => 1, 'fixture_metadata_bytes' => $packet['response_bytes'], 'network_requests' => $packet['network_requests'], 'documents_retrieved' => 0, 'cost' => 0], 'raw_result_count' => count($packet['results']), 'unique_result_count' => count($entries), 'collapsed_hits' => $collapsed, 'omitted_unique_count' => 0, 'filtered_by_relevance_or_period' => $omitted, 'stopping_reason' => $state === 'OK' ? ($entries ? 'COMPLETED' : 'NO_RESULTS') : 'NO_RESULTS_PROVIDER_ERRORS', 'coverage' => 'Crossref scholarly metadata, no abstracts/articles/news coverage. Nonmatching titles filtered; no inference that negative news is absent.', 'independence' => 'NOT_VERIFIED', 'claim_verification' => 'NOT_PERFORMED_METADATA_ONLY', 'ai' => 'OFF'];
+    }
+
+    /** @param list<array<string, mixed>> $entries
+     * @return list<array<string, mixed>>
+     */
+    public function compare(array $entries): array
+    {
+        $pairs = [];
+        foreach ($entries as $i => $a) {
+            foreach (array_slice($entries, $i + 1) as $b) {
+                $left = MultiSourceFixtureSupport::words($a['snippet']);
+                $right = MultiSourceFixtureSupport::words($b['snippet']);
+                $same = (bool) array_intersect($a['origins'], $b['origins']);
+                $pairs[] = ['left' => $a['id'], 'right' => $b['id'], 'shared_terms' => array_slice(array_values(array_intersect($left, $right)), 0, 12), 'left_only_terms' => array_slice(array_values(array_diff($left, $right)), 0, 12), 'right_only_terms' => array_slice(array_values(array_diff($right, $left)), 0, 12), 'possible_republication' => $same, 'shared_declared_origin' => $same, 'independence' => 'NOT_VERIFIED', 'conclusion' => 'Perbandingan label bibliografi saja; bukan perbandingan isi artikel, corroboration, atau verifikasi citra negatif.'];
+            }
+        }
+
+        return $pairs;
+    }
 }
-
-
-

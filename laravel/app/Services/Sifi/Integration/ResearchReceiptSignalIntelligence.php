@@ -16,7 +16,7 @@ final class ResearchReceiptSignalIntelligence
     ];
 
     /**
-     * @param array<string, mixed> $receipt
+     * @param  array<string, mixed>  $receipt
      * @return array<string, mixed>
      */
     public function project(array $receipt, int $limit = 10): array
@@ -122,10 +122,8 @@ final class ResearchReceiptSignalIntelligence
             }
         }
 
-        uksort($termCounts, fn (string $a, string $b): int =>
-            ($termCounts[$b] <=> $termCounts[$a]) ?: strcmp($a, $b));
-        usort($items, fn (array $a, array $b): int =>
-            ($b['relevance_points'] <=> $a['relevance_points']) ?: strcmp($a['id'], $b['id']));
+        uksort($termCounts, fn (string $a, string $b): int => ($termCounts[$b] <=> $termCounts[$a]) ?: strcmp($a, $b));
+        usort($items, fn (array $a, array $b): int => ($b['relevance_points'] <=> $a['relevance_points']) ?: strcmp($a['id'], $b['id']));
 
         $callStates = [];
         foreach ($calls as $call) {
@@ -184,6 +182,7 @@ final class ResearchReceiptSignalIntelligence
                 && ! in_array($word, self::STOP_WORDS, true)
         )));
         sort($words, SORT_STRING);
+
         return $words;
     }
 }

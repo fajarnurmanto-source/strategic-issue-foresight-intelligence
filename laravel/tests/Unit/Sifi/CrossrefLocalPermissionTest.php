@@ -4,6 +4,7 @@ namespace Tests\Unit\Sifi;
 
 use App\Services\Sifi\Integration\CrossrefLocalPermission;
 use App\Services\Sifi\SearchProviderRegistry;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -18,7 +19,7 @@ final class CrossrefLocalPermissionTest extends TestCase
 
     public function test_isolated_opt_in_renews_only_crossref_metadata_review(): void
     {
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-08 12:00:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-08 12:00:00', 'Asia/Jakarta'));
         config([
             'sifi_ih03b.crossref_metadata_enabled' => true,
             'database.default' => 'sqlite',
@@ -37,7 +38,7 @@ final class CrossrefLocalPermissionTest extends TestCase
         config(['sifi_ih03b.crossref_metadata_enabled' => true, 'database.default' => 'mysql']);
         $this->assertFalse(app(CrossrefLocalPermission::class)->eligible());
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-14 00:01:00', 'Asia/Jakarta'));
+        $this->travelTo(Carbon::parse('2026-11-14 00:01:00', 'Asia/Jakarta'));
         $this->assertFalse(app(CrossrefLocalPermission::class)->eligible());
     }
 

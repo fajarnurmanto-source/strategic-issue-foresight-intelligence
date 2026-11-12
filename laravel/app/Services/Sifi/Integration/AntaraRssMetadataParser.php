@@ -19,7 +19,7 @@ final class AntaraRssMetadataParser
         $prior = libxml_use_internal_errors(true);
         libxml_clear_errors();
         try {
-            $reader = new \XMLReader();
+            $reader = new \XMLReader;
             if (! $reader->XML($xml, null, LIBXML_NONET | LIBXML_COMPACT)) {
                 throw new \RuntimeException('IH03E_INVALID_RSS');
             }
@@ -34,7 +34,7 @@ final class AntaraRssMetadataParser
             if (libxml_get_errors()) {
                 throw new \RuntimeException('IH03E_INVALID_RSS');
             }
-            $doc = new \DOMDocument();
+            $doc = new \DOMDocument;
             $doc->resolveExternals = false;
             $doc->substituteEntities = false;
             if (! $doc->loadXML($xml, LIBXML_NONET | LIBXML_COMPACT)
@@ -49,7 +49,9 @@ final class AntaraRssMetadataParser
             $entries = [];
             $seen = [];
             foreach ($nodes as $node) {
-                if (!$node instanceof \DOMElement) continue;
+                if (! $node instanceof \DOMElement) {
+                    continue;
+                }
                 $title = trim(strip_tags($xp->evaluate('string(title)', $node)));
                 $url = trim($xp->evaluate('string(link)', $node));
                 if ($title === '' || mb_strlen($title) > 300) {
@@ -103,6 +105,7 @@ final class AntaraRssMetadataParser
                     break;
                 }
             }
+
             return $entries;
         } finally {
             libxml_clear_errors();

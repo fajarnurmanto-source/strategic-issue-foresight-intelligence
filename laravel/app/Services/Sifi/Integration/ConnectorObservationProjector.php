@@ -32,7 +32,7 @@ final class ConnectorObservationProjector
     }
 
     /**
-     * @param array<string, mixed> $envelope
+     * @param  array<string, mixed>  $envelope
      * @return list<array<string, mixed>>
      */
     public function normalize(string $sessionId, int $ownerId, SifiMonitoringObject $object, array $envelope): array

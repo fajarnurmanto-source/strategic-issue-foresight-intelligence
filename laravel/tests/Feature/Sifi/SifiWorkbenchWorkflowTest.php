@@ -42,6 +42,7 @@ final class SifiWorkbenchWorkflowTest extends TestCase
             'review_state' => 'DRAFT', 'revision' => 1,
             'created_at' => now(), 'updated_at' => now(),
         ]);
+
         return ['candidate' => $candidate, 'investigation' => $investigation];
     }
 

@@ -4,9 +4,12 @@ namespace Tests\Feature\Sifi;
 
 use App\Models\SifiMonitoringObject;
 use App\Models\User;
+use App\Services\Sifi\CollectorObservations;
 use App\Services\Sifi\Integration\AntaraRssTransport;
 use App\Services\Sifi\Integration\BlueskySearchTransport;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -21,8 +24,8 @@ final class Ih03jOwnerCollectionTest extends TestCase
     {
         parent::setUp();
         $this->withoutVite();
-        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
-        $this->temporary = sys_get_temp_dir() . '/sifi-ih03j-review-' . Str::uuid();
+        $this->travelTo(Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
+        $this->temporary = sys_get_temp_dir().'/sifi-ih03j-review-'.Str::uuid();
         mkdir($this->temporary, 0700);
         $this->app->useStoragePath($this->temporary);
         config([
@@ -39,8 +42,8 @@ final class Ih03jOwnerCollectionTest extends TestCase
 
     protected function tearDown(): void
     {
-        if (str_starts_with($this->temporary, sys_get_temp_dir() . '/sifi-ih03j-review-')) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->temporary);
+        if (str_starts_with($this->temporary, sys_get_temp_dir().'/sifi-ih03j-review-')) {
+            (new Filesystem)->deleteDirectory($this->temporary);
         }
         parent::tearDown();
     }
@@ -106,7 +109,8 @@ final class Ih03jOwnerCollectionTest extends TestCase
             'sifi_social.bluesky_public_search_enabled' => true,
             'sifi_social.contact_email' => 'maintainer@example.org',
         ]);
-        $transport = new class extends BlueskySearchTransport {
+        $transport = new class extends BlueskySearchTransport
+        {
             public int $calls = 0;
 
             public function fetch(string $query, string $contact): array
@@ -159,12 +163,15 @@ final class Ih03jOwnerCollectionTest extends TestCase
             'sifi_ih03j.owner_collection_enabled' => true,
             'sifi_ih03e.antara_rss_enabled' => true,
         ]);
-        $transport = new class extends AntaraRssTransport {
+        $transport = new class extends AntaraRssTransport
+        {
             public int $calls = 0;
+
             public function fetch(string $contact): array
             {
                 $this->calls++;
                 $url = 'https://www.antaranews.com/berita/123/berita-qa';
+
                 return [
                     'state' => 'OK', 'network_requests' => 1,
                     'http_status' => 200, 'response_bytes' => 180,
@@ -196,7 +203,7 @@ final class Ih03jOwnerCollectionTest extends TestCase
         $this->assertDatabaseCount('sifi_research_sessions', 1);
         $this->assertDatabaseCount('sifi_evidence_drafts', 0);
 
-        $observations = app(\App\Services\Sifi\CollectorObservations::class)->forObject($owner, $object);
+        $observations = app(CollectorObservations::class)->forObject($owner, $object);
         $this->assertCount(1, $observations);
         $this->assertSame(['ANTARA_RSS'], $observations[0]['provider_ids']);
         $this->assertSame('PUBLISHER_RSS_HEADLINES', $observations[0]['source_kind']);

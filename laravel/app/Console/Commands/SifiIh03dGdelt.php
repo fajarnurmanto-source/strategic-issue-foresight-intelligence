@@ -57,9 +57,11 @@ final class SifiIh03dGdelt extends Command
             if ($state !== 'OK') {
                 $this->displaySafeFailure($sessionId, $owner, $object);
             }
+
             return $state === 'OK' ? self::SUCCESS : self::FAILURE;
         } catch (\Throwable $error) {
             $this->error('SIFI_IH03D=HELD: '.$error->getMessage());
+
             return self::FAILURE;
         }
     }
@@ -104,6 +106,7 @@ final class SifiIh03dGdelt extends Command
             $this->line('GDELT_HTTP_STATUS='.($packet['http_status'] ?? 'NONE'));
             $this->line('GDELT_WIRE_DELIVERY_CONFIRMED='.(($packet['wire_delivery_confirmed'] ?? false) ? 'YES' : 'NO'));
             $this->line('GDELT_ELAPSED_MS='.(int) ($packet['elapsed_ms'] ?? 0));
+
             return;
         }
         $this->line('GDELT_SAFE_FAILURE_DETAILS=NOT_AVAILABLE');

@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Settings\AiModelController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Sifi\AiIssueExplanationController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -33,16 +35,16 @@ Route::get('.well-known/passkey-endpoints', function () {
     ]);
 })->name('well-known.passkeys');
 
-Route::middleware(['auth','verified'])->group(function () {
-    Route::get('settings/ai-models', [\App\Http\Controllers\Settings\AiModelController::class, 'edit'])->name('ai-models.edit');
-    Route::post('settings/ai-models/disable', [\App\Http\Controllers\Settings\AiModelController::class, 'disable'])->middleware('throttle:10,1')->name('ai-models.disable');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('settings/ai-models', [AiModelController::class, 'edit'])->name('ai-models.edit');
+    Route::post('settings/ai-models/disable', [AiModelController::class, 'disable'])->middleware('throttle:10,1')->name('ai-models.disable');
 });
 
-Route::middleware(['auth','verified','throttle:10,1'])->group(function () {
-    Route::post('settings/ai-models/providers', [\App\Http\Controllers\Settings\AiModelController::class,'save']);
-    Route::post('settings/ai-models/probe', [\App\Http\Controllers\Settings\AiModelController::class,'probe']);
-    Route::post('settings/ai-models/assign', [\App\Http\Controllers\Settings\AiModelController::class,'assign']);
-    Route::post('settings/ai-models/revoke', [\App\Http\Controllers\Settings\AiModelController::class,'revoke']);
-    Route::get('sifi/issue-candidates/{candidate}/ai-explanation', [\App\Http\Controllers\Sifi\AiIssueExplanationController::class,'show']);
-    Route::post('sifi/issue-candidates/{candidate}/ai-explanation', [\App\Http\Controllers\Sifi\AiIssueExplanationController::class,'run']);
+Route::middleware(['auth', 'verified', 'throttle:10,1'])->group(function () {
+    Route::post('settings/ai-models/providers', [AiModelController::class, 'save']);
+    Route::post('settings/ai-models/probe', [AiModelController::class, 'probe']);
+    Route::post('settings/ai-models/assign', [AiModelController::class, 'assign']);
+    Route::post('settings/ai-models/revoke', [AiModelController::class, 'revoke']);
+    Route::get('sifi/issue-candidates/{candidate}/ai-explanation', [AiIssueExplanationController::class, 'show']);
+    Route::post('sifi/issue-candidates/{candidate}/ai-explanation', [AiIssueExplanationController::class, 'run']);
 });

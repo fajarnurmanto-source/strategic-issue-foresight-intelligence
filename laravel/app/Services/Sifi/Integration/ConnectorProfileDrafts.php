@@ -60,16 +60,23 @@ final class ConnectorProfileDrafts
         }
 
         $credential = $data['credential'] ?? null;
-        if ($credential === '') { $credential = null; }
+        if ($credential === '') {
+            $credential = null;
+        }
 
         if ($data['auth_scheme'] === 'NONE' && $credential !== null) {
             throw new \InvalidArgumentException('UNEXPECTED_CREDENTIAL');
         }
 
-        $actorId=(int)$actor->id;
-        if($actorId<=0) throw new \InvalidArgumentException('INVALID_CONNECTOR_OWNER');
-        $rateLimit=(int)($data['rate_limit_per_minute']??0);
-        if($rateLimit<0) throw new \InvalidArgumentException('INVALID_RATE_LIMIT');
+        $actorId = (int) $actor->id;
+        if ($actorId <= 0) {
+            throw new \InvalidArgumentException('INVALID_CONNECTOR_OWNER');
+        }
+        $rateLimit = (int) ($data['rate_limit_per_minute'] ?? 0);
+        if ($rateLimit < 0) {
+            throw new \InvalidArgumentException('INVALID_RATE_LIMIT');
+        }
+
         return DB::transaction(function () use ($actor, $actorId, $rateLimit, $data, $credential, $endpoint): SifiConnectorProfile {
             $profile = new SifiConnectorProfile;
             $profile->id = (string) Str::uuid();
