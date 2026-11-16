@@ -1,0 +1,38 @@
+name: SIFI R7 one-shot home formatter
+on:
+  push:
+    branches:
+      - fix/sifi-r7-stable-auth-and-product-home-20261116
+permissions:
+  contents: write
+jobs:
+  format-home:
+    if: "github.event.head_commit.message != 'style(sifi): apply vetted vite-plus formatter to product home'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+        working-directory: laravel
+      - name: Format only candidate home and push back to same isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd laravel
+          ./node_modules/.bin/vp check --fix
+          cd ..
+          actual="$(git diff --name-only)"
+          if [ "$actual" != "laravel/resources/js/pages/welcome.tsx" ]; then
+            echo "BLOCKED_UNEXPECTED_FORMATTING_PATH"
+            echo "$actual"
+            exit 1
+          fi
+          git add -- laravel/resources/js/pages/welcome.tsx
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m 'style(sifi): apply vetted vite-plus formatter to product home'
+          git push origin HEAD:fix/sifi-r7-stable-auth-and-product-home-20261116
