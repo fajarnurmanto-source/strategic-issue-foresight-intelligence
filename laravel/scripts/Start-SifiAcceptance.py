@@ -71,6 +71,11 @@ def main() -> None:
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     if state_dir.is_symlink() or stat.S_IMODE(state_dir.stat().st_mode) & 0o077:
         fail("INSECURE_STATE_DIRECTORY")
+    session_dir = state_dir / "sessions"
+    session_dir.mkdir(mode=0o700, exist_ok=True)
+    if session_dir.is_symlink() or stat.S_IMODE(session_dir.stat().st_mode) & 0o077:
+        fail("INSECURE_SESSION_DIRECTORY")
+
     # Pin one database identity for the lifetime of this UAT state directory.
     db_marker = state_dir / "database_path"
     if not db_marker.exists():
@@ -117,6 +122,7 @@ def main() -> None:
         "DB_CONNECTION": "sqlite",
         "DB_DATABASE": str(db),
         "SESSION_DRIVER": "file",
+        "SESSION_FILES_PATH": str(session_dir.resolve()),
         "SESSION_COOKIE": "sifi_r7_acceptance_session",
         "CACHE_STORE": "array",
         "QUEUE_CONNECTION": "sync",
