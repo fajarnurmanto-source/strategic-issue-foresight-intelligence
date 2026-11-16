@@ -64,6 +64,21 @@ def main() -> None:
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     if state_dir.is_symlink() or stat.S_IMODE(state_dir.stat().st_mode) & 0o077:
         fail("INSECURE_STATE_DIRECTORY")
+    # Pin one database identity for the lifetime of this UAT state directory.
+    db_marker = state_dir / "database_path"
+    if not db_marker.exists():
+        try:
+            fd = os.open(str(db_marker), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            pass
+        else:
+            with os.fdopen(fd, "w", encoding="utf-8") as output:
+                output.write(str(db) + "\n")
+    if db_marker.is_symlink() or stat.S_IMODE(db_marker.stat().st_mode) & 0o077:
+        fail("INSECURE_DATABASE_IDENTITY_FILE")
+    if db_marker.read_text(encoding="utf-8").strip() != str(db):
+        fail("DATABASE_IDENTITY_CHANGED_REVIEW_REQUIRED")
+
     key_file = state_dir / "app_key"
     if not key_file.exists():
         try:
