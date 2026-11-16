@@ -44,8 +44,15 @@ def main() -> None:
         fail("SYMLINK_SOURCE_OR_DATABASE")
     if not all((app / p).is_file() for p in ("artisan", "vendor/autoload.php", "public/build/manifest.json")):
         fail("ACCEPTANCE_DEPENDENCY_OR_ASSET_MISSING")
-    if (app / ".env").exists() or (app / "bootstrap/cache/config.php").exists():
-        fail("ACCEPTANCE_ENV_OR_CACHED_CONFIG_PRESENT")
+    if any(entry.name in (".env", ".env.testing") for entry in app.glob(".env*")):
+        fail("ACCEPTANCE_ENV_OVERRIDE_PRESENT")
+    if (app / "bootstrap/cache/config.php").exists():
+        fail("ACCEPTANCE_CACHED_CONFIG_PRESENT")
+    if any((app / "bootstrap/cache").glob("routes-*.php")):
+        fail("ACCEPTANCE_CACHED_ROUTES_PRESENT")
+    hot_file = app / "public/hot"
+    if hot_file.exists() or hot_file.is_symlink():
+        fail("ACCEPTANCE_VITE_DEV_SERVER_OVERRIDE_PRESENT")
     if not 1024 <= args.port <= 65535:
         fail("UNSAFE_PORT")
 
@@ -96,10 +103,11 @@ def main() -> None:
         fail("INVALID_PERSISTENT_APP_KEY")
 
     # All security-critical config is pinned; discard inherited DB URLs and env.
-    env = os.environ.copy()
-    for setting in ("DATABASE_URL", "DB_URL", "DB_HOST", "DB_USERNAME", "DB_PASSWORD",
-                    "DB_CONNECTION", "DB_DATABASE", "APP_KEY", "APP_URL", "SESSION_DOMAIN"):
-        env.pop(setting, None)
+    env = {
+        name: value for name, value in os.environ.items()
+        if not name.startswith(("APP_", "DB_", "SESSION_", "LARAVEL_"))
+    }
+    env.pop("DATABASE_URL", None)
     env.update({
         "APP_NAME": "SIFI_R7_ACCEPTANCE",
         "APP_ENV": "testing",
